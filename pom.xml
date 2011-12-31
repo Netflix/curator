@@ -46,6 +46,7 @@
         <module>curator-test</module>
         <module>curator-x-discovery</module>
         <module>curator-x-discovery-server</module>
+        <module>curator-x-properties</module>
     </modules>
 
     <scm>

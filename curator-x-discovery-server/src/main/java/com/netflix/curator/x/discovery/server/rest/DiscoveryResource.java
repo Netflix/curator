@@ -194,16 +194,16 @@ public abstract class DiscoveryResource<T>
         {
             final List<ServiceInstance<T>>   instances = Lists.newArrayList(context.getServiceDiscovery().queryForInstances(name));
             ServiceInstance<?>               randomInstance = context.getProviderStrategy().getInstance
-                (
-                    new InstanceProvider<T>()
+            (
+                new InstanceProvider<T>()
+                {
+                    @Override
+                    public List<ServiceInstance<T>> getInstances() throws Exception
                     {
-                        @Override
-                        public List<ServiceInstance<T>> getInstances() throws Exception
-                        {
-                            return instances;
-                        }
+                        return instances;
                     }
-                );
+                }
+            );
             if ( randomInstance == null )
             {
                 return Response.status(Response.Status.NOT_FOUND).build();
