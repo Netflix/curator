@@ -122,7 +122,7 @@ public class CuratorFrameworkImpl implements CuratorFramework
         namespace = builder.getNamespace();
         ensurePath = (namespace != null) ? new EnsurePath(ZKPaths.makePath("/", namespace)) : null;
         executorService = Executors.newFixedThreadPool(2, builder.getThreadFactory());  // 1 for listeners, 1 for background ops
-        connectionStateManager = new ConnectionStateManager(this);
+        connectionStateManager = new ConnectionStateManager(this, builder.getThreadFactory());
 
         byte[]      builderDefaultData = builder.getDefaultData();
         defaultData = (builderDefaultData != null) ? Arrays.copyOf(builderDefaultData, builderDefaultData.length) : new byte[0];
