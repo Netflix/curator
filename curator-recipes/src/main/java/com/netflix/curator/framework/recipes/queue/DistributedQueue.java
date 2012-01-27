@@ -252,13 +252,22 @@ public class DistributedQueue<T> implements Closeable
      * @param item item to add
      * @throws Exception connection issues
      */
-    public void     put(T item) throws Exception
+    public String     put(T item) throws Exception
     {
         checkState();
 
-        String      path = makeItemPath();
-        internalPut(item, null, path);
+        String path = makeItemPath();
+        return internalPut(item, null, path);
     }
+
+    public String     putForeground(T item) throws Exception
+    {
+        checkState();
+
+        String path = makeItemPath();
+        return internalPutForeground(item, null, path);
+    }
+
 
     /**
      * Add a set of items into the queue. Adding is done in the background - thus, this method will
@@ -275,7 +284,7 @@ public class DistributedQueue<T> implements Closeable
         internalPut(null, items, path);
     }
 
-    void internalPut(T item, MultiItem<T> multiItem, String path) throws Exception
+    String internalPut(T item, MultiItem<T> multiItem, String path) throws Exception
     {
         if ( item != null )
         {
@@ -292,8 +301,32 @@ public class DistributedQueue<T> implements Closeable
 
         putCount.incrementAndGet();
         byte[]      bytes = ItemSerializer.serialize(multiItem, serializer);
-        client.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).inBackground().forPath(path, bytes);
+        return client.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).inBackground().forPath(path, bytes);
+
     }
+
+    String internalPutForeground(T item, MultiItem<T> multiItem, String path) throws Exception
+    {
+        if ( item != null )
+        {
+            final AtomicReference<T>    ref = new AtomicReference<T>(item);
+            multiItem = new MultiItem<T>()
+            {
+                @Override
+                public T nextItem() throws Exception
+                {
+                    return ref.getAndSet(null);
+                }
+            };
+        }
+
+        putCount.incrementAndGet();
+        byte[]      bytes = ItemSerializer.serialize(multiItem, serializer);
+        //return client.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).inBackground().forPath(path, bytes);
+        return client.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, bytes);
+
+    }
+
 
     void checkState() throws Exception
     {
