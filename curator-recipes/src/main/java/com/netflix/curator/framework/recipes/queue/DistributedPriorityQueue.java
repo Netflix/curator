@@ -25,6 +25,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>An implementation of the Distributed Priority Queue ZK recipe.</p>
@@ -111,6 +112,20 @@ public class DistributedPriorityQueue<T> implements Closeable
         String      priorityHex = priorityToString(priority);
         queue.internalPut(null, items, queue.makeItemPath() + priorityHex);
     }
+	
+    /**
+     * Wait until any pending puts are committed
+     *
+     * @param waitTime max wait time
+     * @param timeUnit time unit
+     * @return true if the flush was successful, false if it timed out first
+     * @throws InterruptedException if thread was interrupted
+     */
+    public boolean flushPuts(long waitTime, TimeUnit timeUnit) throws InterruptedException
+    {
+        return queue.flushPuts(waitTime, timeUnit);
+    }
+	
 
     /**
      * Return the manager for put listeners
