@@ -112,6 +112,20 @@ public class DistributedPriorityQueue<T> implements Closeable, QueueBase<T>
         String      priorityHex = priorityToString(priority);
         queue.internalPut(null, items, queue.makeItemPath() + priorityHex);
     }
+	
+    /**
+     * Wait until any pending puts are committed
+     *
+     * @param waitTime max wait time
+     * @param timeUnit time unit
+     * @return true if the flush was successful, false if it timed out first
+     * @throws InterruptedException if thread was interrupted
+     */
+    public boolean flushPuts(long waitTime, TimeUnit timeUnit) throws InterruptedException
+    {
+        return queue.flushPuts(waitTime, timeUnit);
+    }
+	
 
     @Override
     public void setErrorMode(ErrorMode newErrorMode)
