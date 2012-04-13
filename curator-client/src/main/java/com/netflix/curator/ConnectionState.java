@@ -102,7 +102,7 @@ class ConnectionState implements Watcher, Closeable
         return parentWatcher.getAndSet(newWatcher);
     }
 
-    void        start() throws Exception
+    void start() throws Exception
     {
         log.debug("Starting");
         ensembleProvider.start();
@@ -110,7 +110,7 @@ class ConnectionState implements Watcher, Closeable
     }
 
     @Override
-    public void        close() throws IOException
+    public void close() throws IOException
     {
         log.debug("Closing");
 
