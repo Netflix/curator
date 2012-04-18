@@ -96,13 +96,25 @@ public class CuratorZookeeperClient implements Closeable
         setRetryPolicy(retryPolicy);
     }
 
+    /**
+     * Return the current session state handler
+     *
+     * @return session state handler
+     */
     public SessionState getSessionState()
     {
         return state.getSessionState();
     }
 
+    /**
+     * Change the session state handler
+     *
+     * @param newSessionState new handler
+     */
     public void setSessionState(SessionState newSessionState)
     {
+        newSessionState = Preconditions.checkNotNull(newSessionState, "newSessionState cannot be null");
+        
         state.setSessionState(newSessionState);
     }
 
