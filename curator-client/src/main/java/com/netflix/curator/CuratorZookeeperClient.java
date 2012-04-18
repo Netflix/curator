@@ -114,7 +114,7 @@ public class CuratorZookeeperClient implements Closeable
     public void setSessionState(SessionState newSessionState)
     {
         newSessionState = Preconditions.checkNotNull(newSessionState, "newSessionState cannot be null");
-        
+
         state.setSessionState(newSessionState);
     }
 
