@@ -20,6 +20,9 @@ package com.netflix.curator;
 import com.google.common.io.Closeables;
 import com.netflix.curator.drivers.TracerDriver;
 import com.netflix.curator.ensemble.EnsembleProvider;
+import com.netflix.curator.session.DefaultSessionState;
+import com.netflix.curator.session.SessionFailedException;
+import com.netflix.curator.session.SessionState;
 import com.netflix.curator.utils.DebugUtils;
 import com.netflix.curator.utils.ZookeeperFactory;
 import org.apache.zookeeper.KeeperException;
@@ -37,16 +40,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class ConnectionState implements Watcher, Closeable
 {
-    private volatile long connectionStartMs = 0;
+    private volatile long                           connectionStartMs = 0;
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
-    private final HandleHolder zooKeeper;
-    private final AtomicBoolean isConnected = new AtomicBoolean(false);
-    private final EnsembleProvider ensembleProvider;
-    private final int connectionTimeoutMs;
-    private final AtomicReference<TracerDriver> tracer;
-    private final AtomicReference<Watcher> parentWatcher = new AtomicReference<Watcher>(null);
-    private final Queue<Exception> backgroundExceptions = new ConcurrentLinkedQueue<Exception>();
+    private final Logger                            log = LoggerFactory.getLogger(getClass());
+    private final HandleHolder                      zooKeeper;
+    private final AtomicBoolean                     isConnected = new AtomicBoolean(false);
+    private final EnsembleProvider                  ensembleProvider;
+    private final int                               connectionTimeoutMs;
+    private final AtomicReference<TracerDriver>     tracer;
+    private final AtomicReference<Watcher>          parentWatcher = new AtomicReference<Watcher>(null);
+    private final Queue<Exception>                  backgroundExceptions = new ConcurrentLinkedQueue<Exception>();
+    private final AtomicReference<SessionState>     sessionState = new AtomicReference<SessionState>(new DefaultSessionState());
 
     private static final int        MAX_BACKGROUND_EXCEPTIONS = 10;
     private static final boolean    LOG_EVENTS = Boolean.getBoolean(DebugUtils.PROPERTY_LOG_EVENTS);
@@ -60,8 +64,23 @@ class ConnectionState implements Watcher, Closeable
         zooKeeper = new HandleHolder(zookeeperFactory, this, ensembleProvider, sessionTimeoutMs);
     }
 
+    SessionState getSessionState()
+    {
+        return sessionState.get();
+    }
+
+    void setSessionState(SessionState newSessionState)
+    {
+        sessionState.set(newSessionState);
+    }
+
     ZooKeeper getZooKeeper() throws Exception
     {
+        if ( sessionState.get().shouldThrowSessionFailure() )
+        {
+            throw new SessionFailedException();
+        }
+
         Exception exception = backgroundExceptions.poll();
         if ( exception != null )
         {
@@ -237,6 +256,8 @@ class ConnectionState implements Watcher, Closeable
     {
         log.warn("Session expired event received");
         tracer.get().addCount("session-expired", 1);
+
+        sessionState.get().handleSessionFailure();
 
         try
         {

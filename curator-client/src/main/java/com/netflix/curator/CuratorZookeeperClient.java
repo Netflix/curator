@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.netflix.curator.drivers.TracerDriver;
 import com.netflix.curator.ensemble.EnsembleProvider;
 import com.netflix.curator.ensemble.fixed.FixedEnsembleProvider;
+import com.netflix.curator.session.SessionState;
 import com.netflix.curator.utils.DefaultTracerDriver;
 import com.netflix.curator.utils.DefaultZookeeperFactory;
 import com.netflix.curator.utils.ZookeeperFactory;
@@ -93,6 +94,16 @@ public class CuratorZookeeperClient implements Closeable
         this.connectionTimeoutMs = connectionTimeoutMs;
         state = new ConnectionState(zookeeperFactory, ensembleProvider, sessionTimeoutMs, connectionTimeoutMs, watcher, tracer);
         setRetryPolicy(retryPolicy);
+    }
+
+    public SessionState getSessionState()
+    {
+        return state.getSessionState();
+    }
+
+    public void setSessionState(SessionState newSessionState)
+    {
+        state.setSessionState(newSessionState);
     }
 
     /**
@@ -259,7 +270,7 @@ public class CuratorZookeeperClient implements Closeable
                     latch.countDown();
                 }
             };
-            
+
             previousWatcher.set(state.substituteParentWatcher(tempWatcher));
             long        startTimeMs = System.currentTimeMillis();
             try
