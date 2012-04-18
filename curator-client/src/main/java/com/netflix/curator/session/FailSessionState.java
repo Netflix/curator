@@ -11,6 +11,14 @@ public class FailSessionState implements SessionState
 {
     private final AtomicBoolean     sessionHasFailed = new AtomicBoolean(false);
 
+    /**
+     * Reset the session failed state so that a reconnection will occur
+     */
+    public void reset()
+    {
+        sessionHasFailed.set(false);
+    }
+
     @Override
     public void handleSessionFailure()
     {
