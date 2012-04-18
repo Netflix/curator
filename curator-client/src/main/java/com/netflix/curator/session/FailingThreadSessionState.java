@@ -24,6 +24,7 @@ public class FailingThreadSessionState implements SessionState
     public void handleSessionFailure()
     {
         sessionHasFailed.set(true);
+        parentSessionState.handleSessionFailure();
     }
 
     @Override
