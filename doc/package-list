@@ -1,5 +1,8 @@
 com.netflix.curator
 com.netflix.curator.drivers
+com.netflix.curator.ensemble
+com.netflix.curator.ensemble.exhibitor
+com.netflix.curator.ensemble.fixed
 com.netflix.curator.framework
 com.netflix.curator.framework.api
 com.netflix.curator.framework.api.transaction
@@ -22,3 +25,4 @@ com.netflix.curator.x.discovery.server.contexts
 com.netflix.curator.x.discovery.server.entity
 com.netflix.curator.x.discovery.server.rest
 com.netflix.curator.x.discovery.strategies
+com.netflix.curator.x.zkclientbridge
