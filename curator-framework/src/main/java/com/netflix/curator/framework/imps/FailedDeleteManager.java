@@ -25,25 +25,27 @@ import org.slf4j.LoggerFactory;
 class FailedDeleteManager
 {
     private final Logger log = LoggerFactory.getLogger(getClass());
-    private final CuratorFramework client;
+    private final CuratorFrameworkImpl client;
 
-    FailedDeleteManager(CuratorFramework client)
+    FailedDeleteManager(CuratorFrameworkImpl client)
     {
         this.client = client;
     }
 
-    void addFailedDelete(String path)
+    void addFailedDelete(String fixedPath)
     {
+        String unfixedPath = client.unfixForNamespace(fixedPath);
+
         if ( client.isStarted() )
         {
-            log.debug("Path being added to guaranteed delete set: " + path);
+            log.debug("Path being added to guaranteed delete set: " + fixedPath);
             try
             {
-                client.delete().guaranteed().inBackground().forPath(path);
+                client.delete().guaranteed().inBackground().forPath(unfixedPath);
             }
             catch ( Exception e )
             {
-                addFailedDelete(path);
+                addFailedDelete(fixedPath);
             }
         }
     }
