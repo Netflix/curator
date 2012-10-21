@@ -1,3 +1,4 @@
+cache
 com.netflix.curator
 com.netflix.curator.drivers
 com.netflix.curator.ensemble
@@ -26,3 +27,7 @@ com.netflix.curator.x.discovery.server.entity
 com.netflix.curator.x.discovery.server.rest
 com.netflix.curator.x.discovery.strategies
 com.netflix.curator.x.zkclientbridge
+discovery
+framework
+leader
+locking
