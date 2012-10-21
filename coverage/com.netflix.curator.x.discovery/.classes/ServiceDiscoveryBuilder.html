@@ -1,0 +1,189 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ServiceDiscoveryBuilder</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ServiceDiscoveryBuilder (com.netflix.curator.x.discovery)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ServiceDiscoveryBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/ 12)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>22</i>&nbsp;import com.netflix.curator.x.discovery.details.InstanceSerializer;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.details.JsonInstanceSerializer;
+<i>24</i>&nbsp;import com.netflix.curator.x.discovery.details.ServiceDiscoveryImpl;
+<i>25</i>&nbsp;
+<i>26</i>&nbsp;public class ServiceDiscoveryBuilder&lt;T&gt;
+<i>27</i>&nbsp;{
+<i>28</i>&nbsp;    private CuratorFramework        client;
+<i>29</i>&nbsp;    private String                  basePath;
+<i>30</i>&nbsp;    private InstanceSerializer&lt;T&gt;   serializer;
+<i>31</i>&nbsp;    private ServiceInstance&lt;T&gt;      thisInstance;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;    /**
+<i>34</i>&nbsp;     * Return a new builder. The builder will be defaulted with a {@link JsonInstanceSerializer}.
+<i>35</i>&nbsp;     *
+<i>36</i>&nbsp;     * @param payloadClass the class of the payload of your service instance (you can use {@link Void}
+<i>37</i>&nbsp;     * if your instances don&#39;t need a payload)
+<i>38</i>&nbsp;     * @return new builder
+<i>39</i>&nbsp;     */
+<i>40</i>&nbsp;    public static&lt;T&gt; ServiceDiscoveryBuilder&lt;T&gt;     builder(Class&lt;T&gt; payloadClass)
+<i>41</i>&nbsp;    {
+<b class="fc"><i>42</i>&nbsp;        return new ServiceDiscoveryBuilder&lt;T&gt;(payloadClass).serializer(new JsonInstanceSerializer&lt;T&gt;(payloadClass));</b>
+<i>43</i>&nbsp;    }
+<i>44</i>&nbsp;
+<i>45</i>&nbsp;    /**
+<i>46</i>&nbsp;     * Build a new service discovery with the currently set values
+<i>47</i>&nbsp;     *
+<i>48</i>&nbsp;     * @return new service discovery
+<i>49</i>&nbsp;     */
+<i>50</i>&nbsp;    public ServiceDiscovery&lt;T&gt;      build()
+<i>51</i>&nbsp;    {
+<b class="fc"><i>52</i>&nbsp;        return new ServiceDiscoveryImpl&lt;T&gt;(client, basePath, serializer, thisInstance);</b>
+<i>53</i>&nbsp;    }
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    /**
+<i>56</i>&nbsp;     * Required - set the client to use
+<i>57</i>&nbsp;     *
+<i>58</i>&nbsp;     * @param client client
+<i>59</i>&nbsp;     * @return this
+<i>60</i>&nbsp;     */
+<i>61</i>&nbsp;    public ServiceDiscoveryBuilder&lt;T&gt;   client(CuratorFramework client)
+<i>62</i>&nbsp;    {
+<b class="fc"><i>63</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>64</i>&nbsp;        return this;</b>
+<i>65</i>&nbsp;    }
+<i>66</i>&nbsp;
+<i>67</i>&nbsp;    /**
+<i>68</i>&nbsp;     * Required - set the base path to store in ZK
+<i>69</i>&nbsp;     *
+<i>70</i>&nbsp;     * @param basePath base path
+<i>71</i>&nbsp;     * @return this
+<i>72</i>&nbsp;     */
+<i>73</i>&nbsp;    public ServiceDiscoveryBuilder&lt;T&gt;   basePath(String basePath)
+<i>74</i>&nbsp;    {
+<b class="fc"><i>75</i>&nbsp;        this.basePath = basePath;</b>
+<b class="fc"><i>76</i>&nbsp;        return this;</b>
+<i>77</i>&nbsp;    }
+<i>78</i>&nbsp;
+<i>79</i>&nbsp;    /**
+<i>80</i>&nbsp;     * optional - change the serializer used (the default is {@link JsonInstanceSerializer}
+<i>81</i>&nbsp;     *
+<i>82</i>&nbsp;     * @param serializer the serializer
+<i>83</i>&nbsp;     * @return this
+<i>84</i>&nbsp;     */
+<i>85</i>&nbsp;    public ServiceDiscoveryBuilder&lt;T&gt;   serializer(InstanceSerializer&lt;T&gt; serializer)
+<i>86</i>&nbsp;    {
+<b class="fc"><i>87</i>&nbsp;        this.serializer = serializer;</b>
+<b class="fc"><i>88</i>&nbsp;        return this;</b>
+<i>89</i>&nbsp;    }
+<i>90</i>&nbsp;
+<i>91</i>&nbsp;    /**
+<i>92</i>&nbsp;     * Optional - instance that represents the service that is running. The instance will get auto-registered
+<i>93</i>&nbsp;     *
+<i>94</i>&nbsp;     * @param thisInstance initial instance
+<i>95</i>&nbsp;     * @return this
+<i>96</i>&nbsp;     */
+<i>97</i>&nbsp;    public ServiceDiscoveryBuilder&lt;T&gt;   thisInstance(ServiceInstance&lt;T&gt; thisInstance)
+<i>98</i>&nbsp;    {
+<b class="fc"><i>99</i>&nbsp;        this.thisInstance = thisInstance;</b>
+<b class="fc"><i>100</i>&nbsp;        return this;</b>
+<i>101</i>&nbsp;    }
+<i>102</i>&nbsp;
+<i>103</i>&nbsp;    ServiceDiscoveryBuilder(Class&lt;T&gt; payloadClass)
+<b class="fc"><i>104</i>&nbsp;    {</b>
+<b class="fc"><i>105</i>&nbsp;    }</b>
+<i>106</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

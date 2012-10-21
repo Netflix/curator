@@ -1,0 +1,385 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DeleteBuilderImpl</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DeleteBuilderImpl (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DeleteBuilderImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (10/ 15)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    77.6%
+  </span>
+  <span class="absValue">
+    (38/ 49)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DeleteBuilderImpl$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (4/ 6)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DeleteBuilderImpl$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DeleteBuilderImpl$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DeleteBuilderImpl$4</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (18/ 24)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80.3%
+  </span>
+  <span class="absValue">
+    (53/ 66)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>19</i>&nbsp;
+<i>20</i>&nbsp;import com.netflix.curator.RetryLoop;
+<i>21</i>&nbsp;import com.netflix.curator.TimeTrace;
+<i>22</i>&nbsp;import com.netflix.curator.framework.api.BackgroundCallback;
+<i>23</i>&nbsp;import com.netflix.curator.framework.api.BackgroundPathable;
+<i>24</i>&nbsp;import com.netflix.curator.framework.api.CuratorEvent;
+<i>25</i>&nbsp;import com.netflix.curator.framework.api.CuratorEventType;
+<i>26</i>&nbsp;import com.netflix.curator.framework.api.DeleteBuilder;
+<i>27</i>&nbsp;import com.netflix.curator.framework.api.DeleteBuilderBase;
+<i>28</i>&nbsp;import com.netflix.curator.framework.api.Pathable;
+<i>29</i>&nbsp;import com.netflix.curator.framework.api.transaction.CuratorTransactionBridge;
+<i>30</i>&nbsp;import com.netflix.curator.framework.api.transaction.OperationType;
+<i>31</i>&nbsp;import com.netflix.curator.framework.api.transaction.TransactionDeleteBuilder;
+<i>32</i>&nbsp;import org.apache.zookeeper.AsyncCallback;
+<i>33</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>34</i>&nbsp;import org.apache.zookeeper.Op;
+<i>35</i>&nbsp;import java.util.concurrent.Callable;
+<i>36</i>&nbsp;import java.util.concurrent.Executor;
+<i>37</i>&nbsp;
+<b class="fc"><i>38</i>&nbsp;class DeleteBuilderImpl implements DeleteBuilder, BackgroundOperation&lt;String&gt;</b>
+<i>39</i>&nbsp;{
+<i>40</i>&nbsp;    private final CuratorFrameworkImpl  client;
+<i>41</i>&nbsp;    private int                         version;
+<i>42</i>&nbsp;    private Backgrounding               backgrounding;
+<i>43</i>&nbsp;    private boolean                     guaranteed;
+<i>44</i>&nbsp;
+<i>45</i>&nbsp;    DeleteBuilderImpl(CuratorFrameworkImpl client)
+<b class="fc"><i>46</i>&nbsp;    {</b>
+<b class="fc"><i>47</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>48</i>&nbsp;        version = -1;</b>
+<b class="fc"><i>49</i>&nbsp;        backgrounding = new Backgrounding();</b>
+<b class="fc"><i>50</i>&nbsp;        guaranteed = false;</b>
+<b class="fc"><i>51</i>&nbsp;    }</b>
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;    TransactionDeleteBuilder    asTransactionDeleteBuilder(final CuratorTransactionImpl curatorTransaction, final CuratorMultiTransactionRecord transaction)
+<i>54</i>&nbsp;    {
+<b class="fc"><i>55</i>&nbsp;        return new TransactionDeleteBuilder()</b>
+<b class="fc"><i>56</i>&nbsp;        {</b>
+<i>57</i>&nbsp;            @Override
+<i>58</i>&nbsp;            public CuratorTransactionBridge forPath(String path) throws Exception
+<i>59</i>&nbsp;            {
+<b class="fc"><i>60</i>&nbsp;                String      fixedPath = client.fixForNamespace(path);</b>
+<b class="fc"><i>61</i>&nbsp;                transaction.add(Op.delete(fixedPath, version), OperationType.DELETE, path);</b>
+<b class="fc"><i>62</i>&nbsp;                return curatorTransaction;</b>
+<i>63</i>&nbsp;            }
+<i>64</i>&nbsp;
+<i>65</i>&nbsp;            @Override
+<i>66</i>&nbsp;            public Pathable&lt;CuratorTransactionBridge&gt; withVersion(int version)
+<i>67</i>&nbsp;            {
+<b class="nc"><i>68</i>&nbsp;                DeleteBuilderImpl.this.withVersion(version);</b>
+<b class="nc"><i>69</i>&nbsp;                return this;</b>
+<i>70</i>&nbsp;            }
+<i>71</i>&nbsp;        };
+<i>72</i>&nbsp;    }
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    @Override
+<i>75</i>&nbsp;    public DeleteBuilderBase guaranteed()
+<i>76</i>&nbsp;    {
+<b class="fc"><i>77</i>&nbsp;        guaranteed = true;</b>
+<b class="fc"><i>78</i>&nbsp;        return this;</b>
+<i>79</i>&nbsp;    }
+<i>80</i>&nbsp;
+<i>81</i>&nbsp;    @Override
+<i>82</i>&nbsp;    public BackgroundPathable&lt;Void&gt; withVersion(int version)
+<i>83</i>&nbsp;    {
+<b class="fc"><i>84</i>&nbsp;        this.version = version;</b>
+<b class="fc"><i>85</i>&nbsp;        return this;</b>
+<i>86</i>&nbsp;    }
+<i>87</i>&nbsp;
+<i>88</i>&nbsp;    @Override
+<i>89</i>&nbsp;    public Pathable&lt;Void&gt; inBackground(BackgroundCallback callback, Object context)
+<i>90</i>&nbsp;    {
+<b class="nc"><i>91</i>&nbsp;        backgrounding = new Backgrounding(callback, context);</b>
+<b class="nc"><i>92</i>&nbsp;        return this;</b>
+<i>93</i>&nbsp;    }
+<i>94</i>&nbsp;
+<i>95</i>&nbsp;    @Override
+<i>96</i>&nbsp;    public Pathable&lt;Void&gt; inBackground(BackgroundCallback callback, Object context, Executor executor)
+<i>97</i>&nbsp;    {
+<b class="nc"><i>98</i>&nbsp;        backgrounding = new Backgrounding(client, callback, context, executor);</b>
+<b class="nc"><i>99</i>&nbsp;        return this;</b>
+<i>100</i>&nbsp;    }
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;    @Override
+<i>103</i>&nbsp;    public Pathable&lt;Void&gt; inBackground(BackgroundCallback callback)
+<i>104</i>&nbsp;    {
+<b class="nc"><i>105</i>&nbsp;        backgrounding = new Backgrounding(callback);</b>
+<b class="nc"><i>106</i>&nbsp;        return this;</b>
+<i>107</i>&nbsp;    }
+<i>108</i>&nbsp;
+<i>109</i>&nbsp;    @Override
+<i>110</i>&nbsp;    public Pathable&lt;Void&gt; inBackground(BackgroundCallback callback, Executor executor)
+<i>111</i>&nbsp;    {
+<b class="nc"><i>112</i>&nbsp;        backgrounding = new Backgrounding(client, callback, executor);</b>
+<b class="nc"><i>113</i>&nbsp;        return this;</b>
+<i>114</i>&nbsp;    }
+<i>115</i>&nbsp;
+<i>116</i>&nbsp;    @Override
+<i>117</i>&nbsp;    public Pathable&lt;Void&gt; inBackground()
+<i>118</i>&nbsp;    {
+<b class="fc"><i>119</i>&nbsp;        backgrounding = new Backgrounding(true);</b>
+<b class="fc"><i>120</i>&nbsp;        return this;</b>
+<i>121</i>&nbsp;    }
+<i>122</i>&nbsp;
+<i>123</i>&nbsp;    @Override
+<i>124</i>&nbsp;    public Pathable&lt;Void&gt; inBackground(Object context)
+<i>125</i>&nbsp;    {
+<b class="fc"><i>126</i>&nbsp;        backgrounding = new Backgrounding(context);</b>
+<b class="fc"><i>127</i>&nbsp;        return this;</b>
+<i>128</i>&nbsp;    }
+<i>129</i>&nbsp;
+<i>130</i>&nbsp;    @Override
+<i>131</i>&nbsp;    public void performBackgroundOperation(final OperationAndData&lt;String&gt; operationAndData) throws Exception
+<i>132</i>&nbsp;    {
+<b class="fc"><i>133</i>&nbsp;        final TimeTrace   trace = client.getZookeeperClient().startTracer(&quot;DeleteBuilderImpl-Background&quot;);</b>
+<b class="fc"><i>134</i>&nbsp;        client.getZooKeeper().delete</b>
+<i>135</i>&nbsp;        (
+<i>136</i>&nbsp;            operationAndData.getData(),
+<i>137</i>&nbsp;            version,
+<i>138</i>&nbsp;            new AsyncCallback.VoidCallback()
+<b class="fc"><i>139</i>&nbsp;            {</b>
+<i>140</i>&nbsp;                @Override
+<i>141</i>&nbsp;                public void processResult(int rc, String path, Object ctx)
+<i>142</i>&nbsp;                {
+<b class="fc"><i>143</i>&nbsp;                    trace.commit();</b>
+<b class="fc"><i>144</i>&nbsp;                    CuratorEvent event = new CuratorEventImpl(client, CuratorEventType.DELETE, rc, path, null, ctx, null, null, null, null, null);</b>
+<b class="fc"><i>145</i>&nbsp;                    client.processBackgroundOperation(operationAndData, event);</b>
+<b class="fc"><i>146</i>&nbsp;                }</b>
+<i>147</i>&nbsp;            },
+<i>148</i>&nbsp;            backgrounding.getContext()
+<i>149</i>&nbsp;        );
+<b class="fc"><i>150</i>&nbsp;    }</b>
+<i>151</i>&nbsp;
+<i>152</i>&nbsp;    @Override
+<i>153</i>&nbsp;    public Void forPath(String path) throws Exception
+<i>154</i>&nbsp;    {
+<b class="fc"><i>155</i>&nbsp;        final String        unfixedPath = path;</b>
+<b class="fc"><i>156</i>&nbsp;        path = client.fixForNamespace(path);</b>
+<i>157</i>&nbsp;
+<b class="fc"><i>158</i>&nbsp;        if ( backgrounding.inBackground() )</b>
+<i>159</i>&nbsp;        {
+<b class="fc"><i>160</i>&nbsp;            OperationAndData.ErrorCallback&lt;String&gt;  errorCallback = null;</b>
+<b class="fc"><i>161</i>&nbsp;            if ( guaranteed )</b>
+<i>162</i>&nbsp;            {
+<b class="fc"><i>163</i>&nbsp;                errorCallback = new OperationAndData.ErrorCallback&lt;String&gt;()</b>
+<b class="fc"><i>164</i>&nbsp;                {</b>
+<i>165</i>&nbsp;                    @Override
+<i>166</i>&nbsp;                    public void retriesExhausted(OperationAndData&lt;String&gt; operationAndData)
+<i>167</i>&nbsp;                    {
+<b class="fc"><i>168</i>&nbsp;                        client.getFailedDeleteManager().addFailedDelete(unfixedPath);</b>
+<b class="fc"><i>169</i>&nbsp;                    }</b>
+<i>170</i>&nbsp;                };
+<i>171</i>&nbsp;            }
+<b class="fc"><i>172</i>&nbsp;            client.processBackgroundOperation(new OperationAndData&lt;String&gt;(this, path, backgrounding.getCallback(), errorCallback), null);</b>
+<b class="fc"><i>173</i>&nbsp;        }</b>
+<i>174</i>&nbsp;        else
+<i>175</i>&nbsp;        {
+<b class="fc"><i>176</i>&nbsp;            pathInForeground(path, unfixedPath);</b>
+<i>177</i>&nbsp;        }
+<b class="fc"><i>178</i>&nbsp;        return null;</b>
+<i>179</i>&nbsp;    }
+<i>180</i>&nbsp;
+<i>181</i>&nbsp;    protected int getVersion()
+<i>182</i>&nbsp;    {
+<b class="nc"><i>183</i>&nbsp;        return version;</b>
+<i>184</i>&nbsp;    }
+<i>185</i>&nbsp;
+<i>186</i>&nbsp;    private void pathInForeground(final String path, String unfixedPath) throws Exception
+<i>187</i>&nbsp;    {
+<b class="fc"><i>188</i>&nbsp;        TimeTrace       trace = client.getZookeeperClient().startTracer(&quot;DeleteBuilderImpl-Foreground&quot;);</b>
+<i>189</i>&nbsp;        try
+<i>190</i>&nbsp;        {
+<b class="fc"><i>191</i>&nbsp;            RetryLoop.callWithRetry</b>
+<i>192</i>&nbsp;            (
+<i>193</i>&nbsp;                client.getZookeeperClient(),
+<i>194</i>&nbsp;                new Callable&lt;Void&gt;()
+<b class="fc"><i>195</i>&nbsp;                {</b>
+<i>196</i>&nbsp;                    @Override
+<i>197</i>&nbsp;                    public Void call() throws Exception
+<i>198</i>&nbsp;                    {
+<b class="fc"><i>199</i>&nbsp;                        client.getZooKeeper().delete(path, version);</b>
+<b class="fc"><i>200</i>&nbsp;                        return null;</b>
+<i>201</i>&nbsp;                    }
+<i>202</i>&nbsp;                }
+<i>203</i>&nbsp;            );
+<i>204</i>&nbsp;        }
+<b class="nc"><i>205</i>&nbsp;        catch ( KeeperException.NodeExistsException e )</b>
+<i>206</i>&nbsp;        {
+<b class="nc"><i>207</i>&nbsp;            throw e;</b>
+<i>208</i>&nbsp;        }
+<b class="fc"><i>209</i>&nbsp;        catch ( Exception e )</b>
+<i>210</i>&nbsp;        {
+<b class="fc"><i>211</i>&nbsp;            if ( guaranteed )</b>
+<i>212</i>&nbsp;            {
+<b class="fc"><i>213</i>&nbsp;                client.getFailedDeleteManager().addFailedDelete(unfixedPath);</b>
+<i>214</i>&nbsp;            }
+<b class="fc"><i>215</i>&nbsp;            throw e;</b>
+<b class="fc"><i>216</i>&nbsp;        }</b>
+<b class="fc"><i>217</i>&nbsp;        trace.commit();</b>
+<b class="fc"><i>218</i>&nbsp;    }</b>
+<i>219</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

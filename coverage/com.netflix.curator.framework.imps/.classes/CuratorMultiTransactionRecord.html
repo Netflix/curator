@@ -1,0 +1,173 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: CuratorMultiTransactionRecord</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: CuratorMultiTransactionRecord (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CuratorMultiTransactionRecord</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (4/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (8/ 9)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">CuratorMultiTransactionRecord$TypeAndPath</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (5/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (12/ 13)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *  
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import com.netflix.curator.framework.api.transaction.OperationType;
+<i>23</i>&nbsp;import org.apache.zookeeper.MultiTransactionRecord;
+<i>24</i>&nbsp;import org.apache.zookeeper.Op;
+<i>25</i>&nbsp;import java.util.List;
+<i>26</i>&nbsp;
+<b class="fc"><i>27</i>&nbsp;class CuratorMultiTransactionRecord extends MultiTransactionRecord</b>
+<i>28</i>&nbsp;{
+<b class="fc"><i>29</i>&nbsp;    private final List&lt;TypeAndPath&gt;     metadata = Lists.newArrayList();</b>
+<i>30</i>&nbsp;
+<b class="fc"><i>31</i>&nbsp;    static class TypeAndPath</b>
+<i>32</i>&nbsp;    {
+<i>33</i>&nbsp;        final OperationType type;
+<i>34</i>&nbsp;        final String forPath;
+<i>35</i>&nbsp;
+<i>36</i>&nbsp;        TypeAndPath(OperationType type, String forPath)
+<b class="fc"><i>37</i>&nbsp;        {</b>
+<b class="fc"><i>38</i>&nbsp;            this.type = type;</b>
+<b class="fc"><i>39</i>&nbsp;            this.forPath = forPath;</b>
+<b class="fc"><i>40</i>&nbsp;        }</b>
+<i>41</i>&nbsp;    }
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    @Override
+<i>44</i>&nbsp;    public final void add(Op op)
+<i>45</i>&nbsp;    {
+<b class="nc"><i>46</i>&nbsp;        throw new UnsupportedOperationException();</b>
+<i>47</i>&nbsp;    }
+<i>48</i>&nbsp;    
+<i>49</i>&nbsp;    void add(Op op, OperationType type, String forPath)
+<i>50</i>&nbsp;    {
+<b class="fc"><i>51</i>&nbsp;        super.add(op);</b>
+<b class="fc"><i>52</i>&nbsp;        metadata.add(new TypeAndPath(type, forPath));</b>
+<b class="fc"><i>53</i>&nbsp;    }</b>
+<i>54</i>&nbsp;    
+<i>55</i>&nbsp;    TypeAndPath     getMetadata(int index)
+<i>56</i>&nbsp;    {
+<b class="fc"><i>57</i>&nbsp;        return metadata.get(index);</b>
+<i>58</i>&nbsp;    }
+<i>59</i>&nbsp;
+<i>60</i>&nbsp;    int             metadataSize()
+<i>61</i>&nbsp;    {
+<b class="fc"><i>62</i>&nbsp;        return metadata.size();</b>
+<i>63</i>&nbsp;    }
+<i>64</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

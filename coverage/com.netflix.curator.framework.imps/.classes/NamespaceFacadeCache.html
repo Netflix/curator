@@ -1,0 +1,151 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: NamespaceFacadeCache</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: NamespaceFacadeCache (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NamespaceFacadeCache</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (8/ 10)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">NamespaceFacadeCache$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (10/ 12)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.cache.CacheBuilder;
+<i>4</i>&nbsp;import com.google.common.cache.CacheLoader;
+<i>5</i>&nbsp;import com.google.common.cache.LoadingCache;
+<i>6</i>&nbsp;import java.util.concurrent.ExecutionException;
+<i>7</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>8</i>&nbsp;
+<b class="fc"><i>9</i>&nbsp;class NamespaceFacadeCache</b>
+<i>10</i>&nbsp;{
+<i>11</i>&nbsp;    private final CuratorFrameworkImpl                  client;
+<i>12</i>&nbsp;    private final NamespaceFacade                       nullNamespace;
+<b class="fc"><i>13</i>&nbsp;    private final CacheLoader&lt;String, NamespaceFacade&gt;  loader = new CacheLoader&lt;String, NamespaceFacade&gt;()</b>
+<b class="fc"><i>14</i>&nbsp;    {</b>
+<i>15</i>&nbsp;        @Override
+<i>16</i>&nbsp;        public NamespaceFacade load(String namespace) throws Exception
+<i>17</i>&nbsp;        {
+<b class="fc"><i>18</i>&nbsp;            return new NamespaceFacade(client, namespace);</b>
+<i>19</i>&nbsp;        }
+<i>20</i>&nbsp;    };
+<b class="fc"><i>21</i>&nbsp;    private final LoadingCache&lt;String, NamespaceFacade&gt; cache = CacheBuilder.newBuilder()</b>
+<i>22</i>&nbsp;        .expireAfterAccess(5, TimeUnit.MINUTES) // does this need config? probably not
+<i>23</i>&nbsp;        .build(loader);
+<i>24</i>&nbsp;
+<i>25</i>&nbsp;    NamespaceFacadeCache(CuratorFrameworkImpl client)
+<b class="fc"><i>26</i>&nbsp;    {</b>
+<b class="fc"><i>27</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>28</i>&nbsp;        nullNamespace = new NamespaceFacade(client, null);</b>
+<b class="fc"><i>29</i>&nbsp;    }</b>
+<i>30</i>&nbsp;
+<i>31</i>&nbsp;    NamespaceFacade     get(String namespace)
+<i>32</i>&nbsp;    {
+<i>33</i>&nbsp;        try
+<i>34</i>&nbsp;        {
+<b class="fc"><i>35</i>&nbsp;            return (namespace != null) ? cache.get(namespace) : nullNamespace;</b>
+<i>36</i>&nbsp;        }
+<b class="nc"><i>37</i>&nbsp;        catch ( ExecutionException e )</b>
+<i>38</i>&nbsp;        {
+<b class="nc"><i>39</i>&nbsp;            throw new RuntimeException(e);  // should never happen</b>
+<i>40</i>&nbsp;        }
+<i>41</i>&nbsp;    }
+<i>42</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

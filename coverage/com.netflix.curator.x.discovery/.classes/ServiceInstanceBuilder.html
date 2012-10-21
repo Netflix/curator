@@ -1,0 +1,237 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ServiceInstanceBuilder</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ServiceInstanceBuilder (com.netflix.curator.x.discovery)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ServiceInstanceBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91.7%
+  </span>
+  <span class="absValue">
+    (11/ 12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.3%
+  </span>
+  <span class="absValue">
+    (33/ 35)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import java.net.InetAddress;
+<i>23</i>&nbsp;import java.net.NetworkInterface;
+<i>24</i>&nbsp;import java.net.SocketException;
+<i>25</i>&nbsp;import java.util.Collection;
+<i>26</i>&nbsp;import java.util.Enumeration;
+<i>27</i>&nbsp;import java.util.List;
+<i>28</i>&nbsp;
+<i>29</i>&nbsp;/**
+<i>30</i>&nbsp; * Builder for service instances
+<i>31</i>&nbsp; */
+<i>32</i>&nbsp;public class ServiceInstanceBuilder&lt;T&gt;
+<i>33</i>&nbsp;{
+<i>34</i>&nbsp;    private T payload;
+<i>35</i>&nbsp;    private String name;
+<i>36</i>&nbsp;    private String address;
+<i>37</i>&nbsp;    private Integer port;
+<i>38</i>&nbsp;    private Integer sslPort;
+<i>39</i>&nbsp;    private String id;
+<i>40</i>&nbsp;    private long registrationTimeUTC;
+<b class="fc"><i>41</i>&nbsp;    private ServiceType serviceType = ServiceType.DYNAMIC;</b>
+<i>42</i>&nbsp;    private UriSpec uriSpec;
+<i>43</i>&nbsp;
+<i>44</i>&nbsp;    ServiceInstanceBuilder()
+<b class="fc"><i>45</i>&nbsp;    {</b>
+<b class="fc"><i>46</i>&nbsp;    }</b>
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    /**
+<i>49</i>&nbsp;     * Return a new instance with the currently set values
+<i>50</i>&nbsp;     *
+<i>51</i>&nbsp;     * @return instance
+<i>52</i>&nbsp;     */
+<i>53</i>&nbsp;    public ServiceInstance&lt;T&gt; build()
+<i>54</i>&nbsp;    {
+<b class="fc"><i>55</i>&nbsp;        return new ServiceInstance&lt;T&gt;(name, id, address, port, sslPort, payload, registrationTimeUTC, serviceType, uriSpec);</b>
+<i>56</i>&nbsp;    }
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; name(String name)
+<i>59</i>&nbsp;    {
+<b class="fc"><i>60</i>&nbsp;        this.name = name;</b>
+<b class="fc"><i>61</i>&nbsp;        return this;</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; address(String address)
+<i>65</i>&nbsp;    {
+<b class="fc"><i>66</i>&nbsp;        this.address = address;</b>
+<b class="fc"><i>67</i>&nbsp;        return this;</b>
+<i>68</i>&nbsp;    }
+<i>69</i>&nbsp;
+<i>70</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; id(String id)
+<i>71</i>&nbsp;    {
+<b class="fc"><i>72</i>&nbsp;        this.id = id;</b>
+<b class="fc"><i>73</i>&nbsp;        return this;</b>
+<i>74</i>&nbsp;    }
+<i>75</i>&nbsp;
+<i>76</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; port(int port)
+<i>77</i>&nbsp;    {
+<b class="fc"><i>78</i>&nbsp;        this.port = port;</b>
+<b class="fc"><i>79</i>&nbsp;        return this;</b>
+<i>80</i>&nbsp;    }
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; sslPort(int port)
+<i>83</i>&nbsp;    {
+<b class="fc"><i>84</i>&nbsp;        this.sslPort = port;</b>
+<b class="fc"><i>85</i>&nbsp;        return this;</b>
+<i>86</i>&nbsp;    }
+<i>87</i>&nbsp;
+<i>88</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; payload(T payload)
+<i>89</i>&nbsp;    {
+<b class="fc"><i>90</i>&nbsp;        this.payload = payload;</b>
+<b class="fc"><i>91</i>&nbsp;        return this;</b>
+<i>92</i>&nbsp;    }
+<i>93</i>&nbsp;
+<i>94</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; serviceType(ServiceType serviceType)
+<i>95</i>&nbsp;    {
+<b class="fc"><i>96</i>&nbsp;        this.serviceType = serviceType;</b>
+<b class="fc"><i>97</i>&nbsp;        return this;</b>
+<i>98</i>&nbsp;    }
+<i>99</i>&nbsp;
+<i>100</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; registrationTimeUTC(long registrationTimeUTC)
+<i>101</i>&nbsp;    {
+<b class="fc"><i>102</i>&nbsp;        this.registrationTimeUTC = registrationTimeUTC;</b>
+<b class="fc"><i>103</i>&nbsp;        return this;</b>
+<i>104</i>&nbsp;    }
+<i>105</i>&nbsp;
+<i>106</i>&nbsp;    public ServiceInstanceBuilder&lt;T&gt; uriSpec(UriSpec uriSpec)
+<i>107</i>&nbsp;    {
+<b class="nc"><i>108</i>&nbsp;        this.uriSpec = uriSpec;</b>
+<b class="nc"><i>109</i>&nbsp;        return this;</b>
+<i>110</i>&nbsp;    }
+<i>111</i>&nbsp;
+<i>112</i>&nbsp;    /**
+<i>113</i>&nbsp;     * based on http://pastebin.com/5X073pUc
+<i>114</i>&nbsp;     * &lt;p&gt;
+<i>115</i>&nbsp;     *
+<i>116</i>&nbsp;     * Returns all available IP addresses.
+<i>117</i>&nbsp;     * &lt;p&gt;
+<i>118</i>&nbsp;     * In error case or if no network connection is established, we return
+<i>119</i>&nbsp;     * an empty list here.
+<i>120</i>&nbsp;     * &lt;p&gt;
+<i>121</i>&nbsp;     * Loopback addresses are excluded - so 127.0.0.1 will not be never
+<i>122</i>&nbsp;     * returned.
+<i>123</i>&nbsp;     * &lt;p&gt;
+<i>124</i>&nbsp;     * The &quot;primary&quot; IP might not be the first one in the returned list.
+<i>125</i>&nbsp;     *
+<i>126</i>&nbsp;     * @return  Returns all IP addresses (can be an empty list in error case
+<i>127</i>&nbsp;     *          or if network connection is missing).
+<i>128</i>&nbsp;     * @since   0.1.0
+<i>129</i>&nbsp;     * @throws SocketException errors
+<i>130</i>&nbsp;     */
+<i>131</i>&nbsp;    public static Collection&lt;InetAddress&gt; getAllLocalIPs() throws SocketException
+<i>132</i>&nbsp;    {
+<b class="fc"><i>133</i>&nbsp;        List&lt;InetAddress&gt; listAdr = Lists.newArrayList();</b>
+<b class="fc"><i>134</i>&nbsp;        Enumeration&lt;NetworkInterface&gt; nifs = NetworkInterface.getNetworkInterfaces();</b>
+<b class="fc"><i>135</i>&nbsp;        if (nifs == null) return listAdr;</b>
+<i>136</i>&nbsp;
+<b class="fc"><i>137</i>&nbsp;        while (nifs.hasMoreElements())</b>
+<i>138</i>&nbsp;        {
+<b class="fc"><i>139</i>&nbsp;            NetworkInterface nif = nifs.nextElement();</b>
+<i>140</i>&nbsp;            // We ignore subinterfaces - as not yet needed.
+<i>141</i>&nbsp;
+<b class="fc"><i>142</i>&nbsp;            Enumeration&lt;InetAddress&gt; adrs = nif.getInetAddresses();</b>
+<b class="fc"><i>143</i>&nbsp;            while (adrs.hasMoreElements())</b>
+<i>144</i>&nbsp;            {
+<b class="fc"><i>145</i>&nbsp;                InetAddress adr = adrs.nextElement();</b>
+<b class="fc"><i>146</i>&nbsp;                if (adr != null &amp;&amp; !adr.isLoopbackAddress() &amp;&amp; (nif.isPointToPoint() || !adr.isLinkLocalAddress()))</b>
+<i>147</i>&nbsp;                {
+<b class="fc"><i>148</i>&nbsp;                    listAdr.add(adr);</b>
+<i>149</i>&nbsp;                }
+<b class="fc"><i>150</i>&nbsp;            }</b>
+<b class="fc"><i>151</i>&nbsp;        }</b>
+<b class="fc"><i>152</i>&nbsp;        return listAdr;</b>
+<i>153</i>&nbsp;    }
+<i>154</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

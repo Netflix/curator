@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: MapDiscoveryContext</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.server.contexts</a> ]
+</div>
+
+<h1>Coverage Summary for Class: MapDiscoveryContext (com.netflix.curator.x.discovery.server.contexts)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MapDiscoveryContext</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 21)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *  
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery.server.contexts;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Maps;
+<i>22</i>&nbsp;import com.netflix.curator.x.discovery.ProviderStrategy;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.ServiceDiscovery;
+<i>24</i>&nbsp;import com.netflix.curator.x.discovery.server.rest.DiscoveryContext;
+<i>25</i>&nbsp;import org.codehaus.jackson.JsonNode;
+<i>26</i>&nbsp;import org.codehaus.jackson.node.ObjectNode;
+<i>27</i>&nbsp;import javax.ws.rs.ext.ContextResolver;
+<i>28</i>&nbsp;import javax.ws.rs.ext.Provider;
+<i>29</i>&nbsp;import java.util.Iterator;
+<i>30</i>&nbsp;import java.util.Map;
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;/**
+<i>33</i>&nbsp; * For convenience, a version of {@link DiscoveryContext} that uses a String-to-String map as the
+<i>34</i>&nbsp; * payload
+<i>35</i>&nbsp; */
+<b class="nc"><i>36</i>&nbsp;@Provider</b>
+<i>37</i>&nbsp;public class MapDiscoveryContext implements DiscoveryContext&lt;Map&lt;String, String&gt;&gt;, ContextResolver&lt;DiscoveryContext&lt;Map&lt;String, String&gt;&gt;&gt;
+<i>38</i>&nbsp;{
+<i>39</i>&nbsp;    private final ServiceDiscovery&lt;Map&lt;String, String&gt;&gt; serviceDiscovery;
+<i>40</i>&nbsp;    private final ProviderStrategy&lt;Map&lt;String, String&gt;&gt; providerStrategy;
+<i>41</i>&nbsp;    private final int instanceRefreshMs;
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    public MapDiscoveryContext(ServiceDiscovery&lt;Map&lt;String, String&gt;&gt; serviceDiscovery, ProviderStrategy&lt;Map&lt;String, String&gt;&gt; providerStrategy, int instanceRefreshMs)
+<b class="nc"><i>44</i>&nbsp;    {</b>
+<b class="nc"><i>45</i>&nbsp;        this.serviceDiscovery = serviceDiscovery;</b>
+<b class="nc"><i>46</i>&nbsp;        this.providerStrategy = providerStrategy;</b>
+<b class="nc"><i>47</i>&nbsp;        this.instanceRefreshMs = instanceRefreshMs;</b>
+<i>48</i>&nbsp;    }
+<i>49</i>&nbsp;
+<i>50</i>&nbsp;    @Override
+<i>51</i>&nbsp;    public ProviderStrategy&lt;Map&lt;String, String&gt;&gt; getProviderStrategy()
+<i>52</i>&nbsp;    {
+<b class="nc"><i>53</i>&nbsp;        return providerStrategy;</b>
+<i>54</i>&nbsp;    }
+<i>55</i>&nbsp;
+<i>56</i>&nbsp;    @Override
+<i>57</i>&nbsp;    public int getInstanceRefreshMs()
+<i>58</i>&nbsp;    {
+<b class="nc"><i>59</i>&nbsp;        return instanceRefreshMs;</b>
+<i>60</i>&nbsp;    }
+<i>61</i>&nbsp;
+<i>62</i>&nbsp;    @Override
+<i>63</i>&nbsp;    public ServiceDiscovery&lt;Map&lt;String, String&gt;&gt; getServiceDiscovery()
+<i>64</i>&nbsp;    {
+<b class="nc"><i>65</i>&nbsp;        return serviceDiscovery;</b>
+<i>66</i>&nbsp;    }
+<i>67</i>&nbsp;
+<i>68</i>&nbsp;    @Override
+<i>69</i>&nbsp;    public void marshallJson(ObjectNode node, String fieldName, Map&lt;String, String&gt; map) throws Exception
+<i>70</i>&nbsp;    {
+<b class="nc"><i>71</i>&nbsp;        if ( map == null )</b>
+<i>72</i>&nbsp;        {
+<b class="nc"><i>73</i>&nbsp;            map = Maps.newHashMap();</b>
+<i>74</i>&nbsp;        }
+<b class="nc"><i>75</i>&nbsp;        ObjectNode objectNode = node.putObject(fieldName);</b>
+<b class="nc"><i>76</i>&nbsp;        for ( Map.Entry&lt;String, String&gt; entry : map.entrySet() )</b>
+<i>77</i>&nbsp;        {
+<b class="nc"><i>78</i>&nbsp;            objectNode.put(entry.getKey(), entry.getValue());</b>
+<i>79</i>&nbsp;        }
+<i>80</i>&nbsp;    }
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    @Override
+<i>83</i>&nbsp;    public Map&lt;String, String&gt; unMarshallJson(JsonNode node) throws Exception
+<i>84</i>&nbsp;    {
+<b class="nc"><i>85</i>&nbsp;        Map&lt;String, String&gt;                     map = Maps.newHashMap();</b>
+<b class="nc"><i>86</i>&nbsp;        Iterator&lt;Map.Entry&lt;String,JsonNode&gt;&gt; fields = node.getFields();</b>
+<b class="nc"><i>87</i>&nbsp;        while ( fields.hasNext() )</b>
+<i>88</i>&nbsp;        {
+<b class="nc"><i>89</i>&nbsp;            Map.Entry&lt;String, JsonNode&gt; entry = fields.next();</b>
+<b class="nc"><i>90</i>&nbsp;            map.put(entry.getKey(), entry.getValue().asText());</b>
+<b class="nc"><i>91</i>&nbsp;        }</b>
+<b class="nc"><i>92</i>&nbsp;        return map;</b>
+<i>93</i>&nbsp;    }
+<i>94</i>&nbsp;
+<i>95</i>&nbsp;    @Override
+<i>96</i>&nbsp;    public DiscoveryContext&lt;Map&lt;String, String&gt;&gt; getContext(Class&lt;?&gt; type)
+<i>97</i>&nbsp;    {
+<b class="nc"><i>98</i>&nbsp;        return this;</b>
+<i>99</i>&nbsp;    }
+<i>100</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

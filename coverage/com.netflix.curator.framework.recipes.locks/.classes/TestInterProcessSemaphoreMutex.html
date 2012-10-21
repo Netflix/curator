@@ -1,0 +1,125 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestInterProcessSemaphoreMutex</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestInterProcessSemaphoreMutex (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestInterProcessSemaphoreMutex</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (2/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (2/ 4)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>19</i>&nbsp;import org.testng.annotations.Test;
+<i>20</i>&nbsp;
+<b class="fc"><i>21</i>&nbsp;public class TestInterProcessSemaphoreMutex extends TestInterProcessMutexBase</b>
+<i>22</i>&nbsp;{
+<i>23</i>&nbsp;    private static final String LOCK_PATH = &quot;/locks/our-lock&quot;;
+<i>24</i>&nbsp;
+<i>25</i>&nbsp;    @Override
+<i>26</i>&nbsp;    @Test(enabled = false)
+<i>27</i>&nbsp;    public void testReentrant() throws Exception
+<i>28</i>&nbsp;    {
+<b class="nc"><i>29</i>&nbsp;    }</b>
+<i>30</i>&nbsp;
+<i>31</i>&nbsp;    @Override
+<i>32</i>&nbsp;    @Test(enabled = false)
+<i>33</i>&nbsp;    public void testReentrant2Threads() throws Exception
+<i>34</i>&nbsp;    {
+<b class="nc"><i>35</i>&nbsp;    }</b>
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    @Override
+<i>38</i>&nbsp;    protected InterProcessLock makeLock(CuratorFramework client)
+<i>39</i>&nbsp;    {
+<b class="fc"><i>40</i>&nbsp;        return new InterProcessSemaphoreMutex(client, LOCK_PATH);</b>
+<i>41</i>&nbsp;    }
+<i>42</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

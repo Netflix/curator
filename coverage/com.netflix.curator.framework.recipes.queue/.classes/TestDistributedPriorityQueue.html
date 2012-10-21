@@ -1,0 +1,426 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestDistributedPriorityQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestDistributedPriorityQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestDistributedPriorityQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.9%
+  </span>
+  <span class="absValue">
+    (93/ 98)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestDistributedPriorityQueue$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (3/ 4)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestDistributedPriorityQueue$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (4/ 5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestDistributedPriorityQueue$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestDistributedPriorityQueue$IntSerializer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    93.8%
+  </span>
+  <span class="absValue">
+    (15/ 16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    93.9%
+  </span>
+  <span class="absValue">
+    (108/ 115)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.io.Closeables;
+<i>19</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>21</i>&nbsp;import com.netflix.curator.framework.recipes.BaseClassForTests;
+<i>22</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>23</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>24</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>25</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>26</i>&nbsp;import org.mockito.Mockito;
+<i>27</i>&nbsp;import org.testng.Assert;
+<i>28</i>&nbsp;import org.testng.annotations.Test;
+<i>29</i>&nbsp;import java.util.ArrayList;
+<i>30</i>&nbsp;import java.util.List;
+<i>31</i>&nbsp;import java.util.Random;
+<i>32</i>&nbsp;import java.util.concurrent.BlockingQueue;
+<i>33</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>34</i>&nbsp;import java.util.concurrent.SynchronousQueue;
+<i>35</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>36</i>&nbsp;
+<b class="fc"><i>37</i>&nbsp;public class TestDistributedPriorityQueue extends BaseClassForTests</b>
+<i>38</i>&nbsp;{
+<i>39</i>&nbsp;    @Test
+<i>40</i>&nbsp;    public void     testMinItemsBeforeRefresh() throws Exception
+<i>41</i>&nbsp;    {
+<b class="fc"><i>42</i>&nbsp;        DistributedPriorityQueue&lt;Integer&gt;   queue = null;</b>
+<b class="fc"><i>43</i>&nbsp;        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<b class="fc"><i>44</i>&nbsp;        client.start();</b>
+<i>45</i>&nbsp;        try
+<i>46</i>&nbsp;        {
+<b class="fc"><i>47</i>&nbsp;            final int minItemsBeforeRefresh = 3;</b>
+<i>48</i>&nbsp;
+<b class="fc"><i>49</i>&nbsp;            BlockingQueueConsumer&lt;Integer&gt; consumer = new BlockingQueueConsumer&lt;Integer&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<b class="fc"><i>50</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new IntSerializer(), &quot;/test&quot;).buildPriorityQueue(minItemsBeforeRefresh);</b>
+<b class="fc"><i>51</i>&nbsp;            queue.start();</b>
+<i>52</i>&nbsp;
+<b class="fc"><i>53</i>&nbsp;            for ( int i = 0; i &lt; 10; ++i )</b>
+<i>54</i>&nbsp;            {
+<b class="fc"><i>55</i>&nbsp;                queue.put(i, 10 + i);</b>
+<i>56</i>&nbsp;            }
+<i>57</i>&nbsp;
+<b class="fc"><i>58</i>&nbsp;            Assert.assertEquals(consumer.take(1, TimeUnit.SECONDS), new Integer(0));</b>
+<b class="fc"><i>59</i>&nbsp;            queue.put(1000, 1); // lower priority</b>
+<i>60</i>&nbsp;
+<b class="fc"><i>61</i>&nbsp;            int         count = 0;</b>
+<b class="fc"><i>62</i>&nbsp;            while ( consumer.take(1, TimeUnit.SECONDS) &lt; 1000 )</b>
+<i>63</i>&nbsp;            {
+<b class="fc"><i>64</i>&nbsp;                ++count;</b>
+<i>65</i>&nbsp;            }
+<b class="fc"><i>66</i>&nbsp;            Assert.assertTrue(Math.abs(minItemsBeforeRefresh - count) &lt; minItemsBeforeRefresh, String.format(&quot;Diff: %d - min: %d&quot;, Math.abs(minItemsBeforeRefresh - count), minItemsBeforeRefresh));     // allows for some slack - testing that within a slop value the newly inserted item with lower priority comes out</b>
+<i>67</i>&nbsp;        }
+<i>68</i>&nbsp;        finally
+<i>69</i>&nbsp;        {
+<b class="fc"><i>70</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>71</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>72</i>&nbsp;        }</b>
+<b class="fc"><i>73</i>&nbsp;    }</b>
+<i>74</i>&nbsp;
+<i>75</i>&nbsp;    @Test
+<i>76</i>&nbsp;    public void     testSortingWhileTaking() throws Exception
+<i>77</i>&nbsp;    {
+<b class="fc"><i>78</i>&nbsp;        Timing           timing = new Timing();</b>
+<b class="fc"><i>79</i>&nbsp;        DistributedPriorityQueue&lt;Integer&gt;   queue = null;</b>
+<b class="fc"><i>80</i>&nbsp;        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>81</i>&nbsp;        client.start();</b>
+<i>82</i>&nbsp;        try
+<i>83</i>&nbsp;        {
+<b class="fc"><i>84</i>&nbsp;            final BlockingQueue&lt;Integer&gt;    blockingQueue = new SynchronousQueue&lt;Integer&gt;();</b>
+<b class="fc"><i>85</i>&nbsp;            QueueConsumer&lt;Integer&gt;          consumer = new QueueConsumer&lt;Integer&gt;()</b>
+<b class="fc"><i>86</i>&nbsp;            {</b>
+<i>87</i>&nbsp;                @Override
+<i>88</i>&nbsp;                public void consumeMessage(Integer message) throws Exception
+<i>89</i>&nbsp;                {
+<b class="fc"><i>90</i>&nbsp;                    blockingQueue.put(message);</b>
+<b class="fc"><i>91</i>&nbsp;                }</b>
+<i>92</i>&nbsp;
+<i>93</i>&nbsp;                @Override
+<i>94</i>&nbsp;                public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>95</i>&nbsp;                {
+<b class="nc"><i>96</i>&nbsp;                }</b>
+<i>97</i>&nbsp;            };
+<b class="fc"><i>98</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new IntSerializer(), &quot;/test&quot;).buildPriorityQueue(0);</b>
+<b class="fc"><i>99</i>&nbsp;            queue.start();</b>
+<i>100</i>&nbsp;
+<b class="fc"><i>101</i>&nbsp;            for ( int i = 0; i &lt; 10; ++i )</b>
+<i>102</i>&nbsp;            {
+<b class="fc"><i>103</i>&nbsp;                queue.put(i, 10);</b>
+<i>104</i>&nbsp;            }
+<i>105</i>&nbsp;
+<b class="fc"><i>106</i>&nbsp;            Assert.assertEquals(blockingQueue.poll(timing.seconds(), TimeUnit.SECONDS), new Integer(0));</b>
+<b class="fc"><i>107</i>&nbsp;            timing.sleepABit();</b>
+<b class="fc"><i>108</i>&nbsp;            queue.put(1000, 1); // lower priority</b>
+<b class="fc"><i>109</i>&nbsp;            timing.sleepABit();</b>
+<b class="fc"><i>110</i>&nbsp;            Assert.assertEquals(blockingQueue.poll(timing.seconds(), TimeUnit.SECONDS), new Integer(1)); // is in consumer already</b>
+<b class="fc"><i>111</i>&nbsp;            Assert.assertEquals(blockingQueue.poll(timing.seconds(), TimeUnit.SECONDS), new Integer(1000));</b>
+<i>112</i>&nbsp;        }
+<i>113</i>&nbsp;        finally
+<i>114</i>&nbsp;        {
+<b class="fc"><i>115</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>116</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>117</i>&nbsp;        }</b>
+<b class="fc"><i>118</i>&nbsp;    }</b>
+<i>119</i>&nbsp;
+<i>120</i>&nbsp;    @Test
+<i>121</i>&nbsp;    public void     testAdditions() throws Exception
+<i>122</i>&nbsp;    {
+<b class="fc"><i>123</i>&nbsp;        DistributedPriorityQueue&lt;Integer&gt;   queue = null;</b>
+<b class="fc"><i>124</i>&nbsp;        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<b class="fc"><i>125</i>&nbsp;        client.start();</b>
+<i>126</i>&nbsp;        try
+<i>127</i>&nbsp;        {
+<b class="fc"><i>128</i>&nbsp;            final CountDownLatch        latch = new CountDownLatch(1);</b>
+<b class="fc"><i>129</i>&nbsp;            QueueSerializer&lt;Integer&gt;    serializer = new IntSerializer()</b>
+<b class="fc"><i>130</i>&nbsp;            {</b>
+<i>131</i>&nbsp;                @Override
+<i>132</i>&nbsp;                public Integer deserialize(byte[] bytes)
+<i>133</i>&nbsp;                {
+<i>134</i>&nbsp;                    // gets called in the Queue&#39;s event processing thread
+<i>135</i>&nbsp;                    try
+<i>136</i>&nbsp;                    {
+<b class="fc"><i>137</i>&nbsp;                        latch.await();</b>
+<i>138</i>&nbsp;                    }
+<b class="nc"><i>139</i>&nbsp;                    catch ( InterruptedException e )</b>
+<i>140</i>&nbsp;                    {
+<i>141</i>&nbsp;                        // ignore
+<b class="fc"><i>142</i>&nbsp;                    }</b>
+<b class="fc"><i>143</i>&nbsp;                    return super.deserialize(bytes);</b>
+<i>144</i>&nbsp;                }
+<i>145</i>&nbsp;            };
+<b class="fc"><i>146</i>&nbsp;            BlockingQueueConsumer&lt;Integer&gt; consumer = new BlockingQueueConsumer&lt;Integer&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<b class="fc"><i>147</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, serializer, &quot;/test&quot;).buildPriorityQueue(1);</b>
+<b class="fc"><i>148</i>&nbsp;            queue.start();</b>
+<i>149</i>&nbsp;
+<b class="fc"><i>150</i>&nbsp;            for ( int i = 0; i &lt; 10; ++i )</b>
+<i>151</i>&nbsp;            {
+<b class="fc"><i>152</i>&nbsp;                queue.put(10, 10);</b>
+<b class="fc"><i>153</i>&nbsp;                if ( i == 0 )</b>
+<i>154</i>&nbsp;                {
+<b class="fc"><i>155</i>&nbsp;                    queue.put(1, 1);</b>
+<b class="fc"><i>156</i>&nbsp;                    latch.countDown();</b>
+<i>157</i>&nbsp;                }
+<i>158</i>&nbsp;            }
+<i>159</i>&nbsp;
+<b class="fc"><i>160</i>&nbsp;            assertOrdering(consumer, 10);</b>
+<i>161</i>&nbsp;        }
+<i>162</i>&nbsp;        finally
+<i>163</i>&nbsp;        {
+<b class="fc"><i>164</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>165</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>166</i>&nbsp;        }</b>
+<b class="fc"><i>167</i>&nbsp;    }</b>
+<i>168</i>&nbsp;
+<i>169</i>&nbsp;    @Test
+<i>170</i>&nbsp;    public void     testSimple() throws Exception
+<i>171</i>&nbsp;    {
+<b class="fc"><i>172</i>&nbsp;        List&lt;Integer&gt;                       nums = new ArrayList&lt;Integer&gt;();</b>
+<i>173</i>&nbsp;
+<b class="fc"><i>174</i>&nbsp;        Timing                              timing = new Timing();</b>
+<b class="fc"><i>175</i>&nbsp;        DistributedPriorityQueue&lt;Integer&gt;   queue = null;</b>
+<b class="fc"><i>176</i>&nbsp;        CuratorFramework                    client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>177</i>&nbsp;        client.start();</b>
+<i>178</i>&nbsp;        try
+<i>179</i>&nbsp;        {
+<b class="fc"><i>180</i>&nbsp;            final CountDownLatch            hasConsumedLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>181</i>&nbsp;            final CountDownLatch            okToConsumeLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>182</i>&nbsp;            BlockingQueueConsumer&lt;Integer&gt;  consumer = new BlockingQueueConsumer&lt;Integer&gt;(Mockito.mock(ConnectionStateListener.class))</b>
+<b class="fc"><i>183</i>&nbsp;            {</b>
+<i>184</i>&nbsp;                @Override
+<i>185</i>&nbsp;                public void consumeMessage(Integer message) throws Exception
+<i>186</i>&nbsp;                {
+<b class="fc"><i>187</i>&nbsp;                    hasConsumedLatch.countDown();</b>
+<b class="fc"><i>188</i>&nbsp;                    okToConsumeLatch.await();</b>
+<b class="fc"><i>189</i>&nbsp;                    super.consumeMessage(message);</b>
+<b class="fc"><i>190</i>&nbsp;                }</b>
+<i>191</i>&nbsp;            };
+<b class="fc"><i>192</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new IntSerializer(), &quot;/test&quot;).buildPriorityQueue(0);</b>
+<b class="fc"><i>193</i>&nbsp;            queue.start();</b>
+<i>194</i>&nbsp;
+<b class="fc"><i>195</i>&nbsp;            nums.add(Integer.MIN_VALUE);</b>
+<b class="fc"><i>196</i>&nbsp;            queue.put(Integer.MIN_VALUE, Integer.MIN_VALUE);  // the queue background thread will be blocking with the first item - make sure it&#39;s the lowest value</b>
+<b class="fc"><i>197</i>&nbsp;            Assert.assertTrue(timing.awaitLatch(hasConsumedLatch));</b>
+<i>198</i>&nbsp;
+<b class="fc"><i>199</i>&nbsp;            Random          random = new Random();</b>
+<b class="fc"><i>200</i>&nbsp;            for ( int i = 0; i &lt; 100; ++i )</b>
+<i>201</i>&nbsp;            {
+<b class="fc"><i>202</i>&nbsp;                int     priority = random.nextInt();</b>
+<b class="fc"><i>203</i>&nbsp;                nums.add(priority);</b>
+<b class="fc"><i>204</i>&nbsp;                queue.put(priority, priority);</b>
+<i>205</i>&nbsp;            }
+<i>206</i>&nbsp;
+<b class="fc"><i>207</i>&nbsp;            while ( queue.getCache().getData().children.size() &lt; (nums.size() - 1) )    // -1 because the first message has already been consumed</b>
+<i>208</i>&nbsp;            {
+<b class="fc"><i>209</i>&nbsp;                timing.sleepABit(); // wait for the cache to catch up</b>
+<i>210</i>&nbsp;            }
+<b class="fc"><i>211</i>&nbsp;            okToConsumeLatch.countDown();</b>
+<i>212</i>&nbsp;
+<b class="fc"><i>213</i>&nbsp;            assertOrdering(consumer, nums.size());</b>
+<i>214</i>&nbsp;        }
+<b class="nc"><i>215</i>&nbsp;        catch ( AssertionError e )</b>
+<i>216</i>&nbsp;        {
+<b class="nc"><i>217</i>&nbsp;            StringBuilder   message = new StringBuilder(e.getMessage());</b>
+<b class="nc"><i>218</i>&nbsp;            for ( int i : nums )</b>
+<i>219</i>&nbsp;            {
+<b class="nc"><i>220</i>&nbsp;                message.append(i).append(&quot;\t&quot;).append(DistributedPriorityQueue.priorityToString(i)).append(&quot;\n&quot;);</b>
+<i>221</i>&nbsp;            }
+<b class="nc"><i>222</i>&nbsp;            Assert.fail(message.toString());</b>
+<i>223</i>&nbsp;        }
+<i>224</i>&nbsp;        finally
+<i>225</i>&nbsp;        {
+<b class="fc"><i>226</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>227</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>228</i>&nbsp;        }</b>
+<b class="fc"><i>229</i>&nbsp;    }</b>
+<i>230</i>&nbsp;
+<i>231</i>&nbsp;    private void assertOrdering(BlockingQueueConsumer&lt;Integer&gt; consumer, int qty) throws Exception
+<i>232</i>&nbsp;    {
+<b class="fc"><i>233</i>&nbsp;        int         previous = 0;</b>
+<b class="fc"><i>234</i>&nbsp;        for ( int i = 0; i &lt; qty; ++i )</b>
+<i>235</i>&nbsp;        {
+<b class="fc"><i>236</i>&nbsp;            Integer     value = consumer.take(10, TimeUnit.SECONDS);</b>
+<b class="fc"><i>237</i>&nbsp;            Assert.assertNotNull(value);</b>
+<b class="fc"><i>238</i>&nbsp;            if ( i &gt; 0 )</b>
+<i>239</i>&nbsp;            {
+<b class="fc"><i>240</i>&nbsp;                Assert.assertTrue(value &gt;= previous, String.format(&quot;Value: (%d:%s) Previous: (%d:%s)&quot;, value, DistributedPriorityQueue.priorityToString(value), previous, DistributedPriorityQueue.priorityToString(previous)));</b>
+<i>241</i>&nbsp;            }
+<b class="fc"><i>242</i>&nbsp;            previous = value;</b>
+<i>243</i>&nbsp;        }
+<b class="fc"><i>244</i>&nbsp;    }</b>
+<i>245</i>&nbsp;
+<b class="fc"><i>246</i>&nbsp;    private static class IntSerializer implements QueueSerializer&lt;Integer&gt;</b>
+<i>247</i>&nbsp;    {
+<i>248</i>&nbsp;        @Override
+<i>249</i>&nbsp;        public byte[] serialize(Integer item)
+<i>250</i>&nbsp;        {
+<b class="fc"><i>251</i>&nbsp;            return Integer.toString(item).getBytes();</b>
+<i>252</i>&nbsp;        }
+<i>253</i>&nbsp;
+<i>254</i>&nbsp;        @Override
+<i>255</i>&nbsp;        public Integer deserialize(byte[] bytes)
+<i>256</i>&nbsp;        {
+<b class="fc"><i>257</i>&nbsp;            return Integer.parseInt(new String(bytes));</b>
+<i>258</i>&nbsp;        }
+<i>259</i>&nbsp;    }
+<i>260</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

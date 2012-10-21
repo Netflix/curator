@@ -1,0 +1,214 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: CuratorTransactionResult</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.api.transaction</a> ]
+</div>
+
+<h1>Coverage Summary for Class: CuratorTransactionResult (com.netflix.curator.framework.api.transaction)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CuratorTransactionResult</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (5/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.9%
+  </span>
+  <span class="absValue">
+    (10/ 11)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">CuratorTransactionResult$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (7/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (12/ 13)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.framework.api.transaction;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.base.Predicate;
+<i>22</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>23</i>&nbsp;
+<i>24</i>&nbsp;/**
+<i>25</i>&nbsp; * Holds the result of one transactional operation
+<i>26</i>&nbsp; */
+<i>27</i>&nbsp;public class CuratorTransactionResult
+<i>28</i>&nbsp;{
+<i>29</i>&nbsp;    private final OperationType type;
+<i>30</i>&nbsp;    private final String        forPath;
+<i>31</i>&nbsp;    private final String        resultPath;
+<i>32</i>&nbsp;    private final Stat          resultStat;
+<i>33</i>&nbsp;
+<i>34</i>&nbsp;    /**
+<i>35</i>&nbsp;     * Utility that can be passed to Google Guava to find a particular result. E.g.
+<i>36</i>&nbsp;     * &lt;code&gt;&lt;pre&gt;
+<i>37</i>&nbsp;     * Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(OperationType.CREATE, path))
+<i>38</i>&nbsp;     * &lt;/pre&gt;&lt;/code&gt;
+<i>39</i>&nbsp;     *
+<i>40</i>&nbsp;     * @param type operation type
+<i>41</i>&nbsp;     * @param forPath path
+<i>42</i>&nbsp;     * @return predicate
+<i>43</i>&nbsp;     */
+<i>44</i>&nbsp;    public static Predicate&lt;CuratorTransactionResult&gt;       ofTypeAndPath(final OperationType type, final String forPath)
+<i>45</i>&nbsp;    {
+<b class="fc"><i>46</i>&nbsp;        return new Predicate&lt;CuratorTransactionResult&gt;()</b>
+<b class="fc"><i>47</i>&nbsp;        {</b>
+<i>48</i>&nbsp;            @Override
+<i>49</i>&nbsp;            public boolean apply(CuratorTransactionResult result)
+<i>50</i>&nbsp;            {
+<b class="fc"><i>51</i>&nbsp;                return (result.getType() == type) &amp;&amp; result.getForPath().equals(forPath);</b>
+<i>52</i>&nbsp;            }
+<i>53</i>&nbsp;        };
+<i>54</i>&nbsp;    }
+<i>55</i>&nbsp;
+<i>56</i>&nbsp;    public CuratorTransactionResult(OperationType type, String forPath, String resultPath, Stat resultStat)
+<b class="fc"><i>57</i>&nbsp;    {</b>
+<b class="fc"><i>58</i>&nbsp;        this.forPath = forPath;</b>
+<b class="fc"><i>59</i>&nbsp;        this.resultPath = resultPath;</b>
+<b class="fc"><i>60</i>&nbsp;        this.resultStat = resultStat;</b>
+<b class="fc"><i>61</i>&nbsp;        this.type = type;</b>
+<b class="fc"><i>62</i>&nbsp;    }</b>
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    /**
+<i>65</i>&nbsp;     * Returns the operation type
+<i>66</i>&nbsp;     *
+<i>67</i>&nbsp;     * @return operation type
+<i>68</i>&nbsp;     */
+<i>69</i>&nbsp;    public OperationType getType()
+<i>70</i>&nbsp;    {
+<b class="fc"><i>71</i>&nbsp;        return type;</b>
+<i>72</i>&nbsp;    }
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    /**
+<i>75</i>&nbsp;     * Returns the path that was passed to the operation when added
+<i>76</i>&nbsp;     * 
+<i>77</i>&nbsp;     * @return operation input path
+<i>78</i>&nbsp;     */
+<i>79</i>&nbsp;    public String getForPath()
+<i>80</i>&nbsp;    {
+<b class="fc"><i>81</i>&nbsp;        return forPath;</b>
+<i>82</i>&nbsp;    }
+<i>83</i>&nbsp;
+<i>84</i>&nbsp;    /**
+<i>85</i>&nbsp;     * Returns the operation generated path or &lt;code&gt;null&lt;/code&gt;. i.e. {@link CuratorTransaction#create()}
+<i>86</i>&nbsp;     * using an EPHEMERAL mode generates the created path plus its sequence number.
+<i>87</i>&nbsp;     *
+<i>88</i>&nbsp;     * @return generated path or null
+<i>89</i>&nbsp;     */
+<i>90</i>&nbsp;    public String getResultPath()
+<i>91</i>&nbsp;    {
+<b class="fc"><i>92</i>&nbsp;        return resultPath;</b>
+<i>93</i>&nbsp;    }
+<i>94</i>&nbsp;
+<i>95</i>&nbsp;    /**
+<i>96</i>&nbsp;     * Returns the operation generated stat or &lt;code&gt;null&lt;/code&gt;. i.e. {@link CuratorTransaction#setData()}
+<i>97</i>&nbsp;     * generates a stat object.
+<i>98</i>&nbsp;     *
+<i>99</i>&nbsp;     * @return generated stat or null
+<i>100</i>&nbsp;     */
+<i>101</i>&nbsp;    public Stat getResultStat()
+<i>102</i>&nbsp;    {
+<b class="nc"><i>103</i>&nbsp;        return resultStat;</b>
+<i>104</i>&nbsp;    }
+<i>105</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

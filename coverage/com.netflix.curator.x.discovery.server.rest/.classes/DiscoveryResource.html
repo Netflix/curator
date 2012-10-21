@@ -1,0 +1,328 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DiscoveryResource</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.server.rest</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DiscoveryResource (com.netflix.curator.x.discovery.server.rest)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DiscoveryResource</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 49)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DiscoveryResource$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 51)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery.server.rest;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import com.netflix.curator.x.discovery.ServiceInstance;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.ServiceType;
+<i>24</i>&nbsp;import com.netflix.curator.x.discovery.details.InstanceProvider;
+<i>25</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceInstances;
+<i>26</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceNames;
+<i>27</i>&nbsp;import org.slf4j.Logger;
+<i>28</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>29</i>&nbsp;import javax.ws.rs.Consumes;
+<i>30</i>&nbsp;import javax.ws.rs.DELETE;
+<i>31</i>&nbsp;import javax.ws.rs.GET;
+<i>32</i>&nbsp;import javax.ws.rs.PUT;
+<i>33</i>&nbsp;import javax.ws.rs.Path;
+<i>34</i>&nbsp;import javax.ws.rs.PathParam;
+<i>35</i>&nbsp;import javax.ws.rs.Produces;
+<i>36</i>&nbsp;import javax.ws.rs.core.MediaType;
+<i>37</i>&nbsp;import javax.ws.rs.core.Response;
+<i>38</i>&nbsp;import java.util.Collection;
+<i>39</i>&nbsp;import java.util.Collections;
+<i>40</i>&nbsp;import java.util.List;
+<i>41</i>&nbsp;
+<i>42</i>&nbsp;/**
+<i>43</i>&nbsp; * &lt;p&gt;
+<i>44</i>&nbsp; * The JAX-RS web service. Due to how most JAX-RS implementations are written, you must
+<i>45</i>&nbsp; * create a concrete class that extends this using your payload type. The concrete class should
+<i>46</i>&nbsp; * have the base path that you&#39;d like to use.
+<i>47</i>&nbsp; * &lt;/p&gt;
+<i>48</i>&nbsp; *
+<i>49</i>&nbsp; * &lt;p&gt;
+<i>50</i>&nbsp; * Because the JAX-RS implementation can create a new instance of the resource for every request,
+<i>51</i>&nbsp; * your concrete class must use a context resolver to access the DiscoveryContext. Or, if you
+<i>52</i>&nbsp; * are using an IoC framework, you can access it that way.
+<i>53</i>&nbsp; * &lt;/p&gt;
+<i>54</i>&nbsp; *
+<i>55</i>&nbsp; * &lt;p&gt;
+<i>56</i>&nbsp; * Here&#39;s a version that has no payload (i.e.
+<i>57</i>&nbsp; * a Void payload):
+<i>58</i>&nbsp; * &lt;/p&gt;
+<i>59</i>&nbsp; * &lt;code&gt;&lt;pre&gt;
+<i>60</i>&nbsp; * &amp;#64;Path(&quot;/&quot;)
+<i>61</i>&nbsp; * public class MyResource extends DiscoveryResource&amp;lt;Void&amp;gt; {
+<i>62</i>&nbsp; *     public MyResource(@Context ContextResolver&amp;lt;DiscoveryContext&amp;lt;Void&amp;gt;&amp;gt; resolver) {
+<i>63</i>&nbsp; *         // note: this may not work with all JAX-RS implementations
+<i>64</i>&nbsp; *         super(resolver.getContext(DiscoveryContext.class));
+<i>65</i>&nbsp; *     }
+<i>66</i>&nbsp; * }
+<i>67</i>&nbsp; * &lt;/pre&gt;&lt;/code&gt;
+<i>68</i>&nbsp; */
+<i>69</i>&nbsp;public abstract class DiscoveryResource&lt;T&gt;
+<i>70</i>&nbsp;{
+<b class="nc"><i>71</i>&nbsp;    private static final Logger     log = LoggerFactory.getLogger(DiscoveryResource.class);</b>
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    private final DiscoveryContext&lt;T&gt; context;
+<i>74</i>&nbsp;
+<i>75</i>&nbsp;    public DiscoveryResource(DiscoveryContext&lt;T&gt; context)
+<b class="nc"><i>76</i>&nbsp;    {</b>
+<b class="nc"><i>77</i>&nbsp;        this.context = context;</b>
+<i>78</i>&nbsp;    }
+<i>79</i>&nbsp;
+<i>80</i>&nbsp;    @PUT
+<i>81</i>&nbsp;    @Path(&quot;v1/service/{name}/{id}&quot;)
+<i>82</i>&nbsp;    @Consumes(MediaType.APPLICATION_JSON)
+<i>83</i>&nbsp;    @Produces(MediaType.APPLICATION_JSON)
+<i>84</i>&nbsp;    public Response     putService(ServiceInstance&lt;T&gt; instance, @PathParam(&quot;name&quot;) String name, @PathParam(&quot;id&quot;) String id)
+<i>85</i>&nbsp;    {
+<b class="nc"><i>86</i>&nbsp;        if ( !instance.getId().equals(id) || !instance.getName().equals(name) )</b>
+<i>87</i>&nbsp;        {
+<b class="nc"><i>88</i>&nbsp;            log.info(&quot;Request where path id and/or name doesn&#39;t match entity&quot;);</b>
+<b class="nc"><i>89</i>&nbsp;            return Response.status(Response.Status.BAD_REQUEST).build();</b>
+<i>90</i>&nbsp;        }
+<i>91</i>&nbsp;        
+<b class="nc"><i>92</i>&nbsp;        if ( instance.getServiceType() == ServiceType.DYNAMIC )</b>
+<i>93</i>&nbsp;        {
+<b class="nc"><i>94</i>&nbsp;            log.info(&quot;Service type cannot be dynamic&quot;);</b>
+<b class="nc"><i>95</i>&nbsp;            return Response.status(Response.Status.BAD_REQUEST).build();</b>
+<i>96</i>&nbsp;        }
+<i>97</i>&nbsp;
+<i>98</i>&nbsp;        try
+<i>99</i>&nbsp;        {
+<b class="nc"><i>100</i>&nbsp;            context.getServiceDiscovery().registerService(instance);</b>
+<i>101</i>&nbsp;        }
+<b class="nc"><i>102</i>&nbsp;        catch ( Exception e )</b>
+<i>103</i>&nbsp;        {
+<b class="nc"><i>104</i>&nbsp;            log.error(&quot;Trying to register service&quot;, e);</b>
+<b class="nc"><i>105</i>&nbsp;            return Response.serverError().build();</b>
+<b class="nc"><i>106</i>&nbsp;        }</b>
+<i>107</i>&nbsp;
+<b class="nc"><i>108</i>&nbsp;        return Response.status(Response.Status.CREATED).build();</b>
+<i>109</i>&nbsp;    }
+<i>110</i>&nbsp;
+<i>111</i>&nbsp;    @DELETE
+<i>112</i>&nbsp;    @Path(&quot;v1/service/{name}/{id}&quot;)
+<i>113</i>&nbsp;    public Response     removeService(@PathParam(&quot;name&quot;) String name, @PathParam(&quot;id&quot;) String id)
+<i>114</i>&nbsp;    {
+<i>115</i>&nbsp;        try
+<i>116</i>&nbsp;        {
+<b class="nc"><i>117</i>&nbsp;            ServiceInstance&lt;T&gt; instance = context.getServiceDiscovery().queryForInstance(name, id);</b>
+<b class="nc"><i>118</i>&nbsp;            if ( instance != null )</b>
+<i>119</i>&nbsp;            {
+<i>120</i>&nbsp;                //noinspection unchecked
+<b class="nc"><i>121</i>&nbsp;                context.getServiceDiscovery().unregisterService(instance);</b>
+<i>122</i>&nbsp;            }
+<i>123</i>&nbsp;        }
+<b class="nc"><i>124</i>&nbsp;        catch ( Exception e )</b>
+<i>125</i>&nbsp;        {
+<b class="nc"><i>126</i>&nbsp;            log.error(&quot;Trying to delete service&quot;, e);</b>
+<b class="nc"><i>127</i>&nbsp;            return Response.serverError().build();</b>
+<b class="nc"><i>128</i>&nbsp;        }</b>
+<b class="nc"><i>129</i>&nbsp;        return Response.ok().build();</b>
+<i>130</i>&nbsp;    }
+<i>131</i>&nbsp;
+<i>132</i>&nbsp;    @GET
+<i>133</i>&nbsp;    @Path(&quot;{name}/{id}&quot;)
+<i>134</i>&nbsp;    @Produces(MediaType.APPLICATION_JSON)
+<i>135</i>&nbsp;    public Response     get(@PathParam(&quot;name&quot;) String name, @PathParam(&quot;id&quot;) String id)
+<i>136</i>&nbsp;    {
+<i>137</i>&nbsp;        try
+<i>138</i>&nbsp;        {
+<b class="nc"><i>139</i>&nbsp;            ServiceInstance&lt;T&gt; instance = context.getServiceDiscovery().queryForInstance(name, id);</b>
+<b class="nc"><i>140</i>&nbsp;            if ( instance == null )</b>
+<i>141</i>&nbsp;            {
+<b class="nc"><i>142</i>&nbsp;                return Response.status(Response.Status.NOT_FOUND).build();</b>
+<i>143</i>&nbsp;            }
+<b class="nc"><i>144</i>&nbsp;            return Response.ok(instance).build();</b>
+<i>145</i>&nbsp;        }
+<b class="nc"><i>146</i>&nbsp;        catch ( Exception e )</b>
+<i>147</i>&nbsp;        {
+<b class="nc"><i>148</i>&nbsp;            log.error(String.format(&quot;Trying to get instance (%s) from service (%s)&quot;, id, name), e);</b>
+<b class="nc"><i>149</i>&nbsp;            return Response.serverError().build();</b>
+<i>150</i>&nbsp;        }
+<i>151</i>&nbsp;    }
+<i>152</i>&nbsp;
+<i>153</i>&nbsp;    @GET
+<i>154</i>&nbsp;    @Path(&quot;v1/service&quot;)
+<i>155</i>&nbsp;    @Produces(MediaType.APPLICATION_JSON)
+<i>156</i>&nbsp;    public Response     getAllNames()
+<i>157</i>&nbsp;    {
+<i>158</i>&nbsp;        try
+<i>159</i>&nbsp;        {
+<b class="nc"><i>160</i>&nbsp;            List&lt;String&gt; instances = Lists.newArrayList(context.getServiceDiscovery().queryForNames());</b>
+<b class="nc"><i>161</i>&nbsp;            Collections.sort(instances);</b>
+<b class="nc"><i>162</i>&nbsp;            return Response.ok(new ServiceNames(instances)).build();</b>
+<i>163</i>&nbsp;        }
+<b class="nc"><i>164</i>&nbsp;        catch ( Exception e )</b>
+<i>165</i>&nbsp;        {
+<b class="nc"><i>166</i>&nbsp;            log.error(&quot;Trying to get service names&quot;, e);</b>
+<b class="nc"><i>167</i>&nbsp;            return Response.serverError().build();</b>
+<i>168</i>&nbsp;        }
+<i>169</i>&nbsp;    }
+<i>170</i>&nbsp;
+<i>171</i>&nbsp;    @GET
+<i>172</i>&nbsp;    @Path(&quot;v1/service/{name}&quot;)
+<i>173</i>&nbsp;    @Produces(MediaType.APPLICATION_JSON)
+<i>174</i>&nbsp;    public Response     getAll(@PathParam(&quot;name&quot;) String name)
+<i>175</i>&nbsp;    {
+<i>176</i>&nbsp;        try
+<i>177</i>&nbsp;        {
+<b class="nc"><i>178</i>&nbsp;            Collection&lt;ServiceInstance&lt;T&gt;&gt;  instances = context.getServiceDiscovery().queryForInstances(name);</b>
+<b class="nc"><i>179</i>&nbsp;            return Response.ok(new ServiceInstances&lt;T&gt;(instances)).build();</b>
+<i>180</i>&nbsp;        }
+<b class="nc"><i>181</i>&nbsp;        catch ( Exception e )</b>
+<i>182</i>&nbsp;        {
+<b class="nc"><i>183</i>&nbsp;            log.error(String.format(&quot;Trying to get instances from service (%s)&quot;, name), e);</b>
+<b class="nc"><i>184</i>&nbsp;            return Response.serverError().build();</b>
+<i>185</i>&nbsp;        }
+<i>186</i>&nbsp;    }
+<i>187</i>&nbsp;
+<i>188</i>&nbsp;    @GET
+<i>189</i>&nbsp;    @Path(&quot;v1/anyservice/{name}&quot;)
+<i>190</i>&nbsp;    @Produces(MediaType.APPLICATION_JSON)
+<i>191</i>&nbsp;    public Response     getAny(@PathParam(&quot;name&quot;) String name)
+<i>192</i>&nbsp;    {
+<i>193</i>&nbsp;        try
+<i>194</i>&nbsp;        {
+<b class="nc"><i>195</i>&nbsp;            final List&lt;ServiceInstance&lt;T&gt;&gt;   instances = Lists.newArrayList(context.getServiceDiscovery().queryForInstances(name));</b>
+<b class="nc"><i>196</i>&nbsp;            ServiceInstance&lt;?&gt;               randomInstance = context.getProviderStrategy().getInstance</b>
+<i>197</i>&nbsp;                (
+<i>198</i>&nbsp;                    new InstanceProvider&lt;T&gt;()
+<b class="nc"><i>199</i>&nbsp;                    {</b>
+<i>200</i>&nbsp;                        @Override
+<i>201</i>&nbsp;                        public List&lt;ServiceInstance&lt;T&gt;&gt; getInstances() throws Exception
+<i>202</i>&nbsp;                        {
+<b class="nc"><i>203</i>&nbsp;                            return instances;</b>
+<i>204</i>&nbsp;                        }
+<i>205</i>&nbsp;                    }
+<i>206</i>&nbsp;                );
+<b class="nc"><i>207</i>&nbsp;            if ( randomInstance == null )</b>
+<i>208</i>&nbsp;            {
+<b class="nc"><i>209</i>&nbsp;                return Response.status(Response.Status.NOT_FOUND).build();</b>
+<i>210</i>&nbsp;            }
+<b class="nc"><i>211</i>&nbsp;            return Response.ok(randomInstance).build();</b>
+<i>212</i>&nbsp;        }
+<b class="nc"><i>213</i>&nbsp;        catch ( Exception e )</b>
+<i>214</i>&nbsp;        {
+<b class="nc"><i>215</i>&nbsp;            log.error(String.format(&quot;Trying to get any instance from service (%s)&quot;, name), e);</b>
+<b class="nc"><i>216</i>&nbsp;            return Response.serverError().build();</b>
+<i>217</i>&nbsp;        }
+<i>218</i>&nbsp;    }
+<i>219</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

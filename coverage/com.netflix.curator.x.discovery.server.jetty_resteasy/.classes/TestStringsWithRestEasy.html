@@ -1,0 +1,223 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestStringsWithRestEasy</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.server.jetty_resteasy</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestStringsWithRestEasy (com.netflix.curator.x.discovery.server.jetty_resteasy)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestStringsWithRestEasy</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 40)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery.server.jetty_resteasy;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import com.google.common.io.ByteStreams;
+<i>23</i>&nbsp;import com.google.common.io.CharStreams;
+<i>24</i>&nbsp;import com.netflix.curator.x.discovery.ServiceInstance;
+<i>25</i>&nbsp;import com.netflix.curator.x.discovery.ServiceType;
+<i>26</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceInstances;
+<i>27</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceNames;
+<i>28</i>&nbsp;import junit.framework.Assert;
+<i>29</i>&nbsp;import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+<i>30</i>&nbsp;import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
+<i>31</i>&nbsp;import org.jboss.resteasy.spi.ResteasyProviderFactory;
+<i>32</i>&nbsp;import org.junit.After;
+<i>33</i>&nbsp;import org.junit.Before;
+<i>34</i>&nbsp;import org.junit.Test;
+<i>35</i>&nbsp;import org.mortbay.jetty.Server;
+<i>36</i>&nbsp;import org.mortbay.jetty.servlet.Context;
+<i>37</i>&nbsp;import org.mortbay.jetty.servlet.ServletHolder;
+<i>38</i>&nbsp;import javax.ws.rs.core.MediaType;
+<i>39</i>&nbsp;import java.io.BufferedReader;
+<i>40</i>&nbsp;import java.io.ByteArrayInputStream;
+<i>41</i>&nbsp;import java.io.ByteArrayOutputStream;
+<i>42</i>&nbsp;import java.io.IOException;
+<i>43</i>&nbsp;import java.io.InputStreamReader;
+<i>44</i>&nbsp;import java.io.OutputStream;
+<i>45</i>&nbsp;import java.net.HttpURLConnection;
+<i>46</i>&nbsp;import java.net.URL;
+<i>47</i>&nbsp;import java.net.URLConnection;
+<i>48</i>&nbsp;
+<i>49</i>&nbsp;@SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc"><i>50</i>&nbsp;public class TestStringsWithRestEasy</b>
+<i>51</i>&nbsp;{
+<i>52</i>&nbsp;    private Server server;
+<i>53</i>&nbsp;
+<i>54</i>&nbsp;    @Before
+<i>55</i>&nbsp;    public void         setup() throws Exception
+<i>56</i>&nbsp;    {
+<b class="nc"><i>57</i>&nbsp;        RestEasyApplication.singletonsRef.set(new RestEasySingletons());</b>
+<i>58</i>&nbsp;
+<b class="nc"><i>59</i>&nbsp;        ResteasyProviderFactory.setInstance(new ResteasyProviderFactory());</b>
+<i>60</i>&nbsp;
+<b class="nc"><i>61</i>&nbsp;        HttpServletDispatcher   dispatcher = new HttpServletDispatcher();</b>
+<i>62</i>&nbsp;
+<b class="nc"><i>63</i>&nbsp;        server = new Server(8080);</b>
+<b class="nc"><i>64</i>&nbsp;        Context root = new Context(server, &quot;/&quot;, Context.SESSIONS);</b>
+<b class="nc"><i>65</i>&nbsp;        root.getInitParams().put(&quot;javax.ws.rs.Application&quot;, RestEasyApplication.class.getName());</b>
+<b class="nc"><i>66</i>&nbsp;        root.addServlet(new ServletHolder(dispatcher), &quot;/*&quot;);</b>
+<b class="nc"><i>67</i>&nbsp;        root.addEventListener(new ResteasyBootstrap());</b>
+<b class="nc"><i>68</i>&nbsp;        server.start();</b>
+<i>69</i>&nbsp;    }
+<i>70</i>&nbsp;    
+<i>71</i>&nbsp;    @After
+<i>72</i>&nbsp;    public void         teardown() throws Exception
+<i>73</i>&nbsp;    {
+<b class="nc"><i>74</i>&nbsp;        server.stop();</b>
+<b class="nc"><i>75</i>&nbsp;        server.join();</b>
+<i>76</i>&nbsp;    }
+<i>77</i>&nbsp;
+<i>78</i>&nbsp;    @Test
+<i>79</i>&nbsp;    public void     testRegisterService() throws Exception
+<i>80</i>&nbsp;    {
+<b class="nc"><i>81</i>&nbsp;        RestEasySingletons  restEasySingletons = RestEasyApplication.singletonsRef.get();</b>
+<i>82</i>&nbsp;
+<b class="nc"><i>83</i>&nbsp;        ServiceInstance&lt;String&gt; service = ServiceInstance.&lt;String&gt;builder()</b>
+<i>84</i>&nbsp;            .name(&quot;test&quot;)
+<i>85</i>&nbsp;            .payload(&quot;From Test&quot;)
+<i>86</i>&nbsp;            .serviceType(ServiceType.STATIC)
+<i>87</i>&nbsp;            .build();
+<i>88</i>&nbsp;
+<b class="nc"><i>89</i>&nbsp;        ByteArrayOutputStream           out = new ByteArrayOutputStream();</b>
+<b class="nc"><i>90</i>&nbsp;        restEasySingletons.serviceInstanceMarshallerSingleton.writeTo(service, null, null, null, null, null, out);</b>
+<i>91</i>&nbsp;
+<b class="nc"><i>92</i>&nbsp;        getJson(&quot;http://localhost:8080/v1/service/test/&quot; + service.getId(), new String(out.toByteArray()));</b>
+<i>93</i>&nbsp;
+<b class="nc"><i>94</i>&nbsp;        String json = getJson(&quot;http://localhost:8080/v1/service&quot;, null);</b>
+<b class="nc"><i>95</i>&nbsp;        ServiceNames names = restEasySingletons.serviceNamesMarshallerSingleton.readFrom(ServiceNames.class, null, null, MediaType.APPLICATION_JSON_TYPE, null, new ByteArrayInputStream(json.getBytes()));</b>
+<b class="nc"><i>96</i>&nbsp;        Assert.assertEquals(names.getNames(), Lists.newArrayList(&quot;test&quot;));</b>
+<i>97</i>&nbsp;
+<b class="nc"><i>98</i>&nbsp;        json = getJson(&quot;http://localhost:8080/v1/service/test&quot;, null);</b>
+<b class="nc"><i>99</i>&nbsp;        ServiceInstances&lt;String&gt; instances = restEasySingletons.serviceInstancesMarshallerSingleton.readFrom(null, null, null, null, null, new ByteArrayInputStream(json.getBytes()));</b>
+<b class="nc"><i>100</i>&nbsp;        Assert.assertEquals(instances.getServices().size(), 1);</b>
+<b class="nc"><i>101</i>&nbsp;        Assert.assertEquals(instances.getServices().get(0), service);</b>
+<i>102</i>&nbsp;    }
+<i>103</i>&nbsp;
+<i>104</i>&nbsp;    @Test
+<i>105</i>&nbsp;    public void     testEmptyServiceNames() throws Exception
+<i>106</i>&nbsp;    {
+<b class="nc"><i>107</i>&nbsp;        String          json = getJson(&quot;http://localhost:8080/v1/service&quot;, null);</b>
+<b class="nc"><i>108</i>&nbsp;        ServiceNames    names = RestEasyApplication.singletonsRef.get().serviceNamesMarshallerSingleton.readFrom(ServiceNames.class, null, null, MediaType.APPLICATION_JSON_TYPE, null, new ByteArrayInputStream(json.getBytes()));</b>
+<i>109</i>&nbsp;
+<b class="nc"><i>110</i>&nbsp;        Assert.assertEquals(names.getNames(), Lists.&lt;String&gt;newArrayList());</b>
+<i>111</i>&nbsp;    }
+<i>112</i>&nbsp;
+<i>113</i>&nbsp;    private String getJson(String urlStr, String body) throws IOException
+<i>114</i>&nbsp;    {
+<b class="nc"><i>115</i>&nbsp;        URL                 url = new URL(urlStr);</b>
+<b class="nc"><i>116</i>&nbsp;        URLConnection       urlConnection = url.openConnection();</b>
+<b class="nc"><i>117</i>&nbsp;        urlConnection.addRequestProperty(&quot;Accept&quot;, &quot;application/json&quot;);</b>
+<b class="nc"><i>118</i>&nbsp;        if ( body != null )</b>
+<i>119</i>&nbsp;        {
+<b class="nc"><i>120</i>&nbsp;            ((HttpURLConnection)urlConnection).setRequestMethod(&quot;PUT&quot;);</b>
+<i>121</i>&nbsp;
+<b class="nc"><i>122</i>&nbsp;            urlConnection.addRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</b>
+<b class="nc"><i>123</i>&nbsp;            urlConnection.addRequestProperty(&quot;Content-Length&quot;, Integer.toString(body.length()));</b>
+<b class="nc"><i>124</i>&nbsp;            urlConnection.setDoOutput(true);</b>
+<i>125</i>&nbsp;
+<b class="nc"><i>126</i>&nbsp;            OutputStream        out = urlConnection.getOutputStream();</b>
+<b class="nc"><i>127</i>&nbsp;            ByteStreams.copy(ByteStreams.newInputStreamSupplier(body.getBytes()), out);</b>
+<i>128</i>&nbsp;        }
+<b class="nc"><i>129</i>&nbsp;        BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));</b>
+<i>130</i>&nbsp;        try
+<i>131</i>&nbsp;        {
+<b class="nc"><i>132</i>&nbsp;            return CharStreams.toString(in);</b>
+<i>133</i>&nbsp;        }
+<i>134</i>&nbsp;        finally
+<i>135</i>&nbsp;        {
+<b class="nc"><i>136</i>&nbsp;            in.close();</b>
+<i>137</i>&nbsp;        }
+<i>138</i>&nbsp;    }
+<i>139</i>&nbsp;
+<i>140</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

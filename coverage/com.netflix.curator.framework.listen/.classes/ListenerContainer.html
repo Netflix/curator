@@ -1,0 +1,176 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ListenerContainer</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.listen</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ListenerContainer (com.netflix.curator.framework.listen)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ListenerContainer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (16/ 18)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.framework.listen;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.base.Function;
+<i>22</i>&nbsp;import com.google.common.collect.Maps;
+<i>23</i>&nbsp;import com.google.common.util.concurrent.MoreExecutors;
+<i>24</i>&nbsp;import org.slf4j.Logger;
+<i>25</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>26</i>&nbsp;import java.util.Map;
+<i>27</i>&nbsp;import java.util.concurrent.Executor;
+<i>28</i>&nbsp;
+<i>29</i>&nbsp;/**
+<i>30</i>&nbsp; * Abstracts an object that has listeners
+<i>31</i>&nbsp; */
+<b class="fc"><i>32</i>&nbsp;public class ListenerContainer&lt;T&gt; implements Listenable&lt;T&gt;</b>
+<i>33</i>&nbsp;{
+<b class="fc"><i>34</i>&nbsp;    private final Logger                        log = LoggerFactory.getLogger(getClass());</b>
+<b class="fc"><i>35</i>&nbsp;    private final Map&lt;T, ListenerEntry&lt;T&gt;&gt;      listeners = Maps.newConcurrentMap();</b>
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    @Override
+<i>38</i>&nbsp;    public void addListener(T listener)
+<i>39</i>&nbsp;    {
+<b class="fc"><i>40</i>&nbsp;        addListener(listener, MoreExecutors.sameThreadExecutor());</b>
+<b class="fc"><i>41</i>&nbsp;    }</b>
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    @Override
+<i>44</i>&nbsp;    public void addListener(T listener, Executor executor)
+<i>45</i>&nbsp;    {
+<b class="fc"><i>46</i>&nbsp;        listeners.put(listener, new ListenerEntry&lt;T&gt;(listener, executor));</b>
+<b class="fc"><i>47</i>&nbsp;    }</b>
+<i>48</i>&nbsp;
+<i>49</i>&nbsp;    @Override
+<i>50</i>&nbsp;    public void removeListener(T listener)
+<i>51</i>&nbsp;    {
+<b class="fc"><i>52</i>&nbsp;        listeners.remove(listener);</b>
+<b class="fc"><i>53</i>&nbsp;    }</b>
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    /**
+<i>56</i>&nbsp;     * Remove all listeners
+<i>57</i>&nbsp;     */
+<i>58</i>&nbsp;    public void     clear()
+<i>59</i>&nbsp;    {
+<b class="fc"><i>60</i>&nbsp;        listeners.clear();</b>
+<b class="fc"><i>61</i>&nbsp;    }</b>
+<i>62</i>&nbsp;
+<i>63</i>&nbsp;    /**
+<i>64</i>&nbsp;     * Return the number of listeners
+<i>65</i>&nbsp;     *
+<i>66</i>&nbsp;     * @return number
+<i>67</i>&nbsp;     */
+<i>68</i>&nbsp;    public int      size()
+<i>69</i>&nbsp;    {
+<b class="fc"><i>70</i>&nbsp;        return listeners.size();</b>
+<i>71</i>&nbsp;    }
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    /**
+<i>74</i>&nbsp;     * Utility - apply the given function to each listener. The function receives
+<i>75</i>&nbsp;     * the listener as an argument.
+<i>76</i>&nbsp;     *
+<i>77</i>&nbsp;     * @param function function to call for each listener
+<i>78</i>&nbsp;     */
+<i>79</i>&nbsp;    public void     forEach(Function&lt;T, Void&gt; function)
+<i>80</i>&nbsp;    {
+<b class="fc"><i>81</i>&nbsp;        for ( final ListenerEntry&lt;T&gt; entry : listeners.values() )</b>
+<i>82</i>&nbsp;        {
+<i>83</i>&nbsp;            try
+<i>84</i>&nbsp;            {
+<b class="fc"><i>85</i>&nbsp;                function.apply(entry.listener);</b>
+<i>86</i>&nbsp;            }
+<b class="nc"><i>87</i>&nbsp;            catch ( Throwable e )</b>
+<i>88</i>&nbsp;            {
+<b class="nc"><i>89</i>&nbsp;                log.error(String.format(&quot;Listener (%s) threw an exception&quot;, entry.listener), e);</b>
+<b class="fc"><i>90</i>&nbsp;            }</b>
+<i>91</i>&nbsp;        }
+<b class="fc"><i>92</i>&nbsp;    }</b>
+<i>93</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

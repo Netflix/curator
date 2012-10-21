@@ -1,0 +1,370 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: SimpleDistributedQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: SimpleDistributedQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SimpleDistributedQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (8/ 10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    79.4%
+  </span>
+  <span class="absValue">
+    (50/ 63)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">SimpleDistributedQueue$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (10/ 12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80.3%
+  </span>
+  <span class="absValue">
+    (53/ 66)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>20</i>&nbsp;import com.netflix.curator.utils.EnsurePath;
+<i>21</i>&nbsp;import com.netflix.curator.utils.ZKPaths;
+<i>22</i>&nbsp;import org.apache.zookeeper.CreateMode;
+<i>23</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>24</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>25</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>26</i>&nbsp;import org.slf4j.Logger;
+<i>27</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>28</i>&nbsp;import java.util.Collections;
+<i>29</i>&nbsp;import java.util.List;
+<i>30</i>&nbsp;import java.util.NoSuchElementException;
+<i>31</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>32</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>33</i>&nbsp;
+<i>34</i>&nbsp;/**
+<i>35</i>&nbsp; * &lt;p&gt;
+<i>36</i>&nbsp; *     Drop in replacement for: org.apache.zookeeper.recipes.queue.DistributedQueue that is part of
+<i>37</i>&nbsp; *     the ZooKeeper distribution
+<i>38</i>&nbsp; * &lt;/p&gt;
+<i>39</i>&nbsp; *
+<i>40</i>&nbsp; * &lt;p&gt;
+<i>41</i>&nbsp; *     This class is data compatible with the ZK version. i.e. it uses the same naming scheme so
+<i>42</i>&nbsp; *     it can read from an existing queue
+<i>43</i>&nbsp; * &lt;/p&gt;
+<i>44</i>&nbsp; */
+<i>45</i>&nbsp;public class SimpleDistributedQueue
+<i>46</i>&nbsp;{
+<b class="fc"><i>47</i>&nbsp;    private final Logger log = LoggerFactory.getLogger(getClass());</b>
+<i>48</i>&nbsp;    private final CuratorFramework client;
+<i>49</i>&nbsp;    private final String path;
+<i>50</i>&nbsp;    private final EnsurePath ensurePath;
+<i>51</i>&nbsp;
+<b class="fc"><i>52</i>&nbsp;    private final String PREFIX = &quot;qn-&quot;;</b>
+<i>53</i>&nbsp;
+<i>54</i>&nbsp;    /**
+<i>55</i>&nbsp;     * @param client the client
+<i>56</i>&nbsp;     * @param path path to store queue nodes
+<i>57</i>&nbsp;     */
+<i>58</i>&nbsp;    public SimpleDistributedQueue(CuratorFramework client, String path)
+<b class="fc"><i>59</i>&nbsp;    {</b>
+<b class="fc"><i>60</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>61</i>&nbsp;        this.path = path;</b>
+<b class="fc"><i>62</i>&nbsp;        ensurePath = client.newNamespaceAwareEnsurePath(path);</b>
+<b class="fc"><i>63</i>&nbsp;    }</b>
+<i>64</i>&nbsp;
+<i>65</i>&nbsp;    /**
+<i>66</i>&nbsp;     * Return the head of the queue without modifying the queue.
+<i>67</i>&nbsp;     *
+<i>68</i>&nbsp;     * @return the data at the head of the queue.
+<i>69</i>&nbsp;     * @throws Exception errors
+<i>70</i>&nbsp;     * @throws NoSuchElementException if the queue is empty
+<i>71</i>&nbsp;     */
+<i>72</i>&nbsp;    public byte[] element() throws Exception
+<i>73</i>&nbsp;    {
+<b class="fc"><i>74</i>&nbsp;        byte[] bytes = internalElement(false, null);</b>
+<b class="fc"><i>75</i>&nbsp;        if ( bytes == null )</b>
+<i>76</i>&nbsp;        {
+<b class="nc"><i>77</i>&nbsp;            throw new NoSuchElementException();</b>
+<i>78</i>&nbsp;        }
+<b class="fc"><i>79</i>&nbsp;        return bytes;</b>
+<i>80</i>&nbsp;    }
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    /**
+<i>83</i>&nbsp;     * Attempts to remove the head of the queue and return it.
+<i>84</i>&nbsp;     *
+<i>85</i>&nbsp;     * @return The former head of the queue
+<i>86</i>&nbsp;     * @throws Exception errors
+<i>87</i>&nbsp;     * @throws NoSuchElementException if the queue is empty
+<i>88</i>&nbsp;     */
+<i>89</i>&nbsp;    public byte[] remove() throws Exception
+<i>90</i>&nbsp;    {
+<b class="fc"><i>91</i>&nbsp;        byte[] bytes = internalElement(true, null);</b>
+<b class="fc"><i>92</i>&nbsp;        if ( bytes == null )</b>
+<i>93</i>&nbsp;        {
+<b class="fc"><i>94</i>&nbsp;            throw new NoSuchElementException();</b>
+<i>95</i>&nbsp;        }
+<b class="fc"><i>96</i>&nbsp;        return bytes;</b>
+<i>97</i>&nbsp;    }
+<i>98</i>&nbsp;
+<i>99</i>&nbsp;    /**
+<i>100</i>&nbsp;     * Removes the head of the queue and returns it, blocks until it succeeds.
+<i>101</i>&nbsp;     *
+<i>102</i>&nbsp;     * @return The former head of the queue
+<i>103</i>&nbsp;     * @throws Exception errors
+<i>104</i>&nbsp;     */
+<i>105</i>&nbsp;    public byte[] take() throws Exception
+<i>106</i>&nbsp;    {
+<b class="fc"><i>107</i>&nbsp;        return internalPoll(0, null);</b>
+<i>108</i>&nbsp;    }
+<i>109</i>&nbsp;
+<i>110</i>&nbsp;    /**
+<i>111</i>&nbsp;     * Inserts data into queue.
+<i>112</i>&nbsp;     *
+<i>113</i>&nbsp;     * @param data the data
+<i>114</i>&nbsp;     * @return true if data was successfully added
+<i>115</i>&nbsp;     * @throws Exception errors
+<i>116</i>&nbsp;     */
+<i>117</i>&nbsp;    public boolean offer(byte[] data) throws Exception
+<i>118</i>&nbsp;    {
+<b class="fc"><i>119</i>&nbsp;        ensurePath.ensure(client.getZookeeperClient());</b>
+<i>120</i>&nbsp;
+<b class="fc"><i>121</i>&nbsp;        String thisPath = ZKPaths.makePath(path, PREFIX);</b>
+<b class="fc"><i>122</i>&nbsp;        client.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(thisPath, data);</b>
+<b class="fc"><i>123</i>&nbsp;        return true;</b>
+<i>124</i>&nbsp;    }
+<i>125</i>&nbsp;
+<i>126</i>&nbsp;    /**
+<i>127</i>&nbsp;     * Returns the data at the first element of the queue, or null if the queue is empty.
+<i>128</i>&nbsp;     *
+<i>129</i>&nbsp;     * @return data at the first element of the queue, or null.
+<i>130</i>&nbsp;     * @throws Exception errors
+<i>131</i>&nbsp;     */
+<i>132</i>&nbsp;    public byte[] peek() throws Exception
+<i>133</i>&nbsp;    {
+<i>134</i>&nbsp;        try
+<i>135</i>&nbsp;        {
+<b class="nc"><i>136</i>&nbsp;            return element();</b>
+<i>137</i>&nbsp;        }
+<b class="nc"><i>138</i>&nbsp;        catch ( NoSuchElementException e )</b>
+<i>139</i>&nbsp;        {
+<b class="nc"><i>140</i>&nbsp;            return null;</b>
+<i>141</i>&nbsp;        }
+<i>142</i>&nbsp;    }
+<i>143</i>&nbsp;
+<i>144</i>&nbsp;    /**
+<i>145</i>&nbsp;     * Retrieves and removes the head of this queue, waiting up to the
+<i>146</i>&nbsp;     * specified wait time if necessary for an element to become available.
+<i>147</i>&nbsp;     *
+<i>148</i>&nbsp;     * @param timeout how long to wait before giving up, in units of
+<i>149</i>&nbsp;     *        &lt;tt&gt;unit&lt;/tt&gt;
+<i>150</i>&nbsp;     * @param unit a &lt;tt&gt;TimeUnit&lt;/tt&gt; determining how to interpret the
+<i>151</i>&nbsp;     *        &lt;tt&gt;timeout&lt;/tt&gt; parameter
+<i>152</i>&nbsp;     * @return the head of this queue, or &lt;tt&gt;null&lt;/tt&gt; if the
+<i>153</i>&nbsp;     *         specified waiting time elapses before an element is available
+<i>154</i>&nbsp;     * @throws Exception errors
+<i>155</i>&nbsp;     */
+<i>156</i>&nbsp;    public byte[] poll(long timeout, TimeUnit unit) throws Exception
+<i>157</i>&nbsp;    {
+<b class="fc"><i>158</i>&nbsp;        return internalPoll(timeout, unit);</b>
+<i>159</i>&nbsp;    }
+<i>160</i>&nbsp;
+<i>161</i>&nbsp;    /**
+<i>162</i>&nbsp;     * Attempts to remove the head of the queue and return it. Returns null if the queue is empty.
+<i>163</i>&nbsp;     *
+<i>164</i>&nbsp;     * @return Head of the queue or null.
+<i>165</i>&nbsp;     * @throws Exception errors
+<i>166</i>&nbsp;     */
+<i>167</i>&nbsp;    public byte[] poll() throws Exception
+<i>168</i>&nbsp;    {
+<i>169</i>&nbsp;        try
+<i>170</i>&nbsp;        {
+<b class="nc"><i>171</i>&nbsp;            return remove();</b>
+<i>172</i>&nbsp;        }
+<b class="nc"><i>173</i>&nbsp;        catch ( NoSuchElementException e )</b>
+<i>174</i>&nbsp;        {
+<b class="nc"><i>175</i>&nbsp;            return null;</b>
+<i>176</i>&nbsp;        }
+<i>177</i>&nbsp;    }
+<i>178</i>&nbsp;
+<i>179</i>&nbsp;    private byte[] internalPoll(long timeout, TimeUnit unit) throws Exception
+<i>180</i>&nbsp;    {
+<b class="fc"><i>181</i>&nbsp;        ensurePath.ensure(client.getZookeeperClient());</b>
+<i>182</i>&nbsp;
+<b class="fc"><i>183</i>&nbsp;        long            startMs = System.currentTimeMillis();</b>
+<b class="fc"><i>184</i>&nbsp;        boolean         hasTimeout = (unit != null);</b>
+<b class="fc"><i>185</i>&nbsp;        long            maxWaitMs = hasTimeout ? TimeUnit.MILLISECONDS.convert(timeout, unit) : Long.MAX_VALUE;</b>
+<i>186</i>&nbsp;        for(;;)
+<i>187</i>&nbsp;        {
+<b class="fc"><i>188</i>&nbsp;            final CountDownLatch    latch = new CountDownLatch(1);</b>
+<b class="fc"><i>189</i>&nbsp;            Watcher                 watcher = new Watcher()</b>
+<b class="fc"><i>190</i>&nbsp;            {</b>
+<i>191</i>&nbsp;                @Override
+<i>192</i>&nbsp;                public void process(WatchedEvent event)
+<i>193</i>&nbsp;                {
+<b class="fc"><i>194</i>&nbsp;                    latch.countDown();</b>
+<b class="fc"><i>195</i>&nbsp;                }</b>
+<i>196</i>&nbsp;            };
+<b class="fc"><i>197</i>&nbsp;            byte[]      bytes = internalElement(true, watcher);</b>
+<b class="fc"><i>198</i>&nbsp;            if ( bytes != null )</b>
+<i>199</i>&nbsp;            {
+<b class="fc"><i>200</i>&nbsp;                return bytes;</b>
+<i>201</i>&nbsp;            }
+<i>202</i>&nbsp;
+<b class="fc"><i>203</i>&nbsp;            if ( hasTimeout )</b>
+<i>204</i>&nbsp;            {
+<b class="fc"><i>205</i>&nbsp;                long        elapsedMs = System.currentTimeMillis() - startMs;</b>
+<b class="fc"><i>206</i>&nbsp;                long        thisWaitMs = maxWaitMs - elapsedMs;</b>
+<b class="fc"><i>207</i>&nbsp;                if ( thisWaitMs &lt;= 0 )</b>
+<i>208</i>&nbsp;                {
+<b class="fc"><i>209</i>&nbsp;                    return null;</b>
+<i>210</i>&nbsp;                }
+<b class="fc"><i>211</i>&nbsp;                latch.await(thisWaitMs, TimeUnit.MILLISECONDS);</b>
+<b class="fc"><i>212</i>&nbsp;            }</b>
+<i>213</i>&nbsp;            else
+<i>214</i>&nbsp;            {
+<b class="fc"><i>215</i>&nbsp;                latch.await();</b>
+<i>216</i>&nbsp;            }
+<b class="fc"><i>217</i>&nbsp;        }</b>
+<i>218</i>&nbsp;    }
+<i>219</i>&nbsp;
+<i>220</i>&nbsp;    private byte[] internalElement(boolean removeIt, Watcher watcher) throws Exception
+<i>221</i>&nbsp;    {
+<b class="fc"><i>222</i>&nbsp;        ensurePath.ensure(client.getZookeeperClient());</b>
+<i>223</i>&nbsp;
+<i>224</i>&nbsp;        List&lt;String&gt; nodes;
+<i>225</i>&nbsp;        try
+<i>226</i>&nbsp;        {
+<b class="fc"><i>227</i>&nbsp;            nodes = (watcher != null) ? client.getChildren().usingWatcher(watcher).forPath(path) : client.getChildren().forPath(path);</b>
+<i>228</i>&nbsp;        }
+<b class="nc"><i>229</i>&nbsp;        catch ( KeeperException.NoNodeException dummy )</b>
+<i>230</i>&nbsp;        {
+<b class="nc"><i>231</i>&nbsp;            return null;</b>
+<b class="fc"><i>232</i>&nbsp;        }</b>
+<b class="fc"><i>233</i>&nbsp;        Collections.sort(nodes);</b>
+<i>234</i>&nbsp;
+<b class="fc"><i>235</i>&nbsp;        for ( String node : nodes )</b>
+<i>236</i>&nbsp;        {
+<b class="fc"><i>237</i>&nbsp;            if ( !node.startsWith(PREFIX) )</b>
+<i>238</i>&nbsp;            {
+<b class="nc"><i>239</i>&nbsp;                log.warn(&quot;Foreign node in queue path: &quot; + node);</b>
+<b class="nc"><i>240</i>&nbsp;                continue;</b>
+<i>241</i>&nbsp;            }
+<i>242</i>&nbsp;
+<b class="fc"><i>243</i>&nbsp;            String  thisPath = ZKPaths.makePath(path, node);</b>
+<i>244</i>&nbsp;            try
+<i>245</i>&nbsp;            {
+<b class="fc"><i>246</i>&nbsp;                byte[] bytes = client.getData().forPath(thisPath);</b>
+<b class="fc"><i>247</i>&nbsp;                if ( removeIt )</b>
+<i>248</i>&nbsp;                {
+<b class="fc"><i>249</i>&nbsp;                    client.delete().forPath(thisPath);</b>
+<i>250</i>&nbsp;                }
+<b class="fc"><i>251</i>&nbsp;                return bytes;</b>
+<i>252</i>&nbsp;            }
+<b class="nc"><i>253</i>&nbsp;            catch ( KeeperException.NoNodeException ignore )</b>
+<i>254</i>&nbsp;            {
+<i>255</i>&nbsp;                //Another client removed the node first, try next
+<i>256</i>&nbsp;            }
+<b class="nc"><i>257</i>&nbsp;        }</b>
+<i>258</i>&nbsp;
+<b class="fc"><i>259</i>&nbsp;        return null;</b>
+<i>260</i>&nbsp;    }
+<i>261</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

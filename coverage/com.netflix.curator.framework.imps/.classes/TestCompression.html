@@ -1,0 +1,219 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestCompression</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestCompression (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestCompression</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (34/ 34)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestCompression$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/ 10)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (44/ 44)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.io.Closeables;
+<i>4</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>5</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>6</i>&nbsp;import com.netflix.curator.framework.api.CompressionProvider;
+<i>7</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>8</i>&nbsp;import org.testng.Assert;
+<i>9</i>&nbsp;import org.testng.annotations.Test;
+<i>10</i>&nbsp;import java.util.concurrent.atomic.AtomicInteger;
+<i>11</i>&nbsp;
+<b class="fc"><i>12</i>&nbsp;public class TestCompression extends BaseClassForTests</b>
+<i>13</i>&nbsp;{
+<i>14</i>&nbsp;    @Test
+<i>15</i>&nbsp;    public void testCompressionProvider() throws Exception
+<i>16</i>&nbsp;    {
+<b class="fc"><i>17</i>&nbsp;        final byte[]            data = &quot;here&#39;s a string&quot;.getBytes();</b>
+<i>18</i>&nbsp;
+<b class="fc"><i>19</i>&nbsp;        final AtomicInteger     compressCounter = new AtomicInteger();</b>
+<b class="fc"><i>20</i>&nbsp;        final AtomicInteger     decompressCounter = new AtomicInteger();</b>
+<b class="fc"><i>21</i>&nbsp;        CompressionProvider     compressionProvider = new CompressionProvider()</b>
+<b class="fc"><i>22</i>&nbsp;        {</b>
+<i>23</i>&nbsp;            @Override
+<i>24</i>&nbsp;            public byte[] compress(String path, byte[] data) throws Exception
+<i>25</i>&nbsp;            {
+<b class="fc"><i>26</i>&nbsp;                compressCounter.incrementAndGet();</b>
+<i>27</i>&nbsp;
+<b class="fc"><i>28</i>&nbsp;                byte[]      bytes = new byte[data.length * 2];</b>
+<b class="fc"><i>29</i>&nbsp;                System.arraycopy(data, 0, bytes, 0, data.length);</b>
+<b class="fc"><i>30</i>&nbsp;                System.arraycopy(data, 0, bytes, data.length, data.length);</b>
+<b class="fc"><i>31</i>&nbsp;                return bytes;</b>
+<i>32</i>&nbsp;            }
+<i>33</i>&nbsp;
+<i>34</i>&nbsp;            @Override
+<i>35</i>&nbsp;            public byte[] decompress(String path, byte[] compressedData) throws Exception
+<i>36</i>&nbsp;            {
+<b class="fc"><i>37</i>&nbsp;                decompressCounter.incrementAndGet();</b>
+<i>38</i>&nbsp;
+<b class="fc"><i>39</i>&nbsp;                byte[]          bytes = new byte[compressedData.length / 2];</b>
+<b class="fc"><i>40</i>&nbsp;                System.arraycopy(compressedData, 0, bytes, 0, bytes.length);</b>
+<b class="fc"><i>41</i>&nbsp;                return bytes;</b>
+<i>42</i>&nbsp;            }
+<i>43</i>&nbsp;        };
+<i>44</i>&nbsp;
+<b class="fc"><i>45</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.builder().</b>
+<i>46</i>&nbsp;            compressionProvider(compressionProvider).
+<i>47</i>&nbsp;            connectString(server.getConnectString()).
+<i>48</i>&nbsp;            retryPolicy(new RetryOneTime(1)).
+<i>49</i>&nbsp;            build();
+<i>50</i>&nbsp;        try
+<i>51</i>&nbsp;        {
+<b class="fc"><i>52</i>&nbsp;            client.start();</b>
+<i>53</i>&nbsp;
+<b class="fc"><i>54</i>&nbsp;            client.create().compressed().creatingParentsIfNeeded().forPath(&quot;/a/b/c&quot;, data);</b>
+<i>55</i>&nbsp;
+<b class="fc"><i>56</i>&nbsp;            Assert.assertNotEquals(data, client.getData().forPath(&quot;/a/b/c&quot;));</b>
+<b class="fc"><i>57</i>&nbsp;            Assert.assertEquals(data.length, client.getData().decompressed().forPath(&quot;/a/b/c&quot;).length);</b>
+<i>58</i>&nbsp;        }
+<i>59</i>&nbsp;        finally
+<i>60</i>&nbsp;        {
+<b class="fc"><i>61</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>62</i>&nbsp;        }</b>
+<i>63</i>&nbsp;
+<b class="fc"><i>64</i>&nbsp;        Assert.assertEquals(compressCounter.get(), 1);</b>
+<b class="fc"><i>65</i>&nbsp;        Assert.assertEquals(decompressCounter.get(), 1);</b>
+<b class="fc"><i>66</i>&nbsp;    }</b>
+<i>67</i>&nbsp;
+<i>68</i>&nbsp;    @Test
+<i>69</i>&nbsp;    public void testSetData() throws Exception
+<i>70</i>&nbsp;    {
+<b class="fc"><i>71</i>&nbsp;        final byte[]            data = &quot;here&#39;s a string&quot;.getBytes();</b>
+<i>72</i>&nbsp;
+<b class="fc"><i>73</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>74</i>&nbsp;        try
+<i>75</i>&nbsp;        {
+<b class="fc"><i>76</i>&nbsp;            client.start();</b>
+<i>77</i>&nbsp;
+<b class="fc"><i>78</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/a/b/c&quot;, data);</b>
+<b class="fc"><i>79</i>&nbsp;            Assert.assertEquals(data, client.getData().forPath(&quot;/a/b/c&quot;));</b>
+<i>80</i>&nbsp;
+<b class="fc"><i>81</i>&nbsp;            client.setData().compressed().forPath(&quot;/a/b/c&quot;, data);</b>
+<b class="fc"><i>82</i>&nbsp;            Assert.assertEquals(data.length, client.getData().decompressed().forPath(&quot;/a/b/c&quot;).length);</b>
+<i>83</i>&nbsp;        }
+<i>84</i>&nbsp;        finally
+<i>85</i>&nbsp;        {
+<b class="fc"><i>86</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>87</i>&nbsp;        }</b>
+<b class="fc"><i>88</i>&nbsp;    }</b>
+<i>89</i>&nbsp;
+<i>90</i>&nbsp;    @Test
+<i>91</i>&nbsp;    public void testSimple() throws Exception
+<i>92</i>&nbsp;    {
+<b class="fc"><i>93</i>&nbsp;        final byte[]            data = &quot;here&#39;s a string&quot;.getBytes();</b>
+<i>94</i>&nbsp;
+<b class="fc"><i>95</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>96</i>&nbsp;        try
+<i>97</i>&nbsp;        {
+<b class="fc"><i>98</i>&nbsp;            client.start();</b>
+<i>99</i>&nbsp;
+<b class="fc"><i>100</i>&nbsp;            client.create().compressed().creatingParentsIfNeeded().forPath(&quot;/a/b/c&quot;, data);</b>
+<i>101</i>&nbsp;
+<b class="fc"><i>102</i>&nbsp;            Assert.assertNotEquals(data, client.getData().forPath(&quot;/a/b/c&quot;));</b>
+<b class="fc"><i>103</i>&nbsp;            Assert.assertEquals(data.length, client.getData().decompressed().forPath(&quot;/a/b/c&quot;).length);</b>
+<i>104</i>&nbsp;        }
+<i>105</i>&nbsp;        finally
+<i>106</i>&nbsp;        {
+<b class="fc"><i>107</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>108</i>&nbsp;        }</b>
+<b class="fc"><i>109</i>&nbsp;    }</b>
+<i>110</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

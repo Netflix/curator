@@ -1,0 +1,374 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DistributedIdQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DistributedIdQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DistributedIdQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    73.3%
+  </span>
+  <span class="absValue">
+    (11/ 15)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    77.5%
+  </span>
+  <span class="absValue">
+    (31/ 40)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DistributedIdQueue$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DistributedIdQueue$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DistributedIdQueue$Parts</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    81%
+  </span>
+  <span class="absValue">
+    (17/ 21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    82%
+  </span>
+  <span class="absValue">
+    (41/ 50)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.listen.ListenerContainer;
+<i>22</i>&nbsp;import org.slf4j.Logger;
+<i>23</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>24</i>&nbsp;import java.io.IOException;
+<i>25</i>&nbsp;import java.util.Collections;
+<i>26</i>&nbsp;import java.util.Comparator;
+<i>27</i>&nbsp;import java.util.List;
+<i>28</i>&nbsp;import java.util.concurrent.Executor;
+<i>29</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>30</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;/**
+<i>33</i>&nbsp; * A version of {@link DistributedQueue} that allows IDs to be associated with queue items. Items
+<i>34</i>&nbsp; * can then be removed from the queue if needed
+<i>35</i>&nbsp; */
+<b class="fc"><i>36</i>&nbsp;public class DistributedIdQueue&lt;T&gt; implements QueueBase&lt;T&gt;</b>
+<i>37</i>&nbsp;{
+<b class="fc"><i>38</i>&nbsp;    private final Logger                log = LoggerFactory.getLogger(getClass());</b>
+<i>39</i>&nbsp;    private final DistributedQueue&lt;T&gt;   queue;
+<i>40</i>&nbsp;
+<i>41</i>&nbsp;    private static final char           SEPARATOR = &#39;|&#39;;
+<i>42</i>&nbsp;
+<b class="fc"><i>43</i>&nbsp;    private static class Parts</b>
+<i>44</i>&nbsp;    {
+<i>45</i>&nbsp;        final String        id;
+<i>46</i>&nbsp;        final String        cleaned;
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;        private Parts(String id, String cleaned)
+<b class="fc"><i>49</i>&nbsp;        {</b>
+<b class="fc"><i>50</i>&nbsp;            this.id = id;</b>
+<b class="fc"><i>51</i>&nbsp;            this.cleaned = cleaned;</b>
+<b class="fc"><i>52</i>&nbsp;        }</b>
+<i>53</i>&nbsp;    }
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    DistributedIdQueue
+<i>56</i>&nbsp;    (
+<i>57</i>&nbsp;        CuratorFramework client,
+<i>58</i>&nbsp;        QueueConsumer&lt;T&gt; consumer, QueueSerializer&lt;T&gt;
+<i>59</i>&nbsp;        serializer, String
+<i>60</i>&nbsp;        queuePath, ThreadFactory
+<i>61</i>&nbsp;        threadFactory, Executor
+<i>62</i>&nbsp;        executor,
+<i>63</i>&nbsp;        int minItemsBeforeRefresh,
+<i>64</i>&nbsp;        boolean refreshOnWatch,
+<i>65</i>&nbsp;        String lockPath,
+<i>66</i>&nbsp;        int maxItems,
+<i>67</i>&nbsp;        boolean putInBackground,
+<i>68</i>&nbsp;        int finalFlushMs
+<i>69</i>&nbsp;    )
+<b class="fc"><i>70</i>&nbsp;    {</b>
+<b class="fc"><i>71</i>&nbsp;        queue = new DistributedQueue&lt;T&gt;(client, consumer, serializer, queuePath, threadFactory, executor, minItemsBeforeRefresh, refreshOnWatch, lockPath, maxItems, putInBackground, finalFlushMs)</b>
+<b class="fc"><i>72</i>&nbsp;        {</b>
+<i>73</i>&nbsp;            @Override
+<i>74</i>&nbsp;            protected void sortChildren(List&lt;String&gt; children)
+<i>75</i>&nbsp;            {
+<b class="fc"><i>76</i>&nbsp;                internalSortChildren(children);</b>
+<b class="fc"><i>77</i>&nbsp;            }</b>
+<i>78</i>&nbsp;        };
+<i>79</i>&nbsp;
+<b class="fc"><i>80</i>&nbsp;        if ( queue.makeItemPath().contains(Character.toString(SEPARATOR)) )</b>
+<i>81</i>&nbsp;        {
+<b class="nc"><i>82</i>&nbsp;            throw new IllegalStateException(&quot;DistributedQueue can&#39;t use &quot; + SEPARATOR);</b>
+<i>83</i>&nbsp;        }
+<b class="fc"><i>84</i>&nbsp;    }</b>
+<i>85</i>&nbsp;
+<i>86</i>&nbsp;    @Override
+<i>87</i>&nbsp;    public void start() throws Exception
+<i>88</i>&nbsp;    {
+<b class="fc"><i>89</i>&nbsp;        queue.start();</b>
+<b class="fc"><i>90</i>&nbsp;    }</b>
+<i>91</i>&nbsp;
+<i>92</i>&nbsp;    @Override
+<i>93</i>&nbsp;    public void close() throws IOException
+<i>94</i>&nbsp;    {
+<b class="fc"><i>95</i>&nbsp;        queue.close();</b>
+<b class="fc"><i>96</i>&nbsp;    }</b>
+<i>97</i>&nbsp;
+<i>98</i>&nbsp;    @Override
+<i>99</i>&nbsp;    public ListenerContainer&lt;QueuePutListener&lt;T&gt;&gt; getPutListenerContainer()
+<i>100</i>&nbsp;    {
+<b class="nc"><i>101</i>&nbsp;        return queue.getPutListenerContainer();</b>
+<i>102</i>&nbsp;    }
+<i>103</i>&nbsp;
+<i>104</i>&nbsp;    @Override
+<i>105</i>&nbsp;    public void setErrorMode(ErrorMode newErrorMode)
+<i>106</i>&nbsp;    {
+<b class="nc"><i>107</i>&nbsp;        queue.setErrorMode(newErrorMode);</b>
+<b class="nc"><i>108</i>&nbsp;    }</b>
+<i>109</i>&nbsp;
+<i>110</i>&nbsp;    @Override
+<i>111</i>&nbsp;    public boolean flushPuts(long waitTime, TimeUnit timeUnit) throws InterruptedException
+<i>112</i>&nbsp;    {
+<b class="nc"><i>113</i>&nbsp;        return queue.flushPuts(waitTime, timeUnit);</b>
+<i>114</i>&nbsp;    }
+<i>115</i>&nbsp;
+<i>116</i>&nbsp;    @Override
+<i>117</i>&nbsp;    public int getLastMessageCount()
+<i>118</i>&nbsp;    {
+<b class="nc"><i>119</i>&nbsp;        return queue.getLastMessageCount();</b>
+<i>120</i>&nbsp;    }
+<i>121</i>&nbsp;
+<i>122</i>&nbsp;    /**
+<i>123</i>&nbsp;     * Put an item into the queue with the given Id&lt;br/&gt;&lt;br/&gt;
+<i>124</i>&nbsp;     * NOTE: if an upper bound was set via {@link QueueBuilder#maxItems}, this method will
+<i>125</i>&nbsp;     * block until there is available space in the queue.
+<i>126</i>&nbsp;     *
+<i>127</i>&nbsp;     * @param item item
+<i>128</i>&nbsp;     * @param itemId item Id
+<i>129</i>&nbsp;     * @throws Exception errors
+<i>130</i>&nbsp;     */
+<i>131</i>&nbsp;    public void put(T item, String itemId) throws Exception
+<i>132</i>&nbsp;    {
+<b class="fc"><i>133</i>&nbsp;        put(item, itemId, 0, null);</b>
+<b class="fc"><i>134</i>&nbsp;    }</b>
+<i>135</i>&nbsp;
+<i>136</i>&nbsp;    /**
+<i>137</i>&nbsp;     * Same as {@link #put(Object, String)} but allows a maximum wait time if an upper bound was set
+<i>138</i>&nbsp;     * via {@link QueueBuilder#maxItems}.
+<i>139</i>&nbsp;     *
+<i>140</i>&nbsp;     * @param item item
+<i>141</i>&nbsp;     * @param itemId item Id
+<i>142</i>&nbsp;     * @param maxWait maximum wait
+<i>143</i>&nbsp;     * @param unit wait unit
+<i>144</i>&nbsp;     * @return true if items was added, false if timed out
+<i>145</i>&nbsp;     * @throws Exception
+<i>146</i>&nbsp;     */
+<i>147</i>&nbsp;    public boolean put(T item, String itemId, int maxWait, TimeUnit unit) throws Exception
+<i>148</i>&nbsp;    {
+<b class="fc"><i>149</i>&nbsp;        Preconditions.checkArgument(isValidId(itemId), &quot;Invalid id: &quot; + itemId);</b>
+<i>150</i>&nbsp;
+<b class="fc"><i>151</i>&nbsp;        queue.checkState();</b>
+<i>152</i>&nbsp;
+<b class="fc"><i>153</i>&nbsp;        return queue.internalPut(item, null, queue.makeItemPath() + SEPARATOR + fixId(itemId) + SEPARATOR, maxWait, unit);</b>
+<i>154</i>&nbsp;    }
+<i>155</i>&nbsp;
+<i>156</i>&nbsp;    /**
+<i>157</i>&nbsp;     * Remove any items with the given Id
+<i>158</i>&nbsp;     *
+<i>159</i>&nbsp;     * @param id item Id to remove
+<i>160</i>&nbsp;     * @return number of items removed
+<i>161</i>&nbsp;     * @throws Exception errors
+<i>162</i>&nbsp;     */
+<i>163</i>&nbsp;    public int remove(String id) throws Exception
+<i>164</i>&nbsp;    {
+<b class="fc"><i>165</i>&nbsp;        id = Preconditions.checkNotNull(id, &quot;id cannot be null&quot;);</b>
+<i>166</i>&nbsp;
+<b class="fc"><i>167</i>&nbsp;        queue.checkState();</b>
+<i>168</i>&nbsp;
+<b class="fc"><i>169</i>&nbsp;        int     count = 0;</b>
+<b class="fc"><i>170</i>&nbsp;        for ( String name : queue.getChildren() )</b>
+<i>171</i>&nbsp;        {
+<b class="fc"><i>172</i>&nbsp;            if ( parseId(name).id.equals(id) )</b>
+<i>173</i>&nbsp;            {
+<b class="fc"><i>174</i>&nbsp;                if ( queue.tryRemove(name) )</b>
+<i>175</i>&nbsp;                {
+<b class="nc"><i>176</i>&nbsp;                    ++count;</b>
+<i>177</i>&nbsp;                }
+<i>178</i>&nbsp;            }
+<i>179</i>&nbsp;        }
+<i>180</i>&nbsp;
+<b class="fc"><i>181</i>&nbsp;        return count;</b>
+<i>182</i>&nbsp;    }
+<i>183</i>&nbsp;
+<i>184</i>&nbsp;    private void internalSortChildren(List&lt;String&gt; children)
+<i>185</i>&nbsp;    {
+<b class="fc"><i>186</i>&nbsp;        Collections.sort</b>
+<i>187</i>&nbsp;        (
+<i>188</i>&nbsp;            children,
+<i>189</i>&nbsp;            new Comparator&lt;String&gt;()
+<b class="fc"><i>190</i>&nbsp;            {</b>
+<i>191</i>&nbsp;                @Override
+<i>192</i>&nbsp;                public int compare(String o1, String o2)
+<i>193</i>&nbsp;                {
+<b class="fc"><i>194</i>&nbsp;                    return parseId(o1).cleaned.compareTo(parseId(o2).cleaned);</b>
+<i>195</i>&nbsp;                }
+<i>196</i>&nbsp;            }
+<i>197</i>&nbsp;        );
+<b class="fc"><i>198</i>&nbsp;    }</b>
+<i>199</i>&nbsp;    
+<i>200</i>&nbsp;    private boolean isValidId(String id)
+<i>201</i>&nbsp;    {
+<b class="fc"><i>202</i>&nbsp;        return (id != null) &amp;&amp; (id.length() &gt; 0);</b>
+<i>203</i>&nbsp;    }
+<i>204</i>&nbsp;
+<i>205</i>&nbsp;    private static String   fixId(String id)
+<i>206</i>&nbsp;    {
+<b class="fc"><i>207</i>&nbsp;        String fixed = id.replace(&#39;/&#39;, &#39;_&#39;);</b>
+<b class="fc"><i>208</i>&nbsp;        return fixed.replace(SEPARATOR, &#39;_&#39;);</b>
+<i>209</i>&nbsp;    }
+<i>210</i>&nbsp;
+<i>211</i>&nbsp;    private Parts parseId(String name)
+<i>212</i>&nbsp;    {
+<b class="fc"><i>213</i>&nbsp;        int         firstIndex = name.indexOf(SEPARATOR);</b>
+<b class="fc"><i>214</i>&nbsp;        int         secondIndex = name.indexOf(SEPARATOR, firstIndex + 1);</b>
+<b class="fc"><i>215</i>&nbsp;        if ( (firstIndex &lt; 0) || (secondIndex &lt; 0) )</b>
+<i>216</i>&nbsp;        {
+<b class="nc"><i>217</i>&nbsp;            log.error(&quot;Bad node in queue: &quot; + name);</b>
+<b class="nc"><i>218</i>&nbsp;            return new Parts(name, name);</b>
+<i>219</i>&nbsp;        }
+<i>220</i>&nbsp;
+<b class="fc"><i>221</i>&nbsp;        return new Parts</b>
+<i>222</i>&nbsp;        (
+<i>223</i>&nbsp;            name.substring(firstIndex + 1, secondIndex),
+<i>224</i>&nbsp;            name.substring(0, firstIndex) + name.substring(secondIndex + 1)
+<i>225</i>&nbsp;        );
+<i>226</i>&nbsp;    }
+<i>227</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

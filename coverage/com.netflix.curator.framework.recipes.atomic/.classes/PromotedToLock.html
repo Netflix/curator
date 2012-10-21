@@ -1,0 +1,239 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: PromotedToLock</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.atomic</a> ]
+</div>
+
+<h1>Coverage Summary for Class: PromotedToLock (com.netflix.curator.framework.recipes.atomic)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PromotedToLock</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/ 12)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">PromotedToLock$Builder</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (5/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    84.6%
+  </span>
+  <span class="absValue">
+    (11/ 13)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (12/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92%
+  </span>
+  <span class="absValue">
+    (23/ 25)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.atomic;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.netflix.curator.RetryPolicy;
+<i>21</i>&nbsp;import com.netflix.curator.retry.RetryNTimes;
+<i>22</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>23</i>&nbsp;
+<i>24</i>&nbsp;/**
+<i>25</i>&nbsp; * Abstraction of arguments for mutex promotion. Use {@link #builder()} to create.
+<i>26</i>&nbsp; */
+<b class="fc"><i>27</i>&nbsp;public class PromotedToLock</b>
+<i>28</i>&nbsp;{
+<i>29</i>&nbsp;    private final String        path;
+<i>30</i>&nbsp;    private final long          maxLockTime;
+<i>31</i>&nbsp;    private final TimeUnit      maxLockTimeUnit;
+<i>32</i>&nbsp;    private final RetryPolicy   retryPolicy;
+<i>33</i>&nbsp;
+<i>34</i>&nbsp;    /**
+<i>35</i>&nbsp;     * Allocate a new builder
+<i>36</i>&nbsp;     *
+<i>37</i>&nbsp;     * @return new builder
+<i>38</i>&nbsp;     */
+<i>39</i>&nbsp;    public static Builder   builder()
+<i>40</i>&nbsp;    {
+<b class="fc"><i>41</i>&nbsp;        return new Builder();</b>
+<i>42</i>&nbsp;    }
+<i>43</i>&nbsp;
+<b class="fc"><i>44</i>&nbsp;    public static class Builder</b>
+<i>45</i>&nbsp;    {
+<b class="fc"><i>46</i>&nbsp;        private PromotedToLock      instance = new PromotedToLock(null, -1, null, new RetryNTimes(0, 0));</b>
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;        /**
+<i>49</i>&nbsp;         * Build the argument block
+<i>50</i>&nbsp;         *
+<i>51</i>&nbsp;         * @return new block
+<i>52</i>&nbsp;         */
+<i>53</i>&nbsp;        public PromotedToLock       build()
+<i>54</i>&nbsp;        {
+<b class="fc"><i>55</i>&nbsp;            Preconditions.checkNotNull(instance.path, &quot;path cannot be null&quot;);</b>
+<b class="fc"><i>56</i>&nbsp;            Preconditions.checkNotNull(instance.retryPolicy, &quot;retryPolicy cannot be null&quot;);</b>
+<i>57</i>&nbsp;
+<b class="fc"><i>58</i>&nbsp;            return new PromotedToLock(instance.path, instance.maxLockTime, instance.maxLockTimeUnit, instance.retryPolicy);</b>
+<i>59</i>&nbsp;        }
+<i>60</i>&nbsp;
+<i>61</i>&nbsp;        /**
+<i>62</i>&nbsp;         * Set the path for the mutex lock (required)
+<i>63</i>&nbsp;         *
+<i>64</i>&nbsp;         * @param path path
+<i>65</i>&nbsp;         * @return this
+<i>66</i>&nbsp;         */
+<i>67</i>&nbsp;        public Builder          lockPath(String path)
+<i>68</i>&nbsp;        {
+<b class="fc"><i>69</i>&nbsp;            instance = new PromotedToLock(path, instance.maxLockTime, instance.maxLockTimeUnit, instance.retryPolicy);</b>
+<b class="fc"><i>70</i>&nbsp;            return this;</b>
+<i>71</i>&nbsp;        }
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;        /**
+<i>74</i>&nbsp;         * Set the retry policy to use when an operation does not succeed
+<i>75</i>&nbsp;         *
+<i>76</i>&nbsp;         * @param retryPolicy new policy
+<i>77</i>&nbsp;         * @return this
+<i>78</i>&nbsp;         */
+<i>79</i>&nbsp;        public Builder          retryPolicy(RetryPolicy retryPolicy)
+<i>80</i>&nbsp;        {
+<b class="fc"><i>81</i>&nbsp;            instance = new PromotedToLock(instance.path, instance.maxLockTime, instance.maxLockTimeUnit, retryPolicy);</b>
+<b class="fc"><i>82</i>&nbsp;            return this;</b>
+<i>83</i>&nbsp;        }
+<i>84</i>&nbsp;
+<i>85</i>&nbsp;        /**
+<i>86</i>&nbsp;         * Set the timeout to use when locking (optional)
+<i>87</i>&nbsp;         *
+<i>88</i>&nbsp;         * @param maxLockTime time
+<i>89</i>&nbsp;         * @param maxLockTimeUnit unit
+<i>90</i>&nbsp;         * @return this
+<i>91</i>&nbsp;         */
+<i>92</i>&nbsp;        public Builder          timeout(long maxLockTime, TimeUnit maxLockTimeUnit)
+<i>93</i>&nbsp;        {
+<b class="nc"><i>94</i>&nbsp;            instance = new PromotedToLock(instance.path, maxLockTime, maxLockTimeUnit, instance.retryPolicy);</b>
+<b class="nc"><i>95</i>&nbsp;            return this;</b>
+<i>96</i>&nbsp;        }
+<i>97</i>&nbsp;
+<i>98</i>&nbsp;        private Builder()
+<b class="fc"><i>99</i>&nbsp;        {</b>
+<b class="fc"><i>100</i>&nbsp;        }</b>
+<i>101</i>&nbsp;    }
+<i>102</i>&nbsp;
+<i>103</i>&nbsp;    String getPath()
+<i>104</i>&nbsp;    {
+<b class="fc"><i>105</i>&nbsp;        return path;</b>
+<i>106</i>&nbsp;    }
+<i>107</i>&nbsp;
+<i>108</i>&nbsp;    long getMaxLockTime()
+<i>109</i>&nbsp;    {
+<b class="fc"><i>110</i>&nbsp;        return maxLockTime;</b>
+<i>111</i>&nbsp;    }
+<i>112</i>&nbsp;
+<i>113</i>&nbsp;    TimeUnit getMaxLockTimeUnit()
+<i>114</i>&nbsp;    {
+<b class="fc"><i>115</i>&nbsp;        return maxLockTimeUnit;</b>
+<i>116</i>&nbsp;    }
+<i>117</i>&nbsp;
+<i>118</i>&nbsp;    RetryPolicy getRetryPolicy()
+<i>119</i>&nbsp;    {
+<b class="fc"><i>120</i>&nbsp;        return retryPolicy;</b>
+<i>121</i>&nbsp;    }
+<i>122</i>&nbsp;
+<i>123</i>&nbsp;    private PromotedToLock(String path, long maxLockTime, TimeUnit maxLockTimeUnit, RetryPolicy retryPolicy)
+<b class="fc"><i>124</i>&nbsp;    {</b>
+<b class="fc"><i>125</i>&nbsp;        this.path = path;</b>
+<b class="fc"><i>126</i>&nbsp;        this.maxLockTime = maxLockTime;</b>
+<b class="fc"><i>127</i>&nbsp;        this.maxLockTimeUnit = maxLockTimeUnit;</b>
+<b class="fc"><i>128</i>&nbsp;        this.retryPolicy = retryPolicy;</b>
+<b class="fc"><i>129</i>&nbsp;    }</b>
+<i>130</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

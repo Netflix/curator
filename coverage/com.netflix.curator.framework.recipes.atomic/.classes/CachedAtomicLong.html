@@ -1,0 +1,157 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: CachedAtomicLong</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.atomic</a> ]
+</div>
+
+<h1>Coverage Summary for Class: CachedAtomicLong (com.netflix.curator.framework.recipes.atomic)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CachedAtomicLong</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (20/ 20)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.atomic;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;/**
+<i>20</i>&nbsp; * Uses an {@link DistributedAtomicNumber} and allocates values in chunks for better performance
+<i>21</i>&nbsp; */
+<i>22</i>&nbsp;public class CachedAtomicLong
+<i>23</i>&nbsp;{
+<i>24</i>&nbsp;    private final DistributedAtomicLong number;
+<i>25</i>&nbsp;    private final long                  cacheFactor;
+<i>26</i>&nbsp;
+<b class="fc"><i>27</i>&nbsp;    private AtomicValue&lt;Long&gt;          currentValue = null;</b>
+<b class="fc"><i>28</i>&nbsp;    private int                        currentIndex = 0;</b>
+<i>29</i>&nbsp;
+<i>30</i>&nbsp;    /**
+<i>31</i>&nbsp;     * @param number the number to use
+<i>32</i>&nbsp;     * @param cacheFactor the number of values to allocate at a time
+<i>33</i>&nbsp;     */
+<i>34</i>&nbsp;    public CachedAtomicLong(DistributedAtomicLong number, int cacheFactor)
+<b class="fc"><i>35</i>&nbsp;    {</b>
+<b class="fc"><i>36</i>&nbsp;        this.number = number;</b>
+<b class="fc"><i>37</i>&nbsp;        this.cacheFactor = cacheFactor;</b>
+<b class="fc"><i>38</i>&nbsp;    }</b>
+<i>39</i>&nbsp;
+<i>40</i>&nbsp;    /**
+<i>41</i>&nbsp;     * Returns the next value (incrementing by 1). If a new chunk of numbers is needed, it is
+<i>42</i>&nbsp;     * requested from the number
+<i>43</i>&nbsp;     *
+<i>44</i>&nbsp;     * @return next increment
+<i>45</i>&nbsp;     * @throws Exception errors
+<i>46</i>&nbsp;     */
+<i>47</i>&nbsp;    public AtomicValue&lt;Long&gt;       next() throws Exception
+<i>48</i>&nbsp;    {
+<b class="fc"><i>49</i>&nbsp;        MutableAtomicValue&lt;Long&gt; result = new MutableAtomicValue&lt;Long&gt;(0L, 0L);</b>
+<i>50</i>&nbsp;
+<b class="fc"><i>51</i>&nbsp;        if ( currentValue == null )</b>
+<i>52</i>&nbsp;        {
+<b class="fc"><i>53</i>&nbsp;            currentValue = number.add(cacheFactor);</b>
+<b class="fc"><i>54</i>&nbsp;            if ( !currentValue.succeeded() )</b>
+<i>55</i>&nbsp;            {
+<b class="fc"><i>56</i>&nbsp;                currentValue = null;</b>
+<b class="fc"><i>57</i>&nbsp;                result.succeeded = false;</b>
+<b class="fc"><i>58</i>&nbsp;                return result;</b>
+<i>59</i>&nbsp;            }
+<b class="fc"><i>60</i>&nbsp;            currentIndex = 0;</b>
+<i>61</i>&nbsp;        }
+<i>62</i>&nbsp;
+<b class="fc"><i>63</i>&nbsp;        result.succeeded = true;</b>
+<b class="fc"><i>64</i>&nbsp;        result.preValue = currentValue.preValue() + currentIndex;</b>
+<b class="fc"><i>65</i>&nbsp;        result.postValue = result.preValue + 1;</b>
+<i>66</i>&nbsp;
+<b class="fc"><i>67</i>&nbsp;        if ( ++currentIndex &gt;= cacheFactor )</b>
+<i>68</i>&nbsp;        {
+<b class="fc"><i>69</i>&nbsp;            currentValue = null;</b>
+<i>70</i>&nbsp;        }
+<i>71</i>&nbsp;
+<b class="fc"><i>72</i>&nbsp;        return result;</b>
+<i>73</i>&nbsp;    }
+<i>74</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

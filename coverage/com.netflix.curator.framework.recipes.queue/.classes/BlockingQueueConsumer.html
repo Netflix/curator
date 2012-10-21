@@ -1,0 +1,234 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: BlockingQueueConsumer</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: BlockingQueueConsumer (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BlockingQueueConsumer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70%
+  </span>
+  <span class="absValue">
+    (7/ 10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70.6%
+  </span>
+  <span class="absValue">
+    (12/ 17)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>19</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>20</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>21</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>22</i>&nbsp;import java.util.Collection;
+<i>23</i>&nbsp;import java.util.List;
+<i>24</i>&nbsp;import java.util.concurrent.ArrayBlockingQueue;
+<i>25</i>&nbsp;import java.util.concurrent.BlockingQueue;
+<i>26</i>&nbsp;import java.util.concurrent.LinkedBlockingQueue;
+<i>27</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>28</i>&nbsp;
+<i>29</i>&nbsp;/**
+<i>30</i>&nbsp; * Utility - a queue consumer that provides behavior similar to a {@link BlockingQueue}
+<i>31</i>&nbsp; */
+<i>32</i>&nbsp;public class BlockingQueueConsumer&lt;T&gt; implements QueueConsumer&lt;T&gt;
+<i>33</i>&nbsp;{
+<i>34</i>&nbsp;    private final ConnectionStateListener   connectionStateListener;
+<i>35</i>&nbsp;    private final BlockingQueue&lt;T&gt;          items;
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    /**
+<i>38</i>&nbsp;     * Creates with capacity of {@link Integer#MAX_VALUE}
+<i>39</i>&nbsp;     * @param connectionStateListener listener for connection state changes
+<i>40</i>&nbsp;     */
+<i>41</i>&nbsp;    public BlockingQueueConsumer(ConnectionStateListener connectionStateListener)
+<i>42</i>&nbsp;    {
+<b class="fc"><i>43</i>&nbsp;        this(connectionStateListener, new LinkedBlockingQueue&lt;T&gt;());</b>
+<b class="fc"><i>44</i>&nbsp;    }</b>
+<i>45</i>&nbsp;
+<i>46</i>&nbsp;    /**
+<i>47</i>&nbsp;     * @param capacity max capacity (i.e. puts block if full)
+<i>48</i>&nbsp;     * @param connectionStateListener listener for connection state changes
+<i>49</i>&nbsp;     */
+<i>50</i>&nbsp;    public BlockingQueueConsumer(ConnectionStateListener connectionStateListener, int capacity)
+<i>51</i>&nbsp;    {
+<b class="nc"><i>52</i>&nbsp;        this(connectionStateListener, new ArrayBlockingQueue&lt;T&gt;(capacity));</b>
+<b class="nc"><i>53</i>&nbsp;    }</b>
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    /**
+<i>56</i>&nbsp;     * Wrap the given blocking queue
+<i>57</i>&nbsp;     *
+<i>58</i>&nbsp;     * @param queue queue to use
+<i>59</i>&nbsp;     * @param connectionStateListener listener for connection state changes
+<i>60</i>&nbsp;     */
+<i>61</i>&nbsp;    public BlockingQueueConsumer(ConnectionStateListener connectionStateListener, BlockingQueue&lt;T&gt; queue)
+<b class="fc"><i>62</i>&nbsp;    {</b>
+<b class="fc"><i>63</i>&nbsp;        this.connectionStateListener = connectionStateListener;</b>
+<b class="fc"><i>64</i>&nbsp;        this.items = queue;</b>
+<b class="fc"><i>65</i>&nbsp;    }</b>
+<i>66</i>&nbsp;
+<i>67</i>&nbsp;    @Override
+<i>68</i>&nbsp;    public void consumeMessage(T message) throws Exception
+<i>69</i>&nbsp;    {
+<b class="fc"><i>70</i>&nbsp;        items.add(message);</b>
+<b class="fc"><i>71</i>&nbsp;    }</b>
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    /**
+<i>74</i>&nbsp;     * Return any currently queued items without removing them from the queue
+<i>75</i>&nbsp;     *
+<i>76</i>&nbsp;     * @return items (can be empty)
+<i>77</i>&nbsp;     */
+<i>78</i>&nbsp;    public List&lt;T&gt; getItems()
+<i>79</i>&nbsp;    {
+<b class="fc"><i>80</i>&nbsp;        return ImmutableList.copyOf(items);</b>
+<i>81</i>&nbsp;    }
+<i>82</i>&nbsp;
+<i>83</i>&nbsp;    /**
+<i>84</i>&nbsp;     * Returns the number of currently queue items
+<i>85</i>&nbsp;     *
+<i>86</i>&nbsp;     * @return currently queue item count or 0
+<i>87</i>&nbsp;     */
+<i>88</i>&nbsp;    public int  size()
+<i>89</i>&nbsp;    {
+<b class="fc"><i>90</i>&nbsp;        return items.size();</b>
+<i>91</i>&nbsp;    }
+<i>92</i>&nbsp;
+<i>93</i>&nbsp;    /**
+<i>94</i>&nbsp;     * Take the next item from the queue, blocking until there is an item available
+<i>95</i>&nbsp;     *
+<i>96</i>&nbsp;     * @return the item
+<i>97</i>&nbsp;     * @throws InterruptedException thread interruption
+<i>98</i>&nbsp;     */
+<i>99</i>&nbsp;    public T take() throws InterruptedException
+<i>100</i>&nbsp;    {
+<b class="fc"><i>101</i>&nbsp;        return items.take();</b>
+<i>102</i>&nbsp;    }
+<i>103</i>&nbsp;
+<i>104</i>&nbsp;    /**
+<i>105</i>&nbsp;     * Take the next item from the queue, waiting up to the specified time for
+<i>106</i>&nbsp;     * an available item. If the time elapses, &lt;code&gt;null&lt;/code&gt; is returned.
+<i>107</i>&nbsp;     *
+<i>108</i>&nbsp;     * @param time amount of time to block
+<i>109</i>&nbsp;     * @param unit time unit
+<i>110</i>&nbsp;     * @return next item or null
+<i>111</i>&nbsp;     * @throws InterruptedException thread interruption
+<i>112</i>&nbsp;     */
+<i>113</i>&nbsp;    public T take(int time, TimeUnit unit) throws InterruptedException
+<i>114</i>&nbsp;    {
+<b class="fc"><i>115</i>&nbsp;        return items.poll(time, unit);</b>
+<i>116</i>&nbsp;    }
+<i>117</i>&nbsp;
+<i>118</i>&nbsp;    /**
+<i>119</i>&nbsp;     * Removes all available elements from this queue and adds them
+<i>120</i>&nbsp;     * to the given collection.  This operation may be more
+<i>121</i>&nbsp;     * efficient than repeatedly polling this queue.  A failure
+<i>122</i>&nbsp;     * encountered while attempting to add elements to
+<i>123</i>&nbsp;     * collection &lt;tt&gt;c&lt;/tt&gt; may result in elements being in neither,
+<i>124</i>&nbsp;     * either or both collections when the associated exception is
+<i>125</i>&nbsp;     * thrown.  Attempts to drain a queue to itself result in
+<i>126</i>&nbsp;     * &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;. Further, the behavior of
+<i>127</i>&nbsp;     * this operation is undefined if the specified collection is
+<i>128</i>&nbsp;     * modified while the operation is in progress.
+<i>129</i>&nbsp;     *
+<i>130</i>&nbsp;     * @param c the collection to transfer elements into
+<i>131</i>&nbsp;     * @return the number of elements transferred
+<i>132</i>&nbsp;     * @throws UnsupportedOperationException if addition of elements
+<i>133</i>&nbsp;     *         is not supported by the specified collection
+<i>134</i>&nbsp;     * @throws ClassCastException if the class of an element of this queue
+<i>135</i>&nbsp;     *         prevents it from being added to the specified collection
+<i>136</i>&nbsp;     * @throws NullPointerException if the specified collection is null
+<i>137</i>&nbsp;     * @throws IllegalArgumentException if the specified collection is this
+<i>138</i>&nbsp;     *         queue, or some property of an element of this queue prevents
+<i>139</i>&nbsp;     *         it from being added to the specified collection
+<i>140</i>&nbsp;     */
+<i>141</i>&nbsp;    public int drainTo(Collection&lt;? super T&gt; c)
+<i>142</i>&nbsp;    {
+<b class="nc"><i>143</i>&nbsp;        return items.drainTo(c);</b>
+<i>144</i>&nbsp;    }
+<i>145</i>&nbsp;
+<i>146</i>&nbsp;    @Override
+<i>147</i>&nbsp;    public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>148</i>&nbsp;    {
+<b class="nc"><i>149</i>&nbsp;        connectionStateListener.stateChanged(client, newState);</b>
+<b class="nc"><i>150</i>&nbsp;    }</b>
+<i>151</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,319 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: RetryLoop</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator</a> ]
+</div>
+
+<h1>Coverage Summary for Class: RetryLoop (com.netflix.curator)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">RetryLoop</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    93%
+  </span>
+  <span class="absValue">
+    (40/ 43)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">RetryLoop$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (11/ 11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    93.5%
+  </span>
+  <span class="absValue">
+    (43/ 46)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;package com.netflix.curator;
+<i>19</i>&nbsp;
+<i>20</i>&nbsp;import com.netflix.curator.drivers.TracerDriver;
+<i>21</i>&nbsp;import com.netflix.curator.utils.DebugUtils;
+<i>22</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>23</i>&nbsp;import org.slf4j.Logger;
+<i>24</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>25</i>&nbsp;import java.util.concurrent.Callable;
+<i>26</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>27</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>28</i>&nbsp;
+<i>29</i>&nbsp;/**
+<i>30</i>&nbsp; * &lt;p&gt;Mechanism to perform an operation on Zookeeper that is safe against
+<i>31</i>&nbsp; * disconnections and &quot;recoverable&quot; errors.&lt;/p&gt;
+<i>32</i>&nbsp; *
+<i>33</i>&nbsp; * &lt;p&gt;
+<i>34</i>&nbsp; * If an exception occurs during the operation, the RetryLoop will process it,
+<i>35</i>&nbsp; * check with the current retry policy and either attempt to reconnect or re-throw
+<i>36</i>&nbsp; * the exception
+<i>37</i>&nbsp; * &lt;/p&gt;
+<i>38</i>&nbsp; *
+<i>39</i>&nbsp; * Canonical usage:&lt;br/&gt;
+<i>40</i>&nbsp; * &lt;code&gt;&lt;pre&gt;
+<i>41</i>&nbsp; * RetryLoop retryLoop = client.newRetryLoop();
+<i>42</i>&nbsp; * while ( retryLoop.shouldContinue() )
+<i>43</i>&nbsp; * {
+<i>44</i>&nbsp; *     try
+<i>45</i>&nbsp; *     {
+<i>46</i>&nbsp; *         // do your work
+<i>47</i>&nbsp; *         ZooKeeper      zk = client.getZooKeeper();    // it&#39;s important to re-get the ZK instance in case there was an error and the instance was re-created
+<i>48</i>&nbsp; *
+<i>49</i>&nbsp; *         retryLoop.markComplete();
+<i>50</i>&nbsp; *     }
+<i>51</i>&nbsp; *     catch ( Exception e )
+<i>52</i>&nbsp; *     {
+<i>53</i>&nbsp; *         retryLoop.takeException(e);
+<i>54</i>&nbsp; *     }
+<i>55</i>&nbsp; * }
+<i>56</i>&nbsp; * &lt;/pre&gt;&lt;/code&gt;
+<i>57</i>&nbsp; */
+<i>58</i>&nbsp;public class RetryLoop
+<i>59</i>&nbsp;{
+<b class="fc"><i>60</i>&nbsp;    private boolean         isDone = false;</b>
+<b class="fc"><i>61</i>&nbsp;    private int             retryCount = 0;</b>
+<i>62</i>&nbsp;
+<b class="fc"><i>63</i>&nbsp;    private final Logger            log = LoggerFactory.getLogger(getClass());</b>
+<b class="fc"><i>64</i>&nbsp;    private final long              startTimeMs = System.currentTimeMillis();</b>
+<i>65</i>&nbsp;    private final RetryPolicy       retryPolicy;
+<i>66</i>&nbsp;    private final AtomicReference&lt;TracerDriver&gt;     tracer;
+<i>67</i>&nbsp;
+<b class="fc"><i>68</i>&nbsp;    private static final RetrySleeper  sleeper = new RetrySleeper()</b>
+<b class="fc"><i>69</i>&nbsp;    {</b>
+<i>70</i>&nbsp;        @Override
+<i>71</i>&nbsp;        public void sleepFor(long time, TimeUnit unit) throws InterruptedException
+<i>72</i>&nbsp;        {
+<b class="fc"><i>73</i>&nbsp;            unit.sleep(time);</b>
+<b class="fc"><i>74</i>&nbsp;        }</b>
+<i>75</i>&nbsp;    };
+<i>76</i>&nbsp;
+<i>77</i>&nbsp;    /**
+<i>78</i>&nbsp;     * Returns the default retry sleeper
+<i>79</i>&nbsp;     *
+<i>80</i>&nbsp;     * @return sleeper
+<i>81</i>&nbsp;     */
+<i>82</i>&nbsp;    public static RetrySleeper      getDefaultRetrySleeper()
+<i>83</i>&nbsp;    {
+<b class="fc"><i>84</i>&nbsp;        return sleeper;</b>
+<i>85</i>&nbsp;    }
+<i>86</i>&nbsp;
+<i>87</i>&nbsp;    /**
+<i>88</i>&nbsp;     * Convenience utility: creates a retry loop calling the given proc and retrying if needed
+<i>89</i>&nbsp;     *
+<i>90</i>&nbsp;     * @param client Zookeeper
+<i>91</i>&nbsp;     * @param proc procedure to call with retry
+<i>92</i>&nbsp;     * @param &lt;T&gt; return type
+<i>93</i>&nbsp;     * @return procedure result
+<i>94</i>&nbsp;     * @throws Exception any non-retriable errors
+<i>95</i>&nbsp;     */
+<i>96</i>&nbsp;    public static&lt;T&gt; T      callWithRetry(CuratorZookeeperClient client, Callable&lt;T&gt; proc) throws Exception
+<i>97</i>&nbsp;    {
+<b class="fc"><i>98</i>&nbsp;        T               result = null;</b>
+<b class="fc"><i>99</i>&nbsp;        RetryLoop       retryLoop = client.newRetryLoop();</b>
+<b class="fc"><i>100</i>&nbsp;        while ( retryLoop.shouldContinue() )</b>
+<i>101</i>&nbsp;        {
+<i>102</i>&nbsp;            try
+<i>103</i>&nbsp;            {
+<b class="fc"><i>104</i>&nbsp;                client.internalBlockUntilConnectedOrTimedOut();</b>
+<i>105</i>&nbsp;                
+<b class="fc"><i>106</i>&nbsp;                result = proc.call();</b>
+<b class="fc"><i>107</i>&nbsp;                retryLoop.markComplete();</b>
+<i>108</i>&nbsp;            }
+<b class="fc"><i>109</i>&nbsp;            catch ( Exception e )</b>
+<i>110</i>&nbsp;            {
+<b class="fc"><i>111</i>&nbsp;                retryLoop.takeException(e);</b>
+<b class="fc"><i>112</i>&nbsp;            }</b>
+<i>113</i>&nbsp;        }
+<b class="fc"><i>114</i>&nbsp;        return result;</b>
+<i>115</i>&nbsp;    }
+<i>116</i>&nbsp;
+<i>117</i>&nbsp;    RetryLoop(RetryPolicy retryPolicy, AtomicReference&lt;TracerDriver&gt; tracer)
+<b class="fc"><i>118</i>&nbsp;    {</b>
+<b class="fc"><i>119</i>&nbsp;        this.retryPolicy = retryPolicy;</b>
+<b class="fc"><i>120</i>&nbsp;        this.tracer = tracer;</b>
+<b class="fc"><i>121</i>&nbsp;    }</b>
+<i>122</i>&nbsp;
+<i>123</i>&nbsp;    /**
+<i>124</i>&nbsp;     * If true is returned, make an attempt at the operation
+<i>125</i>&nbsp;     *
+<i>126</i>&nbsp;     * @return true/false
+<i>127</i>&nbsp;     */
+<i>128</i>&nbsp;    public boolean      shouldContinue()
+<i>129</i>&nbsp;    {
+<b class="fc"><i>130</i>&nbsp;        return !isDone;</b>
+<i>131</i>&nbsp;    }
+<i>132</i>&nbsp;
+<i>133</i>&nbsp;    /**
+<i>134</i>&nbsp;     * Call this when your operation has successfully completed
+<i>135</i>&nbsp;     */
+<i>136</i>&nbsp;    public void     markComplete()
+<i>137</i>&nbsp;    {
+<b class="fc"><i>138</i>&nbsp;        isDone = true;</b>
+<b class="fc"><i>139</i>&nbsp;    }</b>
+<i>140</i>&nbsp;
+<i>141</i>&nbsp;    /**
+<i>142</i>&nbsp;     * Utility - return true if the given Zookeeper result code is retry-able
+<i>143</i>&nbsp;     *
+<i>144</i>&nbsp;     * @param rc result code
+<i>145</i>&nbsp;     * @return true/false
+<i>146</i>&nbsp;     */
+<i>147</i>&nbsp;    public static boolean      shouldRetry(int rc)
+<i>148</i>&nbsp;    {
+<b class="fc"><i>149</i>&nbsp;        return (rc == KeeperException.Code.CONNECTIONLOSS.intValue()) ||</b>
+<i>150</i>&nbsp;            (rc == KeeperException.Code.OPERATIONTIMEOUT.intValue()) ||
+<i>151</i>&nbsp;            (rc == KeeperException.Code.SESSIONMOVED.intValue()) ||
+<i>152</i>&nbsp;            (rc == KeeperException.Code.SESSIONEXPIRED.intValue());
+<i>153</i>&nbsp;    }
+<i>154</i>&nbsp;
+<i>155</i>&nbsp;    /**
+<i>156</i>&nbsp;     * Utility - return true if the given exception is retry-able
+<i>157</i>&nbsp;     *
+<i>158</i>&nbsp;     * @param exception exception to check
+<i>159</i>&nbsp;     * @return true/false
+<i>160</i>&nbsp;     */
+<i>161</i>&nbsp;    public static boolean      isRetryException(Throwable exception)
+<i>162</i>&nbsp;    {
+<b class="fc"><i>163</i>&nbsp;        if ( exception instanceof KeeperException )</b>
+<i>164</i>&nbsp;        {
+<b class="fc"><i>165</i>&nbsp;            KeeperException     keeperException = (KeeperException)exception;</b>
+<b class="fc"><i>166</i>&nbsp;            return shouldRetry(keeperException.code().intValue());</b>
+<i>167</i>&nbsp;        }
+<b class="fc"><i>168</i>&nbsp;        return false;</b>
+<i>169</i>&nbsp;    }
+<i>170</i>&nbsp;
+<i>171</i>&nbsp;    /**
+<i>172</i>&nbsp;     * Pass any caught exceptions here
+<i>173</i>&nbsp;     *
+<i>174</i>&nbsp;     * @param exception the exception
+<i>175</i>&nbsp;     * @throws Exception if not retry-able or the retry policy returned negative
+<i>176</i>&nbsp;     */
+<i>177</i>&nbsp;    public void         takeException(Exception exception) throws Exception
+<i>178</i>&nbsp;    {
+<b class="fc"><i>179</i>&nbsp;        boolean     rethrow = true;</b>
+<b class="fc"><i>180</i>&nbsp;        if ( isRetryException(exception) )</b>
+<i>181</i>&nbsp;        {
+<b class="fc"><i>182</i>&nbsp;            if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )</b>
+<i>183</i>&nbsp;            {
+<b class="nc"><i>184</i>&nbsp;                log.debug(&quot;Retry-able exception received&quot;, exception);</b>
+<i>185</i>&nbsp;            }
+<b class="fc"><i>186</i>&nbsp;            if ( retryPolicy.allowRetry(retryCount++, System.currentTimeMillis() - startTimeMs, sleeper) )</b>
+<i>187</i>&nbsp;            {
+<b class="fc"><i>188</i>&nbsp;                tracer.get().addCount(&quot;retries-disallowed&quot;, 1);</b>
+<b class="fc"><i>189</i>&nbsp;                if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )</b>
+<i>190</i>&nbsp;                {
+<b class="nc"><i>191</i>&nbsp;                    log.debug(&quot;Retry policy not allowing retry&quot;);</b>
+<i>192</i>&nbsp;                }
+<b class="fc"><i>193</i>&nbsp;                rethrow = false;</b>
+<i>194</i>&nbsp;            }
+<i>195</i>&nbsp;            else
+<i>196</i>&nbsp;            {
+<b class="fc"><i>197</i>&nbsp;                tracer.get().addCount(&quot;retries-allowed&quot;, 1);</b>
+<b class="fc"><i>198</i>&nbsp;                if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )</b>
+<i>199</i>&nbsp;                {
+<b class="nc"><i>200</i>&nbsp;                    log.debug(&quot;Retrying operation&quot;);</b>
+<i>201</i>&nbsp;                }
+<i>202</i>&nbsp;            }
+<i>203</i>&nbsp;        }
+<i>204</i>&nbsp;
+<b class="fc"><i>205</i>&nbsp;        if ( rethrow )</b>
+<i>206</i>&nbsp;        {
+<b class="fc"><i>207</i>&nbsp;            throw exception;</b>
+<i>208</i>&nbsp;        }
+<b class="fc"><i>209</i>&nbsp;    }</b>
+<i>210</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

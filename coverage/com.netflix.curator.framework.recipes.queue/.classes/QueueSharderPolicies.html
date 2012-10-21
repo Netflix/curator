@@ -1,0 +1,260 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: QueueSharderPolicies</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: QueueSharderPolicies (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">QueueSharderPolicies</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/ 12)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">QueueSharderPolicies$Builder</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.4%
+  </span>
+  <span class="absValue">
+    (5/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70.6%
+  </span>
+  <span class="absValue">
+    (12/ 17)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    85.7%
+  </span>
+  <span class="absValue">
+    (12/ 14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    82.8%
+  </span>
+  <span class="absValue">
+    (24/ 29)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>21</i>&nbsp;
+<i>22</i>&nbsp;/**
+<i>23</i>&nbsp; * Various policies/options for sharding. Usage:
+<i>24</i>&nbsp; * QueueSharderPolicies.builder().foo().bar().build();
+<i>25</i>&nbsp; */
+<b class="fc"><i>26</i>&nbsp;public class QueueSharderPolicies</b>
+<i>27</i>&nbsp;{
+<i>28</i>&nbsp;    private int           newQueueThreshold;
+<i>29</i>&nbsp;    private int           thresholdCheckMs;
+<i>30</i>&nbsp;    private int           maxQueues;
+<i>31</i>&nbsp;    private ThreadFactory threadFactory;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;    private static final int       DEFAULT_QUEUE_THRESHOLD = 10000;
+<i>34</i>&nbsp;    private static final int       DEFAULT_THRESHOLD_CHECK_MS = 30000;
+<i>35</i>&nbsp;    private static final int       DEFAULT_MAX_QUEUES = 10;
+<i>36</i>&nbsp;
+<b class="fc"><i>37</i>&nbsp;    public static class Builder</b>
+<i>38</i>&nbsp;    {
+<b class="fc"><i>39</i>&nbsp;        private QueueSharderPolicies      policies = new QueueSharderPolicies();</b>
+<i>40</i>&nbsp;
+<i>41</i>&nbsp;        /**
+<i>42</i>&nbsp;         * Change the queue threshold. This is the number of items that causes
+<i>43</i>&nbsp;         * a new queue to be added. The default is {@link QueueSharderPolicies#DEFAULT_QUEUE_THRESHOLD}
+<i>44</i>&nbsp;         *
+<i>45</i>&nbsp;         * @param newQueueThreshold new value
+<i>46</i>&nbsp;         * @return this
+<i>47</i>&nbsp;         */
+<i>48</i>&nbsp;        public Builder newQueueThreshold(int newQueueThreshold)
+<i>49</i>&nbsp;        {
+<b class="fc"><i>50</i>&nbsp;            Preconditions.checkArgument(newQueueThreshold &gt; 0, &quot;newQueueThreshold must be a positive number&quot;);</b>
+<i>51</i>&nbsp;
+<b class="fc"><i>52</i>&nbsp;            policies.newQueueThreshold = newQueueThreshold;</b>
+<b class="fc"><i>53</i>&nbsp;            return this;</b>
+<i>54</i>&nbsp;        }
+<i>55</i>&nbsp;
+<i>56</i>&nbsp;        /**
+<i>57</i>&nbsp;         * Change the threshold check. This is how often the queue sizes are checked. The default
+<i>58</i>&nbsp;         * is {@link QueueSharderPolicies#DEFAULT_THRESHOLD_CHECK_MS}
+<i>59</i>&nbsp;         *
+<i>60</i>&nbsp;         * @param thresholdCheckMs period in milliseconds
+<i>61</i>&nbsp;         * @return this
+<i>62</i>&nbsp;         */
+<i>63</i>&nbsp;        public Builder thresholdCheckMs(int thresholdCheckMs)
+<i>64</i>&nbsp;        {
+<b class="fc"><i>65</i>&nbsp;            Preconditions.checkArgument(thresholdCheckMs &gt; 0, &quot;thresholdCheckMs must be a positive number&quot;);</b>
+<i>66</i>&nbsp;
+<b class="fc"><i>67</i>&nbsp;            policies.thresholdCheckMs = thresholdCheckMs;</b>
+<b class="fc"><i>68</i>&nbsp;            return this;</b>
+<i>69</i>&nbsp;        }
+<i>70</i>&nbsp;
+<i>71</i>&nbsp;        /**
+<i>72</i>&nbsp;         * Change the maximum number of queues to create. The default value is {@link QueueSharderPolicies#DEFAULT_MAX_QUEUES}
+<i>73</i>&nbsp;         *
+<i>74</i>&nbsp;         * @param maxQueues the new max
+<i>75</i>&nbsp;         * @return this
+<i>76</i>&nbsp;         */
+<i>77</i>&nbsp;        public Builder maxQueues(int maxQueues)
+<i>78</i>&nbsp;        {
+<b class="nc"><i>79</i>&nbsp;            Preconditions.checkArgument(maxQueues &gt; 0, &quot;thresholdCheckMs must be a positive number&quot;);</b>
+<i>80</i>&nbsp;
+<b class="nc"><i>81</i>&nbsp;            policies.maxQueues = maxQueues;</b>
+<b class="nc"><i>82</i>&nbsp;            return this;</b>
+<i>83</i>&nbsp;        }
+<i>84</i>&nbsp;
+<i>85</i>&nbsp;        /**
+<i>86</i>&nbsp;         * Change the thread factory that&#39;s used to create the sharder&#39;s thread
+<i>87</i>&nbsp;         *
+<i>88</i>&nbsp;         * @param threadFactory new factory
+<i>89</i>&nbsp;         * @return this
+<i>90</i>&nbsp;         */
+<i>91</i>&nbsp;        public Builder threadFactory(ThreadFactory threadFactory)
+<i>92</i>&nbsp;        {
+<b class="nc"><i>93</i>&nbsp;            policies.threadFactory = Preconditions.checkNotNull(threadFactory, &quot;threadFactory cannot be null&quot;);</b>
+<b class="nc"><i>94</i>&nbsp;            return this;</b>
+<i>95</i>&nbsp;        }
+<i>96</i>&nbsp;
+<i>97</i>&nbsp;        public QueueSharderPolicies     build()
+<i>98</i>&nbsp;        {
+<i>99</i>&nbsp;            try
+<i>100</i>&nbsp;            {
+<b class="fc"><i>101</i>&nbsp;                return policies;</b>
+<i>102</i>&nbsp;            }
+<i>103</i>&nbsp;            finally
+<i>104</i>&nbsp;            {
+<b class="fc"><i>105</i>&nbsp;                policies = new QueueSharderPolicies();</b>
+<i>106</i>&nbsp;            }
+<i>107</i>&nbsp;        }
+<i>108</i>&nbsp;
+<i>109</i>&nbsp;        private Builder()
+<b class="fc"><i>110</i>&nbsp;        {</b>
+<b class="fc"><i>111</i>&nbsp;        }</b>
+<i>112</i>&nbsp;    }
+<i>113</i>&nbsp;
+<i>114</i>&nbsp;    /**
+<i>115</i>&nbsp;     * Allocate a new builder
+<i>116</i>&nbsp;     *
+<i>117</i>&nbsp;     * @return builder
+<i>118</i>&nbsp;     */
+<i>119</i>&nbsp;    public static Builder       builder()
+<i>120</i>&nbsp;    {
+<b class="fc"><i>121</i>&nbsp;        return new Builder();</b>
+<i>122</i>&nbsp;    }
+<i>123</i>&nbsp;
+<i>124</i>&nbsp;    int getNewQueueThreshold()
+<i>125</i>&nbsp;    {
+<b class="fc"><i>126</i>&nbsp;        return newQueueThreshold;</b>
+<i>127</i>&nbsp;    }
+<i>128</i>&nbsp;
+<i>129</i>&nbsp;    int getThresholdCheckMs()
+<i>130</i>&nbsp;    {
+<b class="fc"><i>131</i>&nbsp;        return thresholdCheckMs;</b>
+<i>132</i>&nbsp;    }
+<i>133</i>&nbsp;
+<i>134</i>&nbsp;    int getMaxQueues()
+<i>135</i>&nbsp;    {
+<b class="fc"><i>136</i>&nbsp;        return maxQueues;</b>
+<i>137</i>&nbsp;    }
+<i>138</i>&nbsp;
+<i>139</i>&nbsp;    ThreadFactory getThreadFactory()
+<i>140</i>&nbsp;    {
+<b class="fc"><i>141</i>&nbsp;        return threadFactory;</b>
+<i>142</i>&nbsp;    }
+<i>143</i>&nbsp;
+<i>144</i>&nbsp;    private QueueSharderPolicies()
+<b class="fc"><i>145</i>&nbsp;    {</b>
+<b class="fc"><i>146</i>&nbsp;        this.newQueueThreshold = DEFAULT_QUEUE_THRESHOLD;</b>
+<b class="fc"><i>147</i>&nbsp;        this.thresholdCheckMs = DEFAULT_THRESHOLD_CHECK_MS;</b>
+<b class="fc"><i>148</i>&nbsp;        this.maxQueues = DEFAULT_MAX_QUEUES;</b>
+<b class="fc"><i>149</i>&nbsp;        this.threadFactory = QueueBuilder.defaultThreadFactory;</b>
+<b class="fc"><i>150</i>&nbsp;    }</b>
+<i>151</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

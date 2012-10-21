@@ -1,0 +1,181 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestNamespaceFacade</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestNamespaceFacade (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestNamespaceFacade</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (43/ 43)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.io.Closeables;
+<i>4</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>5</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>6</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>7</i>&nbsp;import org.testng.Assert;
+<i>8</i>&nbsp;import org.testng.annotations.Test;
+<i>9</i>&nbsp;
+<b class="fc"><i>10</i>&nbsp;public class TestNamespaceFacade extends BaseClassForTests</b>
+<i>11</i>&nbsp;{
+<i>12</i>&nbsp;    @Test
+<i>13</i>&nbsp;    public void     testGetNamespace() throws Exception
+<i>14</i>&nbsp;    {
+<b class="fc"><i>15</i>&nbsp;        CuratorFramework    client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<b class="fc"><i>16</i>&nbsp;        CuratorFramework    client2 = CuratorFrameworkFactory.builder().namespace(&quot;snafu&quot;).retryPolicy(new RetryOneTime(1)).connectString(&quot;&quot;).build();</b>
+<i>17</i>&nbsp;        try
+<i>18</i>&nbsp;        {
+<b class="fc"><i>19</i>&nbsp;            client.start();</b>
+<i>20</i>&nbsp;
+<b class="fc"><i>21</i>&nbsp;            CuratorFramework fooClient = client.usingNamespace(&quot;foo&quot;);</b>
+<b class="fc"><i>22</i>&nbsp;            CuratorFramework barClient = client.usingNamespace(&quot;bar&quot;);</b>
+<i>23</i>&nbsp;
+<b class="fc"><i>24</i>&nbsp;            Assert.assertEquals(client.getNamespace(), &quot;&quot;);</b>
+<b class="fc"><i>25</i>&nbsp;            Assert.assertEquals(client2.getNamespace(), &quot;snafu&quot;);</b>
+<b class="fc"><i>26</i>&nbsp;            Assert.assertEquals(fooClient.getNamespace(), &quot;foo&quot;);</b>
+<b class="fc"><i>27</i>&nbsp;            Assert.assertEquals(barClient.getNamespace(), &quot;bar&quot;);</b>
+<i>28</i>&nbsp;        }
+<i>29</i>&nbsp;        finally
+<i>30</i>&nbsp;        {
+<b class="fc"><i>31</i>&nbsp;            Closeables.closeQuietly(client2);</b>
+<b class="fc"><i>32</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>33</i>&nbsp;        }</b>
+<b class="fc"><i>34</i>&nbsp;    }</b>
+<i>35</i>&nbsp;
+<i>36</i>&nbsp;    @Test
+<i>37</i>&nbsp;    public void     testSimultaneous() throws Exception
+<i>38</i>&nbsp;    {
+<b class="fc"><i>39</i>&nbsp;        CuratorFramework    client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>40</i>&nbsp;        try
+<i>41</i>&nbsp;        {
+<b class="fc"><i>42</i>&nbsp;            client.start();</b>
+<i>43</i>&nbsp;
+<b class="fc"><i>44</i>&nbsp;            CuratorFramework fooClient = client.usingNamespace(&quot;foo&quot;);</b>
+<b class="fc"><i>45</i>&nbsp;            CuratorFramework barClient = client.usingNamespace(&quot;bar&quot;);</b>
+<i>46</i>&nbsp;
+<b class="fc"><i>47</i>&nbsp;            fooClient.create().forPath(&quot;/one&quot;);</b>
+<b class="fc"><i>48</i>&nbsp;            barClient.create().forPath(&quot;/one&quot;);</b>
+<i>49</i>&nbsp;
+<b class="fc"><i>50</i>&nbsp;            Assert.assertNotNull(client.getZookeeperClient().getZooKeeper().exists(&quot;/foo/one&quot;, false));</b>
+<b class="fc"><i>51</i>&nbsp;            Assert.assertNotNull(client.getZookeeperClient().getZooKeeper().exists(&quot;/bar/one&quot;, false));</b>
+<i>52</i>&nbsp;        }
+<i>53</i>&nbsp;        finally
+<i>54</i>&nbsp;        {
+<b class="fc"><i>55</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>56</i>&nbsp;        }</b>
+<b class="fc"><i>57</i>&nbsp;    }</b>
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;    @Test
+<i>60</i>&nbsp;    public void     testCache() throws Exception
+<i>61</i>&nbsp;    {
+<b class="fc"><i>62</i>&nbsp;        CuratorFramework    client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>63</i>&nbsp;        try
+<i>64</i>&nbsp;        {
+<b class="fc"><i>65</i>&nbsp;            client.start();</b>
+<i>66</i>&nbsp;
+<b class="fc"><i>67</i>&nbsp;            Assert.assertEquals(client.usingNamespace(&quot;foo&quot;), client.usingNamespace(&quot;foo&quot;));</b>
+<b class="fc"><i>68</i>&nbsp;            Assert.assertNotSame(client.usingNamespace(&quot;foo&quot;), client.usingNamespace(&quot;bar&quot;));</b>
+<i>69</i>&nbsp;        }
+<i>70</i>&nbsp;        finally
+<i>71</i>&nbsp;        {
+<b class="fc"><i>72</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>73</i>&nbsp;        }</b>
+<b class="fc"><i>74</i>&nbsp;    }</b>
+<i>75</i>&nbsp;
+<i>76</i>&nbsp;    @Test
+<i>77</i>&nbsp;    public void     testBasic() throws Exception
+<i>78</i>&nbsp;    {
+<b class="fc"><i>79</i>&nbsp;        CuratorFramework    client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>80</i>&nbsp;        try
+<i>81</i>&nbsp;        {
+<b class="fc"><i>82</i>&nbsp;            client.start();</b>
+<i>83</i>&nbsp;
+<b class="fc"><i>84</i>&nbsp;            client.create().forPath(&quot;/one&quot;);</b>
+<b class="fc"><i>85</i>&nbsp;            Assert.assertNotNull(client.getZookeeperClient().getZooKeeper().exists(&quot;/one&quot;, false));</b>
+<i>86</i>&nbsp;
+<b class="fc"><i>87</i>&nbsp;            client.usingNamespace(&quot;space&quot;).create().forPath(&quot;/one&quot;);</b>
+<b class="fc"><i>88</i>&nbsp;            Assert.assertNotNull(client.getZookeeperClient().getZooKeeper().exists(&quot;/space&quot;, false));</b>
+<i>89</i>&nbsp;
+<b class="fc"><i>90</i>&nbsp;            client.usingNamespace(&quot;name&quot;).create().forPath(&quot;/one&quot;);</b>
+<b class="fc"><i>91</i>&nbsp;            Assert.assertNotNull(client.getZookeeperClient().getZooKeeper().exists(&quot;/name&quot;, false));</b>
+<i>92</i>&nbsp;        }
+<i>93</i>&nbsp;        finally
+<i>94</i>&nbsp;        {
+<b class="fc"><i>95</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>96</i>&nbsp;        }</b>
+<b class="fc"><i>97</i>&nbsp;    }</b>
+<i>98</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,252 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: SharedCount</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.shared</a> ]
+</div>
+
+<h1>Coverage Summary for Class: SharedCount (com.netflix.curator.framework.recipes.shared)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SharedCount</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (10/ 12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    84%
+  </span>
+  <span class="absValue">
+    (21/ 25)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">SharedCount$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    86.7%
+  </span>
+  <span class="absValue">
+    (13/ 15)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86.7%
+  </span>
+  <span class="absValue">
+    (26/ 30)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.shared;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.collect.Maps;
+<i>20</i>&nbsp;import com.google.common.util.concurrent.MoreExecutors;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>22</i>&nbsp;import com.netflix.curator.framework.listen.Listenable;
+<i>23</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>24</i>&nbsp;import java.io.Closeable;
+<i>25</i>&nbsp;import java.io.IOException;
+<i>26</i>&nbsp;import java.nio.ByteBuffer;
+<i>27</i>&nbsp;import java.util.Map;
+<i>28</i>&nbsp;import java.util.concurrent.Executor;
+<i>29</i>&nbsp;
+<i>30</i>&nbsp;/**
+<i>31</i>&nbsp; * Manages a shared integer. All clients watching the same path will have the up-to-date
+<i>32</i>&nbsp; * value of the shared integer (considering ZK&#39;s normal consistency guarantees).
+<i>33</i>&nbsp; */
+<b class="fc"><i>34</i>&nbsp;public class SharedCount implements Closeable, SharedCountReader, Listenable&lt;SharedCountListener&gt;</b>
+<i>35</i>&nbsp;{
+<b class="fc"><i>36</i>&nbsp;    private final Map&lt;SharedCountListener, SharedValueListener&gt; listeners = Maps.newConcurrentMap();</b>
+<i>37</i>&nbsp;    private final SharedValue           sharedValue;
+<i>38</i>&nbsp;
+<i>39</i>&nbsp;    /**
+<i>40</i>&nbsp;     * @param client the client
+<i>41</i>&nbsp;     * @param path the shared path - i.e. where the shared count is stored
+<i>42</i>&nbsp;     * @param seedValue the initial value for the count if/f the path has not yet been created
+<i>43</i>&nbsp;     */
+<i>44</i>&nbsp;    public SharedCount(CuratorFramework client, String path, int seedValue)
+<b class="fc"><i>45</i>&nbsp;    {</b>
+<b class="fc"><i>46</i>&nbsp;        sharedValue = new SharedValue(client, path, toBytes(seedValue));</b>
+<b class="fc"><i>47</i>&nbsp;    }</b>
+<i>48</i>&nbsp;
+<i>49</i>&nbsp;    @Override
+<i>50</i>&nbsp;    public int getCount()
+<i>51</i>&nbsp;    {
+<b class="fc"><i>52</i>&nbsp;        return fromBytes(sharedValue.getValue());</b>
+<i>53</i>&nbsp;    }
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    /**
+<i>56</i>&nbsp;     * Change the shared count value irrespective of its previous state
+<i>57</i>&nbsp;     *
+<i>58</i>&nbsp;     * @param newCount new value
+<i>59</i>&nbsp;     * @throws Exception ZK errors, interruptions, etc.
+<i>60</i>&nbsp;     */
+<i>61</i>&nbsp;    public void     setCount(int newCount) throws Exception
+<i>62</i>&nbsp;    {
+<b class="fc"><i>63</i>&nbsp;        sharedValue.setValue(toBytes(newCount));</b>
+<b class="fc"><i>64</i>&nbsp;    }</b>
+<i>65</i>&nbsp;
+<i>66</i>&nbsp;    /**
+<i>67</i>&nbsp;     * Changes the shared count only if its value has not changed since this client last
+<i>68</i>&nbsp;     * read it. If the count has changed, the value is not set and this client&#39;s view of the
+<i>69</i>&nbsp;     * value is updated. i.e. if the count is not successful you can get the updated value
+<i>70</i>&nbsp;     * by calling {@link #getCount()}.
+<i>71</i>&nbsp;     *
+<i>72</i>&nbsp;     * @param newCount the new value to attempt
+<i>73</i>&nbsp;     * @return true if the change attempt was successful, false if not. If the change
+<i>74</i>&nbsp;     * was not successful, {@link #getCount()} will return the updated value
+<i>75</i>&nbsp;     * @throws Exception ZK errors, interruptions, etc.
+<i>76</i>&nbsp;     */
+<i>77</i>&nbsp;    public boolean  trySetCount(int newCount) throws Exception
+<i>78</i>&nbsp;    {
+<b class="fc"><i>79</i>&nbsp;        return sharedValue.trySetValue(toBytes(newCount));</b>
+<i>80</i>&nbsp;    }
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    @Override
+<i>83</i>&nbsp;    public void     addListener(SharedCountListener listener)
+<i>84</i>&nbsp;    {
+<b class="fc"><i>85</i>&nbsp;        addListener(listener, MoreExecutors.sameThreadExecutor());</b>
+<b class="fc"><i>86</i>&nbsp;    }</b>
+<i>87</i>&nbsp;
+<i>88</i>&nbsp;    @Override
+<i>89</i>&nbsp;    public void     addListener(final SharedCountListener listener, Executor executor)
+<i>90</i>&nbsp;    {
+<b class="fc"><i>91</i>&nbsp;        SharedValueListener     valueListener = new SharedValueListener()</b>
+<b class="fc"><i>92</i>&nbsp;        {</b>
+<i>93</i>&nbsp;            @Override
+<i>94</i>&nbsp;            public void valueHasChanged(SharedValueReader sharedValue, byte[] newValue) throws Exception
+<i>95</i>&nbsp;            {
+<b class="fc"><i>96</i>&nbsp;                listener.countHasChanged(SharedCount.this, fromBytes(newValue));</b>
+<b class="fc"><i>97</i>&nbsp;            }</b>
+<i>98</i>&nbsp;
+<i>99</i>&nbsp;            @Override
+<i>100</i>&nbsp;            public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>101</i>&nbsp;            {
+<b class="fc"><i>102</i>&nbsp;                listener.stateChanged(client, newState);</b>
+<b class="fc"><i>103</i>&nbsp;            }</b>
+<i>104</i>&nbsp;        };
+<b class="fc"><i>105</i>&nbsp;        sharedValue.getListenable().addListener(valueListener, executor);</b>
+<b class="fc"><i>106</i>&nbsp;        listeners.put(listener, valueListener);</b>
+<b class="fc"><i>107</i>&nbsp;    }</b>
+<i>108</i>&nbsp;
+<i>109</i>&nbsp;    @Override
+<i>110</i>&nbsp;    public void     removeListener(SharedCountListener listener)
+<i>111</i>&nbsp;    {
+<b class="nc"><i>112</i>&nbsp;        listeners.remove(listener);</b>
+<b class="nc"><i>113</i>&nbsp;    }</b>
+<i>114</i>&nbsp;
+<i>115</i>&nbsp;    /**
+<i>116</i>&nbsp;     * The shared count must be started before it can be used. Call {@link #close()} when you are
+<i>117</i>&nbsp;     * finished with the shared count
+<i>118</i>&nbsp;     *
+<i>119</i>&nbsp;     * @throws Exception ZK errors, interruptions, etc.
+<i>120</i>&nbsp;     */
+<i>121</i>&nbsp;    public void     start() throws Exception
+<i>122</i>&nbsp;    {
+<b class="fc"><i>123</i>&nbsp;        sharedValue.start();</b>
+<b class="fc"><i>124</i>&nbsp;    }</b>
+<i>125</i>&nbsp;
+<i>126</i>&nbsp;    @Override
+<i>127</i>&nbsp;    public void close() throws IOException
+<i>128</i>&nbsp;    {
+<b class="nc"><i>129</i>&nbsp;        sharedValue.close();</b>
+<b class="nc"><i>130</i>&nbsp;    }</b>
+<i>131</i>&nbsp;
+<i>132</i>&nbsp;    private static byte[]   toBytes(int value)
+<i>133</i>&nbsp;    {
+<b class="fc"><i>134</i>&nbsp;        byte[]      bytes = new byte[4];</b>
+<b class="fc"><i>135</i>&nbsp;        ByteBuffer.wrap(bytes).putInt(value);</b>
+<b class="fc"><i>136</i>&nbsp;        return bytes;</b>
+<i>137</i>&nbsp;    }
+<i>138</i>&nbsp;
+<i>139</i>&nbsp;    private static int      fromBytes(byte[] bytes)
+<i>140</i>&nbsp;    {
+<b class="fc"><i>141</i>&nbsp;        return ByteBuffer.wrap(bytes).getInt();</b>
+<i>142</i>&nbsp;    }
+<i>143</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

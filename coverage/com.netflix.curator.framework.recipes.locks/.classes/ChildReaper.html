@@ -1,0 +1,287 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ChildReaper</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ChildReaper (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ChildReaper</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (7/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.6%
+  </span>
+  <span class="absValue">
+    (31/ 35)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">ChildReaper$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ChildReaper$State</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    91.7%
+  </span>
+  <span class="absValue">
+    (11/ 12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.5%
+  </span>
+  <span class="absValue">
+    (38/ 42)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.google.common.io.Closeables;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>22</i>&nbsp;import com.netflix.curator.utils.ThreadUtils;
+<i>23</i>&nbsp;import com.netflix.curator.utils.ZKPaths;
+<i>24</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>25</i>&nbsp;import org.slf4j.Logger;
+<i>26</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>27</i>&nbsp;import java.io.Closeable;
+<i>28</i>&nbsp;import java.io.IOException;
+<i>29</i>&nbsp;import java.util.List;
+<i>30</i>&nbsp;import java.util.concurrent.ScheduledExecutorService;
+<i>31</i>&nbsp;import java.util.concurrent.ScheduledFuture;
+<i>32</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>33</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>34</i>&nbsp;
+<i>35</i>&nbsp;/**
+<i>36</i>&nbsp; * Utility to reap empty child nodes of a parent node. Periodically calls getChildren on
+<i>37</i>&nbsp; * the node and adds empty nodes to an internally managed {@link Reaper}
+<i>38</i>&nbsp; */
+<b class="fc"><i>39</i>&nbsp;public class ChildReaper implements Closeable</b>
+<i>40</i>&nbsp;{
+<b class="fc"><i>41</i>&nbsp;    private final Logger log = LoggerFactory.getLogger(getClass());</b>
+<i>42</i>&nbsp;    private final Reaper reaper;
+<b class="fc"><i>43</i>&nbsp;    private final AtomicReference&lt;State&gt; state = new AtomicReference&lt;State&gt;(State.LATENT);</b>
+<i>44</i>&nbsp;    private final CuratorFramework client;
+<i>45</i>&nbsp;    private final String path;
+<i>46</i>&nbsp;    private final Reaper.Mode mode;
+<i>47</i>&nbsp;    private final ScheduledExecutorService executor;
+<i>48</i>&nbsp;    private final int reapingThresholdMs;
+<i>49</i>&nbsp;
+<i>50</i>&nbsp;    private volatile ScheduledFuture&lt;?&gt; task;
+<i>51</i>&nbsp;
+<b class="fc"><i>52</i>&nbsp;    private enum State</b>
+<i>53</i>&nbsp;    {
+<b class="fc"><i>54</i>&nbsp;        LATENT,</b>
+<b class="fc"><i>55</i>&nbsp;        STARTED,</b>
+<b class="fc"><i>56</i>&nbsp;        CLOSED</b>
+<i>57</i>&nbsp;    }
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;    /**
+<i>60</i>&nbsp;     * @param client the client
+<i>61</i>&nbsp;     * @param path path to reap children from
+<i>62</i>&nbsp;     * @param mode reaping mode
+<i>63</i>&nbsp;     */
+<i>64</i>&nbsp;    public ChildReaper(CuratorFramework client, String path, Reaper.Mode mode)
+<i>65</i>&nbsp;    {
+<b class="nc"><i>66</i>&nbsp;        this(client, path, mode, newExecutorService(), Reaper.DEFAULT_REAPING_THRESHOLD_MS);</b>
+<b class="nc"><i>67</i>&nbsp;    }</b>
+<i>68</i>&nbsp;
+<i>69</i>&nbsp;    /**
+<i>70</i>&nbsp;     * @param client the client
+<i>71</i>&nbsp;     * @param path path to reap children from
+<i>72</i>&nbsp;     * @param reapingThresholdMs threshold in milliseconds that determines that a path can be deleted
+<i>73</i>&nbsp;     * @param mode reaping mode
+<i>74</i>&nbsp;     */
+<i>75</i>&nbsp;    public ChildReaper(CuratorFramework client, String path, Reaper.Mode mode, int reapingThresholdMs)
+<i>76</i>&nbsp;    {
+<b class="fc"><i>77</i>&nbsp;        this(client, path, mode, newExecutorService(), reapingThresholdMs);</b>
+<b class="fc"><i>78</i>&nbsp;    }</b>
+<i>79</i>&nbsp;
+<i>80</i>&nbsp;    /**
+<i>81</i>&nbsp;     * @param client the client
+<i>82</i>&nbsp;     * @param path path to reap children from
+<i>83</i>&nbsp;     * @param executor executor to use for background tasks
+<i>84</i>&nbsp;     * @param reapingThresholdMs threshold in milliseconds that determines that a path can be deleted
+<i>85</i>&nbsp;     * @param mode reaping mode
+<i>86</i>&nbsp;     */
+<i>87</i>&nbsp;    public ChildReaper(CuratorFramework client, String path, Reaper.Mode mode, ScheduledExecutorService executor, int reapingThresholdMs)
+<b class="fc"><i>88</i>&nbsp;    {</b>
+<b class="fc"><i>89</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>90</i>&nbsp;        this.path = path;</b>
+<b class="fc"><i>91</i>&nbsp;        this.mode = mode;</b>
+<b class="fc"><i>92</i>&nbsp;        this.executor = executor;</b>
+<b class="fc"><i>93</i>&nbsp;        this.reapingThresholdMs = reapingThresholdMs;</b>
+<b class="fc"><i>94</i>&nbsp;        this.reaper = new Reaper(client, executor, reapingThresholdMs);</b>
+<b class="fc"><i>95</i>&nbsp;    }</b>
+<i>96</i>&nbsp;
+<i>97</i>&nbsp;    /**
+<i>98</i>&nbsp;     * The reaper must be started
+<i>99</i>&nbsp;     *
+<i>100</i>&nbsp;     * @throws Exception errors
+<i>101</i>&nbsp;     */
+<i>102</i>&nbsp;    public void start() throws Exception
+<i>103</i>&nbsp;    {
+<b class="fc"><i>104</i>&nbsp;        Preconditions.checkState(state.compareAndSet(State.LATENT, State.STARTED), &quot;Already started&quot;);</b>
+<i>105</i>&nbsp;
+<b class="fc"><i>106</i>&nbsp;        task = executor.scheduleWithFixedDelay</b>
+<i>107</i>&nbsp;        (
+<i>108</i>&nbsp;            new Runnable()
+<b class="fc"><i>109</i>&nbsp;            {</b>
+<i>110</i>&nbsp;                @Override
+<i>111</i>&nbsp;                public void run()
+<i>112</i>&nbsp;                {
+<b class="fc"><i>113</i>&nbsp;                    doWork();</b>
+<b class="fc"><i>114</i>&nbsp;                }</b>
+<i>115</i>&nbsp;            },
+<i>116</i>&nbsp;            reapingThresholdMs,
+<i>117</i>&nbsp;            reapingThresholdMs,
+<i>118</i>&nbsp;            TimeUnit.MILLISECONDS
+<i>119</i>&nbsp;        );
+<i>120</i>&nbsp;
+<b class="fc"><i>121</i>&nbsp;        reaper.start();</b>
+<b class="fc"><i>122</i>&nbsp;    }</b>
+<i>123</i>&nbsp;
+<i>124</i>&nbsp;    @Override
+<i>125</i>&nbsp;    public void close() throws IOException
+<i>126</i>&nbsp;    {
+<b class="fc"><i>127</i>&nbsp;        if ( state.compareAndSet(State.STARTED, State.CLOSED) )</b>
+<i>128</i>&nbsp;        {
+<b class="fc"><i>129</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>130</i>&nbsp;            task.cancel(true);</b>
+<i>131</i>&nbsp;        }
+<b class="fc"><i>132</i>&nbsp;    }</b>
+<i>133</i>&nbsp;
+<i>134</i>&nbsp;    private static ScheduledExecutorService newExecutorService()
+<i>135</i>&nbsp;    {
+<b class="fc"><i>136</i>&nbsp;        return ThreadUtils.newFixedThreadScheduledPool(2, &quot;ChildReaper&quot;);</b>
+<i>137</i>&nbsp;    }
+<i>138</i>&nbsp;
+<i>139</i>&nbsp;    private void doWork()
+<i>140</i>&nbsp;    {
+<i>141</i>&nbsp;        try
+<i>142</i>&nbsp;        {
+<b class="fc"><i>143</i>&nbsp;            List&lt;String&gt;        children = client.getChildren().forPath(path);</b>
+<b class="fc"><i>144</i>&nbsp;            for ( String name : children )</b>
+<i>145</i>&nbsp;            {
+<b class="fc"><i>146</i>&nbsp;                String  thisPath = ZKPaths.makePath(path, name);</b>
+<b class="fc"><i>147</i>&nbsp;                Stat    stat = client.checkExists().forPath(thisPath);</b>
+<b class="fc"><i>148</i>&nbsp;                if ( (stat != null) &amp;&amp; (stat.getNumChildren() == 0) )</b>
+<i>149</i>&nbsp;                {
+<b class="fc"><i>150</i>&nbsp;                    reaper.addPath(thisPath, mode);</b>
+<i>151</i>&nbsp;                }
+<b class="fc"><i>152</i>&nbsp;            }</b>
+<i>153</i>&nbsp;        }
+<b class="nc"><i>154</i>&nbsp;        catch ( Exception e )</b>
+<i>155</i>&nbsp;        {
+<b class="nc"><i>156</i>&nbsp;            log.error(&quot;Could not get children for path: &quot; + path, e);</b>
+<b class="fc"><i>157</i>&nbsp;        }</b>
+<b class="fc"><i>158</i>&nbsp;    }</b>
+<i>159</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

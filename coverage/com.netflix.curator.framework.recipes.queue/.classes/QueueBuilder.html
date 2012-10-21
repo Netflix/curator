@@ -1,0 +1,354 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: QueueBuilder</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: QueueBuilder (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">QueueBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    84.6%
+  </span>
+  <span class="absValue">
+    (11/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    84.4%
+  </span>
+  <span class="absValue">
+    (27/ 32)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.google.common.util.concurrent.MoreExecutors;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>22</i>&nbsp;import com.netflix.curator.utils.ThreadUtils;
+<i>23</i>&nbsp;import java.util.concurrent.Executor;
+<i>24</i>&nbsp;import java.util.concurrent.Executors;
+<i>25</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>26</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;/**
+<i>29</i>&nbsp; * The builder for both {@link DistributedQueue} and {@link DistributedPriorityQueue}
+<i>30</i>&nbsp; */
+<i>31</i>&nbsp;public class QueueBuilder&lt;T&gt;
+<i>32</i>&nbsp;{
+<i>33</i>&nbsp;    private final CuratorFramework client;
+<i>34</i>&nbsp;    private final QueueConsumer&lt;T&gt; consumer;
+<i>35</i>&nbsp;    private final QueueSerializer&lt;T&gt; serializer;
+<i>36</i>&nbsp;    private final String queuePath;
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;    private ThreadFactory factory;
+<i>39</i>&nbsp;    private Executor executor;
+<i>40</i>&nbsp;    private String lockPath;
+<b class="fc"><i>41</i>&nbsp;    private int maxItems = NOT_SET;</b>
+<b class="fc"><i>42</i>&nbsp;    private boolean putInBackground = true;</b>
+<b class="fc"><i>43</i>&nbsp;    private int finalFlushMs = 5000;</b>
+<i>44</i>&nbsp;
+<b class="fc"><i>45</i>&nbsp;    static final ThreadFactory  defaultThreadFactory = ThreadUtils.newThreadFactory(&quot;QueueBuilder&quot;);</b>
+<i>46</i>&nbsp;
+<i>47</i>&nbsp;    static final int NOT_SET = Integer.MAX_VALUE;
+<i>48</i>&nbsp;
+<i>49</i>&nbsp;    /**
+<i>50</i>&nbsp;     * Allocate a new builder
+<i>51</i>&nbsp;     *
+<i>52</i>&nbsp;     *
+<i>53</i>&nbsp;     * @param client the curator client
+<i>54</i>&nbsp;     * @param consumer functor to consume messages - NOTE: pass &lt;code&gt;null&lt;/code&gt; to make this a producer-only queue
+<i>55</i>&nbsp;     * @param serializer serializer to use for items
+<i>56</i>&nbsp;     * @param queuePath path to store queue
+<i>57</i>&nbsp;     * @return builder
+<i>58</i>&nbsp;     */
+<i>59</i>&nbsp;    public static&lt;T&gt; QueueBuilder&lt;T&gt;        builder(CuratorFramework client, QueueConsumer&lt;T&gt; consumer, QueueSerializer&lt;T&gt; serializer, String queuePath)
+<i>60</i>&nbsp;    {
+<b class="fc"><i>61</i>&nbsp;        return new QueueBuilder&lt;T&gt;(client, consumer, serializer, queuePath);</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    /**
+<i>65</i>&nbsp;     * Build a {@link DistributedQueue} from the current builder values
+<i>66</i>&nbsp;     *
+<i>67</i>&nbsp;     * @return distributed queue
+<i>68</i>&nbsp;     */
+<i>69</i>&nbsp;    public DistributedQueue&lt;T&gt;      buildQueue()
+<i>70</i>&nbsp;    {
+<b class="fc"><i>71</i>&nbsp;        return new DistributedQueue&lt;T&gt;</b>
+<i>72</i>&nbsp;        (
+<i>73</i>&nbsp;            client,
+<i>74</i>&nbsp;            consumer,
+<i>75</i>&nbsp;            serializer,
+<i>76</i>&nbsp;            queuePath,
+<i>77</i>&nbsp;            factory,
+<i>78</i>&nbsp;            executor,
+<i>79</i>&nbsp;            Integer.MAX_VALUE,
+<i>80</i>&nbsp;            false,
+<i>81</i>&nbsp;            lockPath,
+<i>82</i>&nbsp;            maxItems,
+<i>83</i>&nbsp;            putInBackground,
+<i>84</i>&nbsp;            finalFlushMs
+<i>85</i>&nbsp;        );
+<i>86</i>&nbsp;    }
+<i>87</i>&nbsp;
+<i>88</i>&nbsp;    /**
+<i>89</i>&nbsp;     * Build a {@link DistributedIdQueue} from the current builder values
+<i>90</i>&nbsp;     *
+<i>91</i>&nbsp;     * @return distributed id queue
+<i>92</i>&nbsp;     */
+<i>93</i>&nbsp;    public DistributedIdQueue&lt;T&gt;      buildIdQueue()
+<i>94</i>&nbsp;    {
+<b class="fc"><i>95</i>&nbsp;        return new DistributedIdQueue&lt;T&gt;</b>
+<i>96</i>&nbsp;        (
+<i>97</i>&nbsp;            client,
+<i>98</i>&nbsp;            consumer,
+<i>99</i>&nbsp;            serializer,
+<i>100</i>&nbsp;            queuePath,
+<i>101</i>&nbsp;            factory,
+<i>102</i>&nbsp;            executor,
+<i>103</i>&nbsp;            Integer.MAX_VALUE,
+<i>104</i>&nbsp;            false,
+<i>105</i>&nbsp;            lockPath,
+<i>106</i>&nbsp;            maxItems,
+<i>107</i>&nbsp;            putInBackground,
+<i>108</i>&nbsp;            finalFlushMs
+<i>109</i>&nbsp;        );
+<i>110</i>&nbsp;    }
+<i>111</i>&nbsp;
+<i>112</i>&nbsp;    /**
+<i>113</i>&nbsp;     * &lt;p&gt;Build a {@link DistributedPriorityQueue} from the current builder values.&lt;/p&gt;
+<i>114</i>&nbsp;     *
+<i>115</i>&nbsp;     * &lt;p&gt;When the priority
+<i>116</i>&nbsp;     * queue detects an item addition/removal, it will stop processing its current list of items and
+<i>117</i>&nbsp;     * refresh the list. &lt;code&gt;minItemsBeforeRefresh&lt;/code&gt; modifies this. It determines the minimum
+<i>118</i>&nbsp;     * number of items from the active list that will get processed before a refresh.&lt;/p&gt;
+<i>119</i>&nbsp;     *
+<i>120</i>&nbsp;     * &lt;p&gt;Due to a quirk in the way ZooKeeper notifies changes, the queue will get an item addition/remove
+<i>121</i>&nbsp;     * notification after &lt;b&gt;every&lt;/b&gt; item is processed. This can lead to poor performance. Set
+<i>122</i>&nbsp;     * &lt;code&gt;minItemsBeforeRefresh&lt;/code&gt; to the value your application can tolerate being out of sync.&lt;/p&gt;
+<i>123</i>&nbsp;     *
+<i>124</i>&nbsp;     * &lt;p&gt;For example: if the queue sees 10 items to process, it will end up making 10 calls to ZooKeeper
+<i>125</i>&nbsp;     * to check status. You can control this by setting &lt;code&gt;minItemsBeforeRefresh&lt;/code&gt; to 10 (or more)
+<i>126</i>&nbsp;     * and the queue will only refresh with ZooKeeper after 10 items are processed&lt;/p&gt;
+<i>127</i>&nbsp;     *
+<i>128</i>&nbsp;     * @param minItemsBeforeRefresh minimum items to process before refreshing the item list
+<i>129</i>&nbsp;     * @return distributed priority queue
+<i>130</i>&nbsp;     */
+<i>131</i>&nbsp;    public DistributedPriorityQueue&lt;T&gt;      buildPriorityQueue(int minItemsBeforeRefresh)
+<i>132</i>&nbsp;    {
+<b class="fc"><i>133</i>&nbsp;        return new DistributedPriorityQueue&lt;T&gt;</b>
+<i>134</i>&nbsp;        (
+<i>135</i>&nbsp;            client,
+<i>136</i>&nbsp;            consumer,
+<i>137</i>&nbsp;            serializer,
+<i>138</i>&nbsp;            queuePath,
+<i>139</i>&nbsp;            factory,
+<i>140</i>&nbsp;            executor,
+<i>141</i>&nbsp;            minItemsBeforeRefresh,
+<i>142</i>&nbsp;            lockPath,
+<i>143</i>&nbsp;            maxItems,
+<i>144</i>&nbsp;            putInBackground,
+<i>145</i>&nbsp;            finalFlushMs
+<i>146</i>&nbsp;        );
+<i>147</i>&nbsp;    }
+<i>148</i>&nbsp;
+<i>149</i>&nbsp;    /**
+<i>150</i>&nbsp;     * &lt;p&gt;Build a {@link DistributedDelayQueue} from the current builder values.&lt;/p&gt;
+<i>151</i>&nbsp;     *
+<i>152</i>&nbsp;     * @return distributed delay queue
+<i>153</i>&nbsp;     */
+<i>154</i>&nbsp;    public DistributedDelayQueue&lt;T&gt;      buildDelayQueue()
+<i>155</i>&nbsp;    {
+<b class="fc"><i>156</i>&nbsp;        return new DistributedDelayQueue&lt;T&gt;</b>
+<i>157</i>&nbsp;        (
+<i>158</i>&nbsp;            client,
+<i>159</i>&nbsp;            consumer,
+<i>160</i>&nbsp;            serializer,
+<i>161</i>&nbsp;            queuePath,
+<i>162</i>&nbsp;            factory,
+<i>163</i>&nbsp;            executor,
+<i>164</i>&nbsp;            Integer.MAX_VALUE,
+<i>165</i>&nbsp;            lockPath,
+<i>166</i>&nbsp;            maxItems,
+<i>167</i>&nbsp;            putInBackground,
+<i>168</i>&nbsp;            finalFlushMs
+<i>169</i>&nbsp;        );
+<i>170</i>&nbsp;    }
+<i>171</i>&nbsp;
+<i>172</i>&nbsp;    /**
+<i>173</i>&nbsp;     * Change the thread factory used. The default is {@link Executors#defaultThreadFactory()}
+<i>174</i>&nbsp;     *
+<i>175</i>&nbsp;     * @param factory new thread factory to use
+<i>176</i>&nbsp;     * @return this
+<i>177</i>&nbsp;     */
+<i>178</i>&nbsp;    public QueueBuilder&lt;T&gt;  threadFactory(ThreadFactory factory)
+<i>179</i>&nbsp;    {
+<b class="nc"><i>180</i>&nbsp;        Preconditions.checkNotNull(factory, &quot;factory cannot be null&quot;);</b>
+<i>181</i>&nbsp;
+<b class="nc"><i>182</i>&nbsp;        this.factory = factory;</b>
+<b class="nc"><i>183</i>&nbsp;        return this;</b>
+<i>184</i>&nbsp;    }
+<i>185</i>&nbsp;
+<i>186</i>&nbsp;    /**
+<i>187</i>&nbsp;     * Change the executor used. The default is {@link MoreExecutors#sameThreadExecutor()}
+<i>188</i>&nbsp;     *
+<i>189</i>&nbsp;     * @param executor new executor to use
+<i>190</i>&nbsp;     * @return this
+<i>191</i>&nbsp;     */
+<i>192</i>&nbsp;    public QueueBuilder&lt;T&gt;  executor(Executor executor)
+<i>193</i>&nbsp;    {
+<b class="fc"><i>194</i>&nbsp;        Preconditions.checkNotNull(executor, &quot;executor cannot be null&quot;);</b>
+<i>195</i>&nbsp;
+<b class="fc"><i>196</i>&nbsp;        this.executor = executor;</b>
+<b class="fc"><i>197</i>&nbsp;        return this;</b>
+<i>198</i>&nbsp;    }
+<i>199</i>&nbsp;
+<i>200</i>&nbsp;    /**
+<i>201</i>&nbsp;     * &lt;p&gt;Without a lock set, queue items are removed before being sent to the queue consumer. This can result in message
+<i>202</i>&nbsp;     * loss if the consumer fails to complete the message or the process dies.&lt;/p&gt;
+<i>203</i>&nbsp;     *
+<i>204</i>&nbsp;     * &lt;p&gt;Use a lock to make the message recoverable. A lock is held while
+<i>205</i>&nbsp;     * the message is being processed - this prevents other processes from taking the message. The message will not be removed
+<i>206</i>&nbsp;     * from the queue until the consumer functor returns. Thus, if there is a failure or the process dies,
+<i>207</i>&nbsp;     * the message will get sent to another process. There is a small performance penalty for this behavior however.
+<i>208</i>&nbsp;     *
+<i>209</i>&nbsp;     * @param path path for the lock
+<i>210</i>&nbsp;     * @return this
+<i>211</i>&nbsp;     */
+<i>212</i>&nbsp;    public QueueBuilder&lt;T&gt;  lockPath(String path)
+<i>213</i>&nbsp;    {
+<b class="fc"><i>214</i>&nbsp;        lockPath = path;</b>
+<b class="fc"><i>215</i>&nbsp;        return this;</b>
+<i>216</i>&nbsp;    }
+<i>217</i>&nbsp;
+<i>218</i>&nbsp;    /**
+<i>219</i>&nbsp;     * By default, the various queues are unbounded. This method allows setting a max number of items
+<i>220</i>&nbsp;     * to have in the queue. With this value set, the various &lt;code&gt;put&lt;/code&gt; methods will block when the
+<i>221</i>&nbsp;     * number of items in the queue approaches &lt;code&gt;maxItems&lt;/code&gt;. NOTE: &lt;code&gt;maxItems&lt;/code&gt; cannot
+<i>222</i>&nbsp;     * be exactly achieved. The only guarantee is that approximately &lt;code&gt;maxItems&lt;/code&gt; will cause
+<i>223</i>&nbsp;     * puts to block.
+<i>224</i>&nbsp;     *
+<i>225</i>&nbsp;     * @param maxItems the upper bound for the queue
+<i>226</i>&nbsp;     * @return this
+<i>227</i>&nbsp;     */
+<i>228</i>&nbsp;    public QueueBuilder&lt;T&gt;  maxItems(int maxItems)
+<i>229</i>&nbsp;    {
+<b class="fc"><i>230</i>&nbsp;        this.maxItems = maxItems;</b>
+<b class="fc"><i>231</i>&nbsp;        putInBackground = false;</b>
+<b class="fc"><i>232</i>&nbsp;        return this;</b>
+<i>233</i>&nbsp;    }
+<i>234</i>&nbsp;
+<i>235</i>&nbsp;    /**
+<i>236</i>&nbsp;     * By default, messages are added in the background. However, this can flood the background thread.
+<i>237</i>&nbsp;     *
+<i>238</i>&nbsp;     * @param putInBackground true to put in the background (default). false to put in the foreground.
+<i>239</i>&nbsp;     * @return this
+<i>240</i>&nbsp;     */
+<i>241</i>&nbsp;    public QueueBuilder&lt;T&gt;  putInBackground(boolean putInBackground)
+<i>242</i>&nbsp;    {
+<b class="fc"><i>243</i>&nbsp;        this.putInBackground = putInBackground;</b>
+<b class="fc"><i>244</i>&nbsp;        return this;</b>
+<i>245</i>&nbsp;    }
+<i>246</i>&nbsp;
+<i>247</i>&nbsp;    /**
+<i>248</i>&nbsp;     * Sets an amount of time to call {@link DistributedQueue#flushPuts(long, TimeUnit)} when the
+<i>249</i>&nbsp;     * queue is closed. The default is 5 seconds. Pass 0 to turn flushing on close off.
+<i>250</i>&nbsp;     *
+<i>251</i>&nbsp;     * @param time time
+<i>252</i>&nbsp;     * @param unit the unit
+<i>253</i>&nbsp;     * @return this
+<i>254</i>&nbsp;     */
+<i>255</i>&nbsp;    public QueueBuilder&lt;T&gt;  finalFlushTime(int time, TimeUnit unit)
+<i>256</i>&nbsp;    {
+<b class="nc"><i>257</i>&nbsp;        finalFlushMs = (int)unit.toMillis(time);</b>
+<b class="nc"><i>258</i>&nbsp;        return this;</b>
+<i>259</i>&nbsp;    }
+<i>260</i>&nbsp;
+<i>261</i>&nbsp;    private QueueBuilder(CuratorFramework client, QueueConsumer&lt;T&gt; consumer, QueueSerializer&lt;T&gt; serializer, String queuePath)
+<b class="fc"><i>262</i>&nbsp;    {</b>
+<b class="fc"><i>263</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>264</i>&nbsp;        this.consumer = consumer;</b>
+<b class="fc"><i>265</i>&nbsp;        this.serializer = serializer;</b>
+<b class="fc"><i>266</i>&nbsp;        this.queuePath = queuePath;</b>
+<i>267</i>&nbsp;
+<b class="fc"><i>268</i>&nbsp;        factory = defaultThreadFactory;</b>
+<b class="fc"><i>269</i>&nbsp;        executor = MoreExecutors.sameThreadExecutor();</b>
+<b class="fc"><i>270</i>&nbsp;    }</b>
+<i>271</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

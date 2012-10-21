@@ -1,0 +1,256 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DistributedBarrier</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.barriers</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DistributedBarrier (com.netflix.curator.framework.recipes.barriers)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DistributedBarrier</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.9%
+  </span>
+  <span class="absValue">
+    (30/ 33)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DistributedBarrier$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91.7%
+  </span>
+  <span class="absValue">
+    (33/ 36)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.barriers;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>20</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>21</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>22</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>23</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>24</i>&nbsp;
+<i>25</i>&nbsp;/**
+<i>26</i>&nbsp; * &lt;p&gt;
+<i>27</i>&nbsp; *     A barrier as described in the ZK recipes. Quoting the recipe:
+<i>28</i>&nbsp; * &lt;/p&gt;
+<i>29</i>&nbsp; *
+<i>30</i>&nbsp; * &lt;blockquote&gt;
+<i>31</i>&nbsp; *     Distributed systems use barriers to block processing of a set of nodes
+<i>32</i>&nbsp; *     until a condition is met at which time all the nodes are allowed to proceed
+<i>33</i>&nbsp; * &lt;/blockquote&gt;
+<i>34</i>&nbsp; */
+<b class="fc"><i>35</i>&nbsp;public class DistributedBarrier</b>
+<i>36</i>&nbsp;{
+<i>37</i>&nbsp;    private final CuratorFramework client;
+<i>38</i>&nbsp;    private final String barrierPath;
+<b class="fc"><i>39</i>&nbsp;    private final Watcher watcher = new Watcher()</b>
+<b class="fc"><i>40</i>&nbsp;    {</b>
+<i>41</i>&nbsp;        @Override
+<i>42</i>&nbsp;        public void process(WatchedEvent event)
+<i>43</i>&nbsp;        {
+<b class="fc"><i>44</i>&nbsp;            notifyFromWatcher();</b>
+<b class="fc"><i>45</i>&nbsp;        }</b>
+<i>46</i>&nbsp;    };
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    /**
+<i>49</i>&nbsp;     * @param client client
+<i>50</i>&nbsp;     * @param barrierPath path to use as the barrier
+<i>51</i>&nbsp;     */
+<i>52</i>&nbsp;    public DistributedBarrier(CuratorFramework client, String barrierPath)
+<b class="fc"><i>53</i>&nbsp;    {</b>
+<b class="fc"><i>54</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>55</i>&nbsp;        this.barrierPath = barrierPath;</b>
+<b class="fc"><i>56</i>&nbsp;    }</b>
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;    /**
+<i>59</i>&nbsp;     * Utility to set the barrier node
+<i>60</i>&nbsp;     *
+<i>61</i>&nbsp;     * @throws Exception errors
+<i>62</i>&nbsp;     */
+<i>63</i>&nbsp;    public synchronized void         setBarrier() throws Exception
+<i>64</i>&nbsp;    {
+<i>65</i>&nbsp;        try
+<i>66</i>&nbsp;        {
+<b class="fc"><i>67</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(barrierPath);</b>
+<i>68</i>&nbsp;        }
+<b class="nc"><i>69</i>&nbsp;        catch ( KeeperException.NodeExistsException ignore )</b>
+<i>70</i>&nbsp;        {
+<i>71</i>&nbsp;            // ignore
+<b class="fc"><i>72</i>&nbsp;        }</b>
+<b class="fc"><i>73</i>&nbsp;    }</b>
+<i>74</i>&nbsp;
+<i>75</i>&nbsp;    /**
+<i>76</i>&nbsp;     * Utility to remove the barrier node
+<i>77</i>&nbsp;     *
+<i>78</i>&nbsp;     * @throws Exception errors
+<i>79</i>&nbsp;     */
+<i>80</i>&nbsp;    public synchronized void      removeBarrier() throws Exception
+<i>81</i>&nbsp;    {
+<i>82</i>&nbsp;        try
+<i>83</i>&nbsp;        {
+<b class="fc"><i>84</i>&nbsp;            client.delete().forPath(barrierPath);</b>
+<i>85</i>&nbsp;        }
+<b class="nc"><i>86</i>&nbsp;        catch ( KeeperException.NoNodeException ignore )</b>
+<i>87</i>&nbsp;        {
+<i>88</i>&nbsp;            // ignore
+<b class="fc"><i>89</i>&nbsp;        }</b>
+<b class="fc"><i>90</i>&nbsp;    }</b>
+<i>91</i>&nbsp;
+<i>92</i>&nbsp;    /**
+<i>93</i>&nbsp;     * Blocks until the barrier node comes into existence
+<i>94</i>&nbsp;     *
+<i>95</i>&nbsp;     * @throws Exception errors
+<i>96</i>&nbsp;     */
+<i>97</i>&nbsp;    public synchronized void      waitOnBarrier() throws Exception
+<i>98</i>&nbsp;    {
+<b class="fc"><i>99</i>&nbsp;        waitOnBarrier(-1, null);</b>
+<b class="fc"><i>100</i>&nbsp;    }</b>
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;    /**
+<i>103</i>&nbsp;     * Blocks until the barrier no longer exists or the timeout elapses
+<i>104</i>&nbsp;     *
+<i>105</i>&nbsp;     * @param maxWait max time to block
+<i>106</i>&nbsp;     * @param unit time unit
+<i>107</i>&nbsp;     * @return true if the wait was successful, false if the timeout elapsed first
+<i>108</i>&nbsp;     * @throws Exception errors
+<i>109</i>&nbsp;     */
+<i>110</i>&nbsp;    public synchronized boolean      waitOnBarrier(long maxWait, TimeUnit unit) throws Exception
+<i>111</i>&nbsp;    {
+<b class="fc"><i>112</i>&nbsp;        long            startMs = System.currentTimeMillis();</b>
+<b class="fc"><i>113</i>&nbsp;        boolean         hasMaxWait = (unit != null);</b>
+<b class="fc"><i>114</i>&nbsp;        long            maxWaitMs = hasMaxWait ? TimeUnit.MILLISECONDS.convert(maxWait, unit) : Long.MAX_VALUE;</b>
+<i>115</i>&nbsp;
+<i>116</i>&nbsp;        boolean         result;
+<i>117</i>&nbsp;        for(;;)
+<i>118</i>&nbsp;        {
+<b class="fc"><i>119</i>&nbsp;            result = (client.checkExists().usingWatcher(watcher).forPath(barrierPath) == null);</b>
+<b class="fc"><i>120</i>&nbsp;            if ( result )</b>
+<i>121</i>&nbsp;            {
+<b class="fc"><i>122</i>&nbsp;                break;</b>
+<i>123</i>&nbsp;            }
+<i>124</i>&nbsp;
+<b class="fc"><i>125</i>&nbsp;            if ( hasMaxWait )</b>
+<i>126</i>&nbsp;            {
+<b class="fc"><i>127</i>&nbsp;                long        elapsed = System.currentTimeMillis() - startMs;</b>
+<b class="fc"><i>128</i>&nbsp;                long        thisWaitMs = maxWaitMs - elapsed;</b>
+<b class="fc"><i>129</i>&nbsp;                if ( thisWaitMs &lt;= 0 )</b>
+<i>130</i>&nbsp;                {
+<b class="fc"><i>131</i>&nbsp;                    break;</b>
+<i>132</i>&nbsp;                }
+<b class="fc"><i>133</i>&nbsp;                wait(thisWaitMs);</b>
+<b class="fc"><i>134</i>&nbsp;            }</b>
+<i>135</i>&nbsp;            else
+<i>136</i>&nbsp;            {
+<b class="nc"><i>137</i>&nbsp;                wait();</b>
+<i>138</i>&nbsp;            }
+<i>139</i>&nbsp;        }
+<b class="fc"><i>140</i>&nbsp;        return result;</b>
+<i>141</i>&nbsp;    }
+<i>142</i>&nbsp;
+<i>143</i>&nbsp;    private synchronized void notifyFromWatcher()
+<i>144</i>&nbsp;    {
+<b class="fc"><i>145</i>&nbsp;        notifyAll();</b>
+<b class="fc"><i>146</i>&nbsp;    }</b>
+<i>147</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

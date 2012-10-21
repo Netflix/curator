@@ -1,0 +1,663 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestReaper</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestReaper (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestReaper</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (22/ 22)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    99.5%
+  </span>
+  <span class="absValue">
+    (199/ 200)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestReaper$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90%
+  </span>
+  <span class="absValue">
+    (9/ 10)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestReaper$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestReaper$2$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestReaper$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/ 8)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    96.8%
+  </span>
+  <span class="absValue">
+    (30/ 31)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    99.1%
+  </span>
+  <span class="absValue">
+    (226/ 228)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.io.Closeables;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>22</i>&nbsp;import com.netflix.curator.framework.recipes.BaseClassForTests;
+<i>23</i>&nbsp;import com.netflix.curator.framework.recipes.leader.LeaderSelector;
+<i>24</i>&nbsp;import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
+<i>25</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>26</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>27</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>28</i>&nbsp;import junit.framework.Assert;
+<i>29</i>&nbsp;import org.apache.zookeeper.CreateMode;
+<i>30</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>31</i>&nbsp;import org.testng.annotations.Test;
+<i>32</i>&nbsp;import java.io.IOException;
+<i>33</i>&nbsp;import java.util.Queue;
+<i>34</i>&nbsp;import java.util.concurrent.*;
+<i>35</i>&nbsp;
+<b class="fc"><i>36</i>&nbsp;public class TestReaper extends BaseClassForTests</b>
+<i>37</i>&nbsp;{
+<i>38</i>&nbsp;    @Test
+<i>39</i>&nbsp;    public void testUsingLeader() throws Exception
+<i>40</i>&nbsp;    {
+<b class="fc"><i>41</i>&nbsp;        final Timing            timing = new Timing();</b>
+<b class="fc"><i>42</i>&nbsp;        final CuratorFramework  client = makeClient(timing, null);</b>
+<b class="fc"><i>43</i>&nbsp;        final CountDownLatch    latch = new CountDownLatch(1);</b>
+<b class="fc"><i>44</i>&nbsp;        LeaderSelectorListener  listener = new LeaderSelectorListener()</b>
+<b class="fc"><i>45</i>&nbsp;        {</b>
+<i>46</i>&nbsp;            @Override
+<i>47</i>&nbsp;            public void takeLeadership(CuratorFramework client) throws Exception
+<i>48</i>&nbsp;            {
+<b class="fc"><i>49</i>&nbsp;                Reaper      reaper = new Reaper(client, 1);</b>
+<i>50</i>&nbsp;                try
+<i>51</i>&nbsp;                {
+<b class="fc"><i>52</i>&nbsp;                    reaper.addPath(&quot;/one/two/three&quot;, Reaper.Mode.REAP_UNTIL_DELETE);</b>
+<b class="fc"><i>53</i>&nbsp;                    reaper.start();</b>
+<i>54</i>&nbsp;
+<b class="fc"><i>55</i>&nbsp;                    timing.sleepABit();</b>
+<b class="fc"><i>56</i>&nbsp;                    latch.countDown();</b>
+<i>57</i>&nbsp;                }
+<i>58</i>&nbsp;                finally
+<i>59</i>&nbsp;                {
+<b class="fc"><i>60</i>&nbsp;                    Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>61</i>&nbsp;                }</b>
+<b class="fc"><i>62</i>&nbsp;            }</b>
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;            @Override
+<i>65</i>&nbsp;            public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>66</i>&nbsp;            {
+<b class="nc"><i>67</i>&nbsp;            }</b>
+<i>68</i>&nbsp;        };
+<b class="fc"><i>69</i>&nbsp;        LeaderSelector  selector = new LeaderSelector(client, &quot;/leader&quot;, listener);</b>
+<i>70</i>&nbsp;        try
+<i>71</i>&nbsp;        {
+<b class="fc"><i>72</i>&nbsp;            client.start();</b>
+<b class="fc"><i>73</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>74</i>&nbsp;
+<b class="fc"><i>75</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>76</i>&nbsp;
+<b class="fc"><i>77</i>&nbsp;            selector.start();</b>
+<b class="fc"><i>78</i>&nbsp;            timing.awaitLatch(latch);</b>
+<i>79</i>&nbsp;
+<b class="fc"><i>80</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>81</i>&nbsp;        }
+<i>82</i>&nbsp;        finally
+<i>83</i>&nbsp;        {
+<b class="fc"><i>84</i>&nbsp;            Closeables.closeQuietly(selector);</b>
+<b class="fc"><i>85</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>86</i>&nbsp;        }</b>
+<b class="fc"><i>87</i>&nbsp;    }</b>
+<i>88</i>&nbsp;
+<i>89</i>&nbsp;    @Test
+<i>90</i>&nbsp;    public void testSparseUseNoReap() throws Exception
+<i>91</i>&nbsp;    {
+<b class="fc"><i>92</i>&nbsp;        final int   THRESHOLD = 3000;</b>
+<i>93</i>&nbsp;
+<b class="fc"><i>94</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>95</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>96</i>&nbsp;        Future&lt;Void&gt;            watcher = null;</b>
+<b class="fc"><i>97</i>&nbsp;        CuratorFramework        client = makeClient(timing, null);</b>
+<i>98</i>&nbsp;        try
+<i>99</i>&nbsp;        {
+<b class="fc"><i>100</i>&nbsp;            client.start();</b>
+<b class="fc"><i>101</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>102</i>&nbsp;
+<b class="fc"><i>103</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>104</i>&nbsp;
+<b class="fc"><i>105</i>&nbsp;            final Queue&lt;Reaper.PathHolder&gt;  holders = new ConcurrentLinkedQueue&lt;Reaper.PathHolder&gt;();</b>
+<b class="fc"><i>106</i>&nbsp;            final ExecutorService           pool = Executors.newCachedThreadPool();</b>
+<b class="fc"><i>107</i>&nbsp;            ScheduledExecutorService service = new ScheduledThreadPoolExecutor(1)</b>
+<b class="fc"><i>108</i>&nbsp;            {</b>
+<i>109</i>&nbsp;                @Override
+<i>110</i>&nbsp;                public ScheduledFuture&lt;?&gt; schedule(Runnable command, long delay, TimeUnit unit)
+<i>111</i>&nbsp;                {
+<b class="fc"><i>112</i>&nbsp;                    final Reaper.PathHolder     pathHolder = (Reaper.PathHolder)command;</b>
+<b class="fc"><i>113</i>&nbsp;                    holders.add(pathHolder);</b>
+<b class="fc"><i>114</i>&nbsp;                    final ScheduledFuture&lt;?&gt;    f = super.schedule(command, delay, unit);</b>
+<b class="fc"><i>115</i>&nbsp;                    pool.submit</b>
+<i>116</i>&nbsp;                    (
+<i>117</i>&nbsp;                        new Callable&lt;Void&gt;()
+<b class="fc"><i>118</i>&nbsp;                        {</b>
+<i>119</i>&nbsp;                            @Override
+<i>120</i>&nbsp;                            public Void call() throws Exception
+<i>121</i>&nbsp;                            {
+<b class="fc"><i>122</i>&nbsp;                                f.get();</b>
+<b class="fc"><i>123</i>&nbsp;                                holders.remove(pathHolder);</b>
+<b class="fc"><i>124</i>&nbsp;                                return null;</b>
+<i>125</i>&nbsp;                            }
+<i>126</i>&nbsp;                        }
+<i>127</i>&nbsp;                    );
+<b class="fc"><i>128</i>&nbsp;                    return f;</b>
+<i>129</i>&nbsp;                }
+<i>130</i>&nbsp;            };
+<i>131</i>&nbsp;
+<b class="fc"><i>132</i>&nbsp;            reaper = new Reaper</b>
+<i>133</i>&nbsp;            (
+<i>134</i>&nbsp;                client,
+<i>135</i>&nbsp;                service,
+<i>136</i>&nbsp;                THRESHOLD
+<i>137</i>&nbsp;            );
+<b class="fc"><i>138</i>&nbsp;            reaper.start();</b>
+<b class="fc"><i>139</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;);</b>
+<i>140</i>&nbsp;
+<b class="fc"><i>141</i>&nbsp;            long        start = System.currentTimeMillis();</b>
+<b class="fc"><i>142</i>&nbsp;            boolean     emptyCountIsCorrect = false;</b>
+<b class="fc"><i>143</i>&nbsp;            while ( ((System.currentTimeMillis() - start) &lt; timing.forWaiting().milliseconds()) &amp;&amp; !emptyCountIsCorrect )   // need to loop as the Holder can go in/out of the Reaper&#39;s DelayQueue</b>
+<i>144</i>&nbsp;            {
+<b class="fc"><i>145</i>&nbsp;                for ( Reaper.PathHolder holder : holders )</b>
+<i>146</i>&nbsp;                {
+<b class="fc"><i>147</i>&nbsp;                    if ( holder.path.endsWith(&quot;/one/two/three&quot;) )</b>
+<i>148</i>&nbsp;                    {
+<b class="fc"><i>149</i>&nbsp;                        emptyCountIsCorrect = (holder.emptyCount &gt; 0);</b>
+<b class="fc"><i>150</i>&nbsp;                        break;</b>
+<i>151</i>&nbsp;                    }
+<i>152</i>&nbsp;                }
+<b class="fc"><i>153</i>&nbsp;                Thread.sleep(1);</b>
+<i>154</i>&nbsp;            }
+<b class="fc"><i>155</i>&nbsp;            Assert.assertTrue(emptyCountIsCorrect);</b>
+<i>156</i>&nbsp;
+<b class="fc"><i>157</i>&nbsp;            client.create().forPath(&quot;/one/two/three/foo&quot;);</b>
+<i>158</i>&nbsp;
+<b class="fc"><i>159</i>&nbsp;            Thread.sleep(2 * (THRESHOLD / Reaper.EMPTY_COUNT_THRESHOLD));</b>
+<b class="fc"><i>160</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<b class="fc"><i>161</i>&nbsp;            client.delete().forPath(&quot;/one/two/three/foo&quot;);</b>
+<i>162</i>&nbsp;
+<b class="fc"><i>163</i>&nbsp;            Thread.sleep(THRESHOLD);</b>
+<b class="fc"><i>164</i>&nbsp;            timing.sleepABit();</b>
+<i>165</i>&nbsp;
+<b class="fc"><i>166</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>167</i>&nbsp;        }
+<i>168</i>&nbsp;        finally
+<i>169</i>&nbsp;        {
+<b class="fc"><i>170</i>&nbsp;            if ( watcher != null )</b>
+<i>171</i>&nbsp;            {
+<b class="nc"><i>172</i>&nbsp;                watcher.cancel(true);</b>
+<i>173</i>&nbsp;            }
+<b class="fc"><i>174</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>175</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>176</i>&nbsp;        }</b>
+<b class="fc"><i>177</i>&nbsp;    }</b>
+<i>178</i>&nbsp;
+<i>179</i>&nbsp;    @Test
+<i>180</i>&nbsp;    public void testReapUntilDelete() throws Exception
+<i>181</i>&nbsp;    {
+<b class="fc"><i>182</i>&nbsp;        testReapUntilDelete(null);</b>
+<b class="fc"><i>183</i>&nbsp;    }</b>
+<i>184</i>&nbsp;
+<i>185</i>&nbsp;    @Test
+<i>186</i>&nbsp;    public void testReapUntilDeleteNamespace() throws Exception
+<i>187</i>&nbsp;    {
+<b class="fc"><i>188</i>&nbsp;        testReapUntilDelete(&quot;test&quot;);</b>
+<b class="fc"><i>189</i>&nbsp;    }</b>
+<i>190</i>&nbsp;
+<i>191</i>&nbsp;     @Test
+<i>192</i>&nbsp;    public void testReapUntilGone() throws Exception
+<i>193</i>&nbsp;    {
+<b class="fc"><i>194</i>&nbsp;        testReapUntilGone(null);</b>
+<b class="fc"><i>195</i>&nbsp;    }</b>
+<i>196</i>&nbsp;
+<i>197</i>&nbsp;    @Test
+<i>198</i>&nbsp;    public void testReapUntilGoneNamespace() throws Exception
+<i>199</i>&nbsp;    {
+<b class="fc"><i>200</i>&nbsp;        testReapUntilGone(&quot;test&quot;);</b>
+<b class="fc"><i>201</i>&nbsp;    }</b>
+<i>202</i>&nbsp;
+<i>203</i>&nbsp;    @Test
+<i>204</i>&nbsp;    public void testRemove() throws Exception
+<i>205</i>&nbsp;    {
+<b class="fc"><i>206</i>&nbsp;        testRemove(null);</b>
+<b class="fc"><i>207</i>&nbsp;    }</b>
+<i>208</i>&nbsp;
+<i>209</i>&nbsp;    @Test
+<i>210</i>&nbsp;    public void testRemoveNamespace() throws Exception
+<i>211</i>&nbsp;    {
+<b class="fc"><i>212</i>&nbsp;        testRemove(&quot;test&quot;);</b>
+<b class="fc"><i>213</i>&nbsp;    }</b>
+<i>214</i>&nbsp;
+<i>215</i>&nbsp;    @Test
+<i>216</i>&nbsp;    public void testSimulationWithLocks() throws Exception
+<i>217</i>&nbsp;    {
+<b class="fc"><i>218</i>&nbsp;        testSimulationWithLocks(null);</b>
+<b class="fc"><i>219</i>&nbsp;    }</b>
+<i>220</i>&nbsp;
+<i>221</i>&nbsp;    @Test
+<i>222</i>&nbsp;    public void testSimulationWithLocksNamespace() throws Exception
+<i>223</i>&nbsp;    {
+<b class="fc"><i>224</i>&nbsp;        testSimulationWithLocks(&quot;test&quot;);</b>
+<b class="fc"><i>225</i>&nbsp;    }</b>
+<i>226</i>&nbsp;
+<i>227</i>&nbsp;    @Test
+<i>228</i>&nbsp;    public void testWithEphemerals() throws Exception
+<i>229</i>&nbsp;    {
+<b class="fc"><i>230</i>&nbsp;        testWithEphemerals(null);</b>
+<b class="fc"><i>231</i>&nbsp;    }</b>
+<i>232</i>&nbsp;
+<i>233</i>&nbsp;    @Test
+<i>234</i>&nbsp;    public void testWithEphemeralsNamespace() throws Exception
+<i>235</i>&nbsp;    {
+<b class="fc"><i>236</i>&nbsp;        testWithEphemerals(&quot;test&quot;);</b>
+<b class="fc"><i>237</i>&nbsp;    }</b>
+<i>238</i>&nbsp;
+<i>239</i>&nbsp;    @Test
+<i>240</i>&nbsp;    public void testBasic() throws Exception
+<i>241</i>&nbsp;    {
+<b class="fc"><i>242</i>&nbsp;        testBasic(null);</b>
+<b class="fc"><i>243</i>&nbsp;    }</b>
+<i>244</i>&nbsp;
+<i>245</i>&nbsp;    @Test
+<i>246</i>&nbsp;    public void testBasicNamespace() throws Exception
+<i>247</i>&nbsp;    {
+<b class="fc"><i>248</i>&nbsp;        testBasic(&quot;test&quot;);</b>
+<b class="fc"><i>249</i>&nbsp;    }</b>
+<i>250</i>&nbsp;
+<i>251</i>&nbsp;    private void testReapUntilDelete(String namespace) throws Exception
+<i>252</i>&nbsp;    {
+<b class="fc"><i>253</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>254</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>255</i>&nbsp;        CuratorFramework        client = makeClient(timing, namespace);</b>
+<i>256</i>&nbsp;        try
+<i>257</i>&nbsp;        {
+<b class="fc"><i>258</i>&nbsp;            client.start();</b>
+<b class="fc"><i>259</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>260</i>&nbsp;
+<b class="fc"><i>261</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>262</i>&nbsp;
+<b class="fc"><i>263</i>&nbsp;            reaper = new Reaper(client, 100);</b>
+<b class="fc"><i>264</i>&nbsp;            reaper.start();</b>
+<i>265</i>&nbsp;
+<b class="fc"><i>266</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;, Reaper.Mode.REAP_UNTIL_DELETE);</b>
+<b class="fc"><i>267</i>&nbsp;            timing.sleepABit();</b>
+<i>268</i>&nbsp;
+<b class="fc"><i>269</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>270</i>&nbsp;
+<b class="fc"><i>271</i>&nbsp;            client.create().forPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>272</i>&nbsp;            timing.sleepABit();</b>
+<b class="fc"><i>273</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>274</i>&nbsp;        }
+<i>275</i>&nbsp;        finally
+<i>276</i>&nbsp;        {
+<b class="fc"><i>277</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>278</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>279</i>&nbsp;        }</b>
+<b class="fc"><i>280</i>&nbsp;    }</b>
+<i>281</i>&nbsp;
+<i>282</i>&nbsp;    private void testReapUntilGone(String namespace) throws Exception
+<i>283</i>&nbsp;    {
+<b class="fc"><i>284</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>285</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>286</i>&nbsp;        CuratorFramework        client = makeClient(timing, namespace);</b>
+<i>287</i>&nbsp;        try
+<i>288</i>&nbsp;        {
+<b class="fc"><i>289</i>&nbsp;            client.start();</b>
+<i>290</i>&nbsp;            
+<b class="fc"><i>291</i>&nbsp;            reaper = new Reaper(client, 100);</b>
+<b class="fc"><i>292</i>&nbsp;            reaper.start();</b>
+<i>293</i>&nbsp;
+<b class="fc"><i>294</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;, Reaper.Mode.REAP_UNTIL_GONE);</b>
+<b class="fc"><i>295</i>&nbsp;            timing.sleepABit();</b>
+<i>296</i>&nbsp;
+<b class="fc"><i>297</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>298</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>299</i>&nbsp;
+<b class="fc"><i>300</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;, Reaper.Mode.REAP_UNTIL_GONE);</b>
+<b class="fc"><i>301</i>&nbsp;            timing.sleepABit();</b>
+<i>302</i>&nbsp;
+<b class="fc"><i>303</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>304</i>&nbsp;        }
+<i>305</i>&nbsp;        finally
+<i>306</i>&nbsp;        {
+<b class="fc"><i>307</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>308</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>309</i>&nbsp;        }</b>
+<b class="fc"><i>310</i>&nbsp;    }</b>
+<i>311</i>&nbsp;
+<i>312</i>&nbsp;
+<i>313</i>&nbsp;    private CuratorFramework makeClient(Timing timing, String namespace) throws IOException
+<i>314</i>&nbsp;    {
+<b class="fc"><i>315</i>&nbsp;        CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()</b>
+<i>316</i>&nbsp;            .connectionTimeoutMs(timing.connection())
+<i>317</i>&nbsp;            .sessionTimeoutMs(timing.session())
+<i>318</i>&nbsp;            .connectString(server.getConnectString())
+<i>319</i>&nbsp;            .retryPolicy(new RetryOneTime(1));
+<b class="fc"><i>320</i>&nbsp;        if ( namespace != null )</b>
+<i>321</i>&nbsp;        {
+<b class="fc"><i>322</i>&nbsp;            builder = builder.namespace(namespace);</b>
+<i>323</i>&nbsp;        }
+<b class="fc"><i>324</i>&nbsp;        return builder.build();</b>
+<i>325</i>&nbsp;    }
+<i>326</i>&nbsp;
+<i>327</i>&nbsp;    private void testRemove(String namespace) throws Exception
+<i>328</i>&nbsp;    {
+<b class="fc"><i>329</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>330</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>331</i>&nbsp;        CuratorFramework        client = makeClient(timing, namespace);</b>
+<i>332</i>&nbsp;        try
+<i>333</i>&nbsp;        {
+<b class="fc"><i>334</i>&nbsp;            client.start();</b>
+<b class="fc"><i>335</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>336</i>&nbsp;
+<b class="fc"><i>337</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>338</i>&nbsp;
+<b class="fc"><i>339</i>&nbsp;            reaper = new Reaper(client, 100);</b>
+<b class="fc"><i>340</i>&nbsp;            reaper.start();</b>
+<i>341</i>&nbsp;
+<b class="fc"><i>342</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>343</i>&nbsp;            timing.sleepABit();</b>
+<i>344</i>&nbsp;
+<b class="fc"><i>345</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>346</i>&nbsp;
+<b class="fc"><i>347</i>&nbsp;            Assert.assertTrue(reaper.removePath(&quot;/one/two/three&quot;));</b>
+<i>348</i>&nbsp;
+<b class="fc"><i>349</i>&nbsp;            client.create().forPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>350</i>&nbsp;            timing.sleepABit();</b>
+<b class="fc"><i>351</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>352</i>&nbsp;        }
+<i>353</i>&nbsp;        finally
+<i>354</i>&nbsp;        {
+<b class="fc"><i>355</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>356</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>357</i>&nbsp;        }</b>
+<b class="fc"><i>358</i>&nbsp;    }</b>
+<i>359</i>&nbsp;
+<i>360</i>&nbsp;    private void testSimulationWithLocks(String namespace) throws Exception
+<i>361</i>&nbsp;    {
+<b class="fc"><i>362</i>&nbsp;        final int           LOCK_CLIENTS = 10;</b>
+<b class="fc"><i>363</i>&nbsp;        final int           ITERATIONS = 250;</b>
+<b class="fc"><i>364</i>&nbsp;        final int           MAX_WAIT_MS = 10;</b>
+<i>365</i>&nbsp;
+<b class="fc"><i>366</i>&nbsp;        ExecutorService                     service = Executors.newFixedThreadPool(LOCK_CLIENTS);</b>
+<b class="fc"><i>367</i>&nbsp;        ExecutorCompletionService&lt;Object&gt;   completionService = new ExecutorCompletionService&lt;Object&gt;(service);</b>
+<i>368</i>&nbsp;
+<b class="fc"><i>369</i>&nbsp;        Timing                      timing = new Timing();</b>
+<b class="fc"><i>370</i>&nbsp;        Reaper                      reaper = null;</b>
+<b class="fc"><i>371</i>&nbsp;        final CuratorFramework      client = makeClient(timing, namespace);</b>
+<i>372</i>&nbsp;        try
+<i>373</i>&nbsp;        {
+<b class="fc"><i>374</i>&nbsp;            client.start();</b>
+<i>375</i>&nbsp;
+<b class="fc"><i>376</i>&nbsp;            reaper = new Reaper(client, MAX_WAIT_MS / 2);</b>
+<b class="fc"><i>377</i>&nbsp;            reaper.start();</b>
+<b class="fc"><i>378</i>&nbsp;            reaper.addPath(&quot;/a/b&quot;);</b>
+<i>379</i>&nbsp;
+<b class="fc"><i>380</i>&nbsp;            for ( int i = 0; i &lt; LOCK_CLIENTS; ++i )</b>
+<i>381</i>&nbsp;            {
+<b class="fc"><i>382</i>&nbsp;                completionService.submit</b>
+<i>383</i>&nbsp;                (
+<i>384</i>&nbsp;                    new Callable&lt;Object&gt;()
+<b class="fc"><i>385</i>&nbsp;                    {</b>
+<i>386</i>&nbsp;                        @Override
+<i>387</i>&nbsp;                        public Object call() throws Exception
+<i>388</i>&nbsp;                        {
+<b class="fc"><i>389</i>&nbsp;                            final InterProcessMutex     lock = new InterProcessMutex(client, &quot;/a/b&quot;);</b>
+<b class="fc"><i>390</i>&nbsp;                            for ( int i = 0; i &lt; ITERATIONS; ++i )</b>
+<i>391</i>&nbsp;                            {
+<b class="fc"><i>392</i>&nbsp;                                lock.acquire();</b>
+<i>393</i>&nbsp;                                try
+<i>394</i>&nbsp;                                {
+<b class="fc"><i>395</i>&nbsp;                                    Thread.sleep((int)(Math.random() * MAX_WAIT_MS));</b>
+<i>396</i>&nbsp;                                }
+<i>397</i>&nbsp;                                finally
+<i>398</i>&nbsp;                                {
+<b class="fc"><i>399</i>&nbsp;                                    lock.release();</b>
+<b class="fc"><i>400</i>&nbsp;                                }</b>
+<i>401</i>&nbsp;                            }
+<b class="fc"><i>402</i>&nbsp;                            return null;</b>
+<i>403</i>&nbsp;                        }
+<i>404</i>&nbsp;                    }
+<i>405</i>&nbsp;                );
+<i>406</i>&nbsp;            }
+<i>407</i>&nbsp;
+<b class="fc"><i>408</i>&nbsp;            for ( int i = 0; i &lt; LOCK_CLIENTS; ++i )</b>
+<i>409</i>&nbsp;            {
+<b class="fc"><i>410</i>&nbsp;                completionService.take().get();</b>
+<i>411</i>&nbsp;            }
+<i>412</i>&nbsp;
+<b class="fc"><i>413</i>&nbsp;            Thread.sleep(timing.session());</b>
+<b class="fc"><i>414</i>&nbsp;            timing.sleepABit();</b>
+<i>415</i>&nbsp;
+<b class="fc"><i>416</i>&nbsp;            Stat stat = client.checkExists().forPath(&quot;/a/b&quot;);</b>
+<b class="fc"><i>417</i>&nbsp;            Assert.assertNull(&quot;Child qty: &quot; + ((stat != null) ? stat.getNumChildren() : 0), stat);</b>
+<i>418</i>&nbsp;        }
+<i>419</i>&nbsp;        finally
+<i>420</i>&nbsp;        {
+<b class="fc"><i>421</i>&nbsp;            service.shutdownNow();</b>
+<b class="fc"><i>422</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>423</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>424</i>&nbsp;        }</b>
+<b class="fc"><i>425</i>&nbsp;    }</b>
+<i>426</i>&nbsp;
+<i>427</i>&nbsp;    private void testWithEphemerals(String namespace) throws Exception
+<i>428</i>&nbsp;    {
+<b class="fc"><i>429</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>430</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>431</i>&nbsp;        CuratorFramework        client2 = null;</b>
+<b class="fc"><i>432</i>&nbsp;        CuratorFramework        client = makeClient(timing, namespace);</b>
+<i>433</i>&nbsp;        try
+<i>434</i>&nbsp;        {
+<b class="fc"><i>435</i>&nbsp;            client.start();</b>
+<b class="fc"><i>436</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>437</i>&nbsp;
+<b class="fc"><i>438</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>439</i>&nbsp;
+<b class="fc"><i>440</i>&nbsp;            client2 = makeClient(timing, namespace);</b>
+<b class="fc"><i>441</i>&nbsp;            client2.start();</b>
+<b class="fc"><i>442</i>&nbsp;            for ( int i = 0; i &lt; 10; ++i )</b>
+<i>443</i>&nbsp;            {
+<b class="fc"><i>444</i>&nbsp;                client2.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(&quot;/one/two/three/foo-&quot;);</b>
+<i>445</i>&nbsp;            }
+<i>446</i>&nbsp;
+<b class="fc"><i>447</i>&nbsp;            reaper = new Reaper(client, 100);</b>
+<b class="fc"><i>448</i>&nbsp;            reaper.start();</b>
+<i>449</i>&nbsp;
+<b class="fc"><i>450</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>451</i>&nbsp;            timing.sleepABit();</b>
+<i>452</i>&nbsp;
+<b class="fc"><i>453</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>454</i>&nbsp;
+<b class="fc"><i>455</i>&nbsp;            client2.close();    // should clear ephemerals</b>
+<b class="fc"><i>456</i>&nbsp;            client2 = null;</b>
+<i>457</i>&nbsp;
+<b class="fc"><i>458</i>&nbsp;            Thread.sleep(timing.session());</b>
+<b class="fc"><i>459</i>&nbsp;            timing.sleepABit();</b>
+<i>460</i>&nbsp;
+<b class="fc"><i>461</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>462</i>&nbsp;        }
+<i>463</i>&nbsp;        finally
+<i>464</i>&nbsp;        {
+<b class="fc"><i>465</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>466</i>&nbsp;            Closeables.closeQuietly(client2);</b>
+<b class="fc"><i>467</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>468</i>&nbsp;        }</b>
+<b class="fc"><i>469</i>&nbsp;    }</b>
+<i>470</i>&nbsp;
+<i>471</i>&nbsp;    private void testBasic(String namespace) throws Exception
+<i>472</i>&nbsp;    {
+<b class="fc"><i>473</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>474</i>&nbsp;        Reaper                  reaper = null;</b>
+<b class="fc"><i>475</i>&nbsp;        CuratorFramework        client = makeClient(timing, namespace);</b>
+<i>476</i>&nbsp;        try
+<i>477</i>&nbsp;        {
+<b class="fc"><i>478</i>&nbsp;            client.start();</b>
+<b class="fc"><i>479</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/one/two/three&quot;);</b>
+<i>480</i>&nbsp;
+<b class="fc"><i>481</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>482</i>&nbsp;
+<b class="fc"><i>483</i>&nbsp;            reaper = new Reaper(client, 100);</b>
+<b class="fc"><i>484</i>&nbsp;            reaper.start();</b>
+<i>485</i>&nbsp;
+<b class="fc"><i>486</i>&nbsp;            reaper.addPath(&quot;/one/two/three&quot;);</b>
+<b class="fc"><i>487</i>&nbsp;            timing.sleepABit();</b>
+<i>488</i>&nbsp;
+<b class="fc"><i>489</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/one/two/three&quot;));</b>
+<i>490</i>&nbsp;        }
+<i>491</i>&nbsp;        finally
+<i>492</i>&nbsp;        {
+<b class="fc"><i>493</i>&nbsp;            Closeables.closeQuietly(reaper);</b>
+<b class="fc"><i>494</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>495</i>&nbsp;        }</b>
+<b class="fc"><i>496</i>&nbsp;    }</b>
+<i>497</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,244 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestingZooKeeperServer</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.test</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestingZooKeeperServer (com.netflix.curator.test)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestingZooKeeperServer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/ 10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    93.9%
+  </span>
+  <span class="absValue">
+    (31/ 33)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestingZooKeeperServer$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.4%
+  </span>
+  <span class="absValue">
+    (5/ 7)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestingZooKeeperServer$State</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (14/ 14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91.1%
+  </span>
+  <span class="absValue">
+    (41/ 45)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.test;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+<i>4</i>&nbsp;import org.apache.zookeeper.server.quorum.QuorumPeerMain;
+<i>5</i>&nbsp;import org.slf4j.Logger;
+<i>6</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>7</i>&nbsp;import java.io.Closeable;
+<i>8</i>&nbsp;import java.io.IOException;
+<i>9</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>10</i>&nbsp;
+<i>11</i>&nbsp;/**
+<i>12</i>&nbsp; * Thanks to Jeremie BORDIER (ahfeel) for this code
+<i>13</i>&nbsp; */
+<b class="fc"><i>14</i>&nbsp;public class TestingZooKeeperServer extends QuorumPeerMain implements Closeable</b>
+<i>15</i>&nbsp;{
+<b class="fc"><i>16</i>&nbsp;    private static final Logger logger = LoggerFactory.getLogger(TestingZooKeeperServer.class);</b>
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;    private final QuorumConfigBuilder configBuilder;
+<i>19</i>&nbsp;    private final int thisInstanceIndex;
+<i>20</i>&nbsp;    private volatile ZooKeeperMainFace main;
+<b class="fc"><i>21</i>&nbsp;    private final AtomicReference&lt;State&gt; state = new AtomicReference&lt;State&gt;(State.LATENT);</b>
+<i>22</i>&nbsp;
+<b class="fc"><i>23</i>&nbsp;    private enum State</b>
+<i>24</i>&nbsp;    {
+<b class="fc"><i>25</i>&nbsp;        LATENT,</b>
+<b class="fc"><i>26</i>&nbsp;        STARTED,</b>
+<b class="fc"><i>27</i>&nbsp;        STOPPED,</b>
+<b class="fc"><i>28</i>&nbsp;        CLOSED</b>
+<i>29</i>&nbsp;    }
+<i>30</i>&nbsp;
+<i>31</i>&nbsp;    public TestingZooKeeperServer(QuorumConfigBuilder configBuilder)
+<i>32</i>&nbsp;    {
+<b class="fc"><i>33</i>&nbsp;        this(configBuilder, 0);</b>
+<b class="fc"><i>34</i>&nbsp;    }</b>
+<i>35</i>&nbsp;
+<i>36</i>&nbsp;    public TestingZooKeeperServer(QuorumConfigBuilder configBuilder, int thisInstanceIndex)
+<b class="fc"><i>37</i>&nbsp;    {</b>
+<b class="fc"><i>38</i>&nbsp;        this.configBuilder = configBuilder;</b>
+<b class="fc"><i>39</i>&nbsp;        this.thisInstanceIndex = thisInstanceIndex;</b>
+<b class="fc"><i>40</i>&nbsp;        main = (configBuilder.size() &gt; 1) ? new TestingQuorumPeerMain() : new TestingZooKeeperMain();</b>
+<b class="fc"><i>41</i>&nbsp;    }</b>
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    public void     kill()
+<i>44</i>&nbsp;    {
+<b class="fc"><i>45</i>&nbsp;        main.kill();</b>
+<b class="fc"><i>46</i>&nbsp;        state.set(State.STOPPED);</b>
+<b class="fc"><i>47</i>&nbsp;    }</b>
+<i>48</i>&nbsp;
+<i>49</i>&nbsp;    public void     restart() throws Exception
+<i>50</i>&nbsp;    {
+<b class="fc"><i>51</i>&nbsp;        if ( !state.compareAndSet(State.STOPPED, State.LATENT) )</b>
+<i>52</i>&nbsp;        {
+<b class="nc"><i>53</i>&nbsp;            throw new IllegalStateException(&quot;Instance not stopped&quot;);</b>
+<i>54</i>&nbsp;        }
+<i>55</i>&nbsp;
+<b class="fc"><i>56</i>&nbsp;        main = (configBuilder.size() &gt; 1) ? new TestingQuorumPeerMain() : new TestingZooKeeperMain();</b>
+<b class="fc"><i>57</i>&nbsp;        start();</b>
+<b class="fc"><i>58</i>&nbsp;    }</b>
+<i>59</i>&nbsp;
+<i>60</i>&nbsp;    public void     stop() throws IOException
+<i>61</i>&nbsp;    {
+<b class="fc"><i>62</i>&nbsp;        if ( state.compareAndSet(State.STARTED, State.STOPPED) )</b>
+<i>63</i>&nbsp;        {
+<b class="fc"><i>64</i>&nbsp;            main.close();</b>
+<i>65</i>&nbsp;        }
+<b class="fc"><i>66</i>&nbsp;    }</b>
+<i>67</i>&nbsp;
+<i>68</i>&nbsp;    public InstanceSpec     getInstanceSpec()
+<i>69</i>&nbsp;    {
+<b class="fc"><i>70</i>&nbsp;        return configBuilder.getInstanceSpec(thisInstanceIndex);</b>
+<i>71</i>&nbsp;    }
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    @Override
+<i>74</i>&nbsp;    public void close() throws IOException
+<i>75</i>&nbsp;    {
+<b class="fc"><i>76</i>&nbsp;        stop();</b>
+<i>77</i>&nbsp;
+<b class="fc"><i>78</i>&nbsp;        if ( state.compareAndSet(State.STOPPED, State.CLOSED) )</b>
+<i>79</i>&nbsp;        {
+<b class="fc"><i>80</i>&nbsp;            InstanceSpec        spec = getInstanceSpec();</b>
+<b class="fc"><i>81</i>&nbsp;            if ( spec.deleteDataDirectoryOnClose() )</b>
+<i>82</i>&nbsp;            {
+<b class="fc"><i>83</i>&nbsp;                DirectoryUtils.deleteRecursively(spec.getDataDirectory());</b>
+<i>84</i>&nbsp;            }
+<i>85</i>&nbsp;        }
+<b class="fc"><i>86</i>&nbsp;    }</b>
+<i>87</i>&nbsp;
+<i>88</i>&nbsp;    public void start() throws Exception
+<i>89</i>&nbsp;    {
+<b class="fc"><i>90</i>&nbsp;        if ( !state.compareAndSet(State.LATENT, State.STARTED) )</b>
+<i>91</i>&nbsp;        {
+<b class="nc"><i>92</i>&nbsp;            return;</b>
+<i>93</i>&nbsp;        }
+<i>94</i>&nbsp;
+<b class="fc"><i>95</i>&nbsp;        new Thread</b>
+<i>96</i>&nbsp;        (
+<i>97</i>&nbsp;            new Runnable()
+<b class="fc"><i>98</i>&nbsp;            {</b>
+<i>99</i>&nbsp;                public void run()
+<i>100</i>&nbsp;                {
+<i>101</i>&nbsp;                    try
+<i>102</i>&nbsp;                    {
+<b class="fc"><i>103</i>&nbsp;                        QuorumPeerConfig config = configBuilder.buildConfig(thisInstanceIndex);</b>
+<b class="fc"><i>104</i>&nbsp;                        main.runFromConfig(config);</b>
+<i>105</i>&nbsp;                    }
+<b class="nc"><i>106</i>&nbsp;                    catch ( Exception e )</b>
+<i>107</i>&nbsp;                    {
+<b class="nc"><i>108</i>&nbsp;                        logger.error(String.format(&quot;From testing server (random state: %s)&quot;, String.valueOf(configBuilder.isFromRandom())), e);</b>
+<b class="fc"><i>109</i>&nbsp;                    }</b>
+<b class="fc"><i>110</i>&nbsp;                }</b>
+<i>111</i>&nbsp;            }
+<i>112</i>&nbsp;        ).start();
+<i>113</i>&nbsp;
+<b class="fc"><i>114</i>&nbsp;        main.blockUntilStarted();</b>
+<b class="fc"><i>115</i>&nbsp;    }</b>
+<i>116</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

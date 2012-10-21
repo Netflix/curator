@@ -1,0 +1,204 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: OperationAndData</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: OperationAndData (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">OperationAndData</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    96.7%
+  </span>
+  <span class="absValue">
+    (29/ 30)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>19</i>&nbsp;
+<i>20</i>&nbsp;import com.google.common.annotations.VisibleForTesting;
+<i>21</i>&nbsp;import com.netflix.curator.RetrySleeper;
+<i>22</i>&nbsp;import com.netflix.curator.framework.api.BackgroundCallback;
+<i>23</i>&nbsp;import java.util.concurrent.Delayed;
+<i>24</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>25</i>&nbsp;import java.util.concurrent.atomic.AtomicInteger;
+<i>26</i>&nbsp;import java.util.concurrent.atomic.AtomicLong;
+<i>27</i>&nbsp;
+<b class="fc"><i>28</i>&nbsp;class OperationAndData&lt;T&gt; implements Delayed, RetrySleeper</b>
+<i>29</i>&nbsp;{
+<b class="fc"><i>30</i>&nbsp;    private static final AtomicLong     nextOrdinal = new AtomicLong();</b>
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;    private final BackgroundOperation&lt;T&gt;    operation;
+<i>33</i>&nbsp;    private final T                         data;
+<i>34</i>&nbsp;    private final BackgroundCallback        callback;
+<b class="fc"><i>35</i>&nbsp;    private final long                      startTimeMs = System.currentTimeMillis();</b>
+<i>36</i>&nbsp;    private final ErrorCallback&lt;T&gt;          errorCallback;
+<b class="fc"><i>37</i>&nbsp;    private final AtomicInteger             retryCount = new AtomicInteger(0);</b>
+<b class="fc"><i>38</i>&nbsp;    private final AtomicLong                sleepUntilTimeMs = new AtomicLong(0);</b>
+<b class="fc"><i>39</i>&nbsp;    private final long                      ordinal = nextOrdinal.getAndIncrement();</b>
+<i>40</i>&nbsp;
+<i>41</i>&nbsp;    interface ErrorCallback&lt;T&gt;
+<i>42</i>&nbsp;    {
+<i>43</i>&nbsp;        void retriesExhausted(OperationAndData&lt;T&gt; operationAndData);
+<i>44</i>&nbsp;    }
+<i>45</i>&nbsp;
+<i>46</i>&nbsp;    OperationAndData(BackgroundOperation&lt;T&gt; operation, T data, BackgroundCallback callback, ErrorCallback&lt;T&gt; errorCallback)
+<b class="fc"><i>47</i>&nbsp;    {</b>
+<b class="fc"><i>48</i>&nbsp;        this.operation = operation;</b>
+<b class="fc"><i>49</i>&nbsp;        this.data = data;</b>
+<b class="fc"><i>50</i>&nbsp;        this.callback = callback;</b>
+<b class="fc"><i>51</i>&nbsp;        this.errorCallback = errorCallback;</b>
+<b class="fc"><i>52</i>&nbsp;    }</b>
+<i>53</i>&nbsp;
+<i>54</i>&nbsp;    void callPerformBackgroundOperation() throws Exception
+<i>55</i>&nbsp;    {
+<b class="fc"><i>56</i>&nbsp;        operation.performBackgroundOperation(this);</b>
+<b class="fc"><i>57</i>&nbsp;    }</b>
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;    T getData()
+<i>60</i>&nbsp;    {
+<b class="fc"><i>61</i>&nbsp;        return data;</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    long getElapsedTimeMs()
+<i>65</i>&nbsp;    {
+<b class="fc"><i>66</i>&nbsp;        return System.currentTimeMillis() - startTimeMs;</b>
+<i>67</i>&nbsp;    }
+<i>68</i>&nbsp;
+<i>69</i>&nbsp;    int getThenIncrementRetryCount()
+<i>70</i>&nbsp;    {
+<b class="fc"><i>71</i>&nbsp;        return retryCount.getAndIncrement();</b>
+<i>72</i>&nbsp;    }
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    BackgroundCallback getCallback()
+<i>75</i>&nbsp;    {
+<b class="fc"><i>76</i>&nbsp;        return callback;</b>
+<i>77</i>&nbsp;    }
+<i>78</i>&nbsp;
+<i>79</i>&nbsp;    ErrorCallback&lt;T&gt; getErrorCallback()
+<i>80</i>&nbsp;    {
+<b class="fc"><i>81</i>&nbsp;        return errorCallback;</b>
+<i>82</i>&nbsp;    }
+<i>83</i>&nbsp;
+<i>84</i>&nbsp;    @VisibleForTesting
+<i>85</i>&nbsp;    BackgroundOperation&lt;T&gt; getOperation()
+<i>86</i>&nbsp;    {
+<b class="fc"><i>87</i>&nbsp;        return operation;</b>
+<i>88</i>&nbsp;    }
+<i>89</i>&nbsp;
+<i>90</i>&nbsp;    @Override
+<i>91</i>&nbsp;    public void sleepFor(long time, TimeUnit unit) throws InterruptedException
+<i>92</i>&nbsp;    {
+<b class="fc"><i>93</i>&nbsp;        sleepUntilTimeMs.set(System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(time, unit));</b>
+<b class="fc"><i>94</i>&nbsp;    }</b>
+<i>95</i>&nbsp;
+<i>96</i>&nbsp;    @Override
+<i>97</i>&nbsp;    public long getDelay(TimeUnit unit)
+<i>98</i>&nbsp;    {
+<b class="fc"><i>99</i>&nbsp;        return unit.convert(sleepUntilTimeMs.get() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);</b>
+<i>100</i>&nbsp;    }
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;    @Override
+<i>103</i>&nbsp;    public int compareTo(Delayed o)
+<i>104</i>&nbsp;    {
+<b class="fc"><i>105</i>&nbsp;        if ( o == this )</b>
+<i>106</i>&nbsp;        {
+<b class="nc"><i>107</i>&nbsp;            return 0;</b>
+<i>108</i>&nbsp;        }
+<i>109</i>&nbsp;
+<b class="fc"><i>110</i>&nbsp;        long        diff = getDelay(TimeUnit.MILLISECONDS) - o.getDelay(TimeUnit.MILLISECONDS);</b>
+<b class="fc"><i>111</i>&nbsp;        if ( diff == 0 )</b>
+<i>112</i>&nbsp;        {
+<b class="fc"><i>113</i>&nbsp;            if ( o instanceof OperationAndData )</b>
+<i>114</i>&nbsp;            {
+<b class="fc"><i>115</i>&nbsp;                diff = ordinal - ((OperationAndData)o).ordinal;</b>
+<i>116</i>&nbsp;            }
+<i>117</i>&nbsp;        }
+<i>118</i>&nbsp;
+<b class="fc"><i>119</i>&nbsp;        return (diff &lt; 0) ? -1 : ((diff &gt; 0) ? 1 : 0);</b>
+<i>120</i>&nbsp;    }
+<i>121</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

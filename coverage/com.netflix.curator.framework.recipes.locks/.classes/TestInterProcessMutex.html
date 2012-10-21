@@ -1,0 +1,254 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestInterProcessMutex</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestInterProcessMutex (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestInterProcessMutex</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (15/ 15)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestInterProcessMutex$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/ 8)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestInterProcessMutex$1$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestInterProcessMutex$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/ 9)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (35/ 35)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>19</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>20</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>21</i>&nbsp;import org.testng.Assert;
+<i>22</i>&nbsp;import org.testng.annotations.Test;
+<i>23</i>&nbsp;import java.util.Collection;
+<i>24</i>&nbsp;import java.util.concurrent.Callable;
+<i>25</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>26</i>&nbsp;import java.util.concurrent.ExecutorService;
+<i>27</i>&nbsp;import java.util.concurrent.Executors;
+<i>28</i>&nbsp;import java.util.concurrent.Future;
+<i>29</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>30</i>&nbsp;
+<b class="fc"><i>31</i>&nbsp;public class TestInterProcessMutex extends TestInterProcessMutexBase</b>
+<i>32</i>&nbsp;{
+<i>33</i>&nbsp;    private static final String LOCK_PATH = &quot;/locks/our-lock&quot;;
+<i>34</i>&nbsp;
+<i>35</i>&nbsp;    @Override
+<i>36</i>&nbsp;    protected InterProcessLock makeLock(CuratorFramework client)
+<i>37</i>&nbsp;    {
+<b class="fc"><i>38</i>&nbsp;        return new InterProcessMutex(client, LOCK_PATH);</b>
+<i>39</i>&nbsp;    }
+<i>40</i>&nbsp;
+<i>41</i>&nbsp;    @Test
+<i>42</i>&nbsp;    public void     testRevoking() throws Exception
+<i>43</i>&nbsp;    {
+<b class="fc"><i>44</i>&nbsp;        final CuratorFramework        client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<i>45</i>&nbsp;        try
+<i>46</i>&nbsp;        {
+<b class="fc"><i>47</i>&nbsp;            client.start();</b>
+<b class="fc"><i>48</i>&nbsp;            final InterProcessMutex       lock = new InterProcessMutex(client, LOCK_PATH);</b>
+<i>49</i>&nbsp;
+<b class="fc"><i>50</i>&nbsp;            ExecutorService               executorService = Executors.newCachedThreadPool();</b>
+<i>51</i>&nbsp;
+<b class="fc"><i>52</i>&nbsp;            final CountDownLatch          revokeLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>53</i>&nbsp;            final CountDownLatch          lockLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>54</i>&nbsp;            Future&lt;Void&gt;                  f1 = executorService.submit</b>
+<i>55</i>&nbsp;            (
+<i>56</i>&nbsp;                new Callable&lt;Void&gt;()
+<b class="fc"><i>57</i>&nbsp;                {</b>
+<i>58</i>&nbsp;                    @Override
+<i>59</i>&nbsp;                    public Void call() throws Exception
+<i>60</i>&nbsp;                    {
+<b class="fc"><i>61</i>&nbsp;                        RevocationListener&lt;InterProcessMutex&gt; listener = new RevocationListener&lt;InterProcessMutex&gt;()</b>
+<b class="fc"><i>62</i>&nbsp;                        {</b>
+<i>63</i>&nbsp;                            @Override
+<i>64</i>&nbsp;                            public void revocationRequested(InterProcessMutex lock)
+<i>65</i>&nbsp;                            {
+<b class="fc"><i>66</i>&nbsp;                                revokeLatch.countDown();</b>
+<b class="fc"><i>67</i>&nbsp;                            }</b>
+<i>68</i>&nbsp;                        };
+<b class="fc"><i>69</i>&nbsp;                        lock.makeRevocable(listener);</b>
+<b class="fc"><i>70</i>&nbsp;                        lock.acquire();</b>
+<b class="fc"><i>71</i>&nbsp;                        lockLatch.countDown();</b>
+<b class="fc"><i>72</i>&nbsp;                        revokeLatch.await();</b>
+<b class="fc"><i>73</i>&nbsp;                        lock.release();</b>
+<b class="fc"><i>74</i>&nbsp;                        return null;</b>
+<i>75</i>&nbsp;                    }
+<i>76</i>&nbsp;                }
+<i>77</i>&nbsp;            );
+<i>78</i>&nbsp;
+<b class="fc"><i>79</i>&nbsp;            Future&lt;Void&gt;                  f2 = executorService.submit</b>
+<i>80</i>&nbsp;            (
+<i>81</i>&nbsp;                new Callable&lt;Void&gt;()
+<b class="fc"><i>82</i>&nbsp;                {</b>
+<i>83</i>&nbsp;                    @Override
+<i>84</i>&nbsp;                    public Void call() throws Exception
+<i>85</i>&nbsp;                    {
+<b class="fc"><i>86</i>&nbsp;                        Assert.assertTrue(lockLatch.await(10, TimeUnit.SECONDS));</b>
+<b class="fc"><i>87</i>&nbsp;                        Collection&lt;String&gt; nodes = lock.getParticipantNodes();</b>
+<b class="fc"><i>88</i>&nbsp;                        Assert.assertEquals(nodes.size(), 1);</b>
+<b class="fc"><i>89</i>&nbsp;                        Revoker.attemptRevoke(client, nodes.iterator().next());</b>
+<i>90</i>&nbsp;
+<b class="fc"><i>91</i>&nbsp;                        InterProcessMutex       l2 = new InterProcessMutex(client, LOCK_PATH);</b>
+<b class="fc"><i>92</i>&nbsp;                        Assert.assertTrue(l2.acquire(5, TimeUnit.SECONDS));</b>
+<b class="fc"><i>93</i>&nbsp;                        l2.release();</b>
+<b class="fc"><i>94</i>&nbsp;                        return null;</b>
+<i>95</i>&nbsp;                    }
+<i>96</i>&nbsp;                }
+<i>97</i>&nbsp;            );
+<i>98</i>&nbsp;
+<b class="fc"><i>99</i>&nbsp;            f2.get();</b>
+<b class="fc"><i>100</i>&nbsp;            f1.get();</b>
+<i>101</i>&nbsp;        }
+<i>102</i>&nbsp;        finally
+<i>103</i>&nbsp;        {
+<b class="fc"><i>104</i>&nbsp;            client.close();</b>
+<b class="fc"><i>105</i>&nbsp;        }</b>
+<b class="fc"><i>106</i>&nbsp;    }</b>
+<i>107</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

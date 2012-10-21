@@ -1,0 +1,141 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: NamespaceImpl</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: NamespaceImpl (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NamespaceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (16/ 18)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.netflix.curator.utils.EnsurePath;
+<i>4</i>&nbsp;import com.netflix.curator.utils.ZKPaths;
+<i>5</i>&nbsp;
+<i>6</i>&nbsp;class NamespaceImpl
+<i>7</i>&nbsp;{
+<i>8</i>&nbsp;    private final CuratorFrameworkImpl client;
+<i>9</i>&nbsp;    private final String namespace;
+<i>10</i>&nbsp;    private final EnsurePath ensurePath;
+<i>11</i>&nbsp;
+<i>12</i>&nbsp;    NamespaceImpl(CuratorFrameworkImpl client, String namespace)
+<b class="fc"><i>13</i>&nbsp;    {</b>
+<b class="fc"><i>14</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>15</i>&nbsp;        this.namespace = namespace;</b>
+<b class="fc"><i>16</i>&nbsp;        ensurePath = (namespace != null) ? new EnsurePath(ZKPaths.makePath(&quot;/&quot;, namespace)) : null;</b>
+<b class="fc"><i>17</i>&nbsp;    }</b>
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;    String getNamespace()
+<i>20</i>&nbsp;    {
+<b class="fc"><i>21</i>&nbsp;        return namespace;</b>
+<i>22</i>&nbsp;    }
+<i>23</i>&nbsp;
+<i>24</i>&nbsp;    String    unfixForNamespace(String path)
+<i>25</i>&nbsp;    {
+<b class="fc"><i>26</i>&nbsp;        if ( (namespace != null) &amp;&amp; (path != null) )</b>
+<i>27</i>&nbsp;        {
+<b class="fc"><i>28</i>&nbsp;            String      namespacePath = ZKPaths.makePath(namespace, null);</b>
+<b class="fc"><i>29</i>&nbsp;            if ( path.startsWith(namespacePath) )</b>
+<i>30</i>&nbsp;            {
+<b class="fc"><i>31</i>&nbsp;                path = (path.length() &gt; namespacePath.length()) ? path.substring(namespacePath.length()) : &quot;/&quot;;</b>
+<i>32</i>&nbsp;            }
+<i>33</i>&nbsp;        }
+<b class="fc"><i>34</i>&nbsp;        return path;</b>
+<i>35</i>&nbsp;    }
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    String    fixForNamespace(String path)
+<i>38</i>&nbsp;    {
+<b class="fc"><i>39</i>&nbsp;        if ( ensurePath != null )</b>
+<i>40</i>&nbsp;        {
+<i>41</i>&nbsp;            try
+<i>42</i>&nbsp;            {
+<b class="fc"><i>43</i>&nbsp;                ensurePath.ensure(client.getZookeeperClient());</b>
+<i>44</i>&nbsp;            }
+<b class="nc"><i>45</i>&nbsp;            catch ( Exception e )</b>
+<i>46</i>&nbsp;            {
+<b class="nc"><i>47</i>&nbsp;                client.logError(&quot;Ensure path threw exception&quot;, e);</b>
+<b class="fc"><i>48</i>&nbsp;            }</b>
+<i>49</i>&nbsp;        }
+<i>50</i>&nbsp;
+<b class="fc"><i>51</i>&nbsp;        return ZKPaths.fixForNamespace(namespace, path);</b>
+<i>52</i>&nbsp;    }
+<i>53</i>&nbsp;
+<i>54</i>&nbsp;    EnsurePath newNamespaceAwareEnsurePath(String path)
+<i>55</i>&nbsp;    {
+<b class="fc"><i>56</i>&nbsp;        return new EnsurePath(fixForNamespace(path));</b>
+<i>57</i>&nbsp;    }
+<i>58</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

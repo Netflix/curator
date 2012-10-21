@@ -1,0 +1,432 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestFailedDeleteManager</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestFailedDeleteManager (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestFailedDeleteManager</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.4%
+  </span>
+  <span class="absValue">
+    (94/ 104)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestFailedDeleteManager$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestFailedDeleteManager$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestFailedDeleteManager$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (11/ 11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91.8%
+  </span>
+  <span class="absValue">
+    (112/ 122)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *  
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.io.Closeables;
+<i>22</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>23</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>24</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>25</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>26</i>&nbsp;import com.netflix.curator.retry.ExponentialBackoffRetry;
+<i>27</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>28</i>&nbsp;import com.netflix.curator.test.TestingServer;
+<i>29</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>30</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>31</i>&nbsp;import org.testng.Assert;
+<i>32</i>&nbsp;import org.testng.annotations.Test;
+<i>33</i>&nbsp;import java.io.File;
+<i>34</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>35</i>&nbsp;import java.util.concurrent.Semaphore;
+<i>36</i>&nbsp;
+<b class="fc"><i>37</i>&nbsp;public class TestFailedDeleteManager extends BaseClassForTests</b>
+<i>38</i>&nbsp;{
+<i>39</i>&nbsp;    @Test
+<i>40</i>&nbsp;    public void     testLostSession() throws Exception
+<i>41</i>&nbsp;    {
+<b class="fc"><i>42</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>43</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new ExponentialBackoffRetry(100, 3));</b>
+<i>44</i>&nbsp;        try
+<i>45</i>&nbsp;        {
+<b class="fc"><i>46</i>&nbsp;            client.start();</b>
+<i>47</i>&nbsp;
+<b class="fc"><i>48</i>&nbsp;            client.create().forPath(&quot;/test-me&quot;);</b>
+<i>49</i>&nbsp;
+<b class="fc"><i>50</i>&nbsp;            final CountDownLatch            latch = new CountDownLatch(1);</b>
+<b class="fc"><i>51</i>&nbsp;            final Semaphore                 semaphore = new Semaphore(0);</b>
+<b class="fc"><i>52</i>&nbsp;            ConnectionStateListener         listener = new ConnectionStateListener()</b>
+<b class="fc"><i>53</i>&nbsp;            {</b>
+<i>54</i>&nbsp;                @Override
+<i>55</i>&nbsp;                public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>56</i>&nbsp;                {
+<b class="fc"><i>57</i>&nbsp;                    if ( (newState == ConnectionState.LOST) || (newState == ConnectionState.SUSPENDED) )</b>
+<i>58</i>&nbsp;                    {
+<b class="fc"><i>59</i>&nbsp;                        semaphore.release();</b>
+<i>60</i>&nbsp;                    }
+<b class="fc"><i>61</i>&nbsp;                    else if ( newState == ConnectionState.RECONNECTED )</b>
+<i>62</i>&nbsp;                    {
+<b class="fc"><i>63</i>&nbsp;                        latch.countDown();</b>
+<i>64</i>&nbsp;                    }
+<b class="fc"><i>65</i>&nbsp;                }</b>
+<i>66</i>&nbsp;            };
+<b class="fc"><i>67</i>&nbsp;            client.getConnectionStateListenable().addListener(listener);</b>
+<b class="fc"><i>68</i>&nbsp;            server.stop();</b>
+<i>69</i>&nbsp;
+<b class="fc"><i>70</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>71</i>&nbsp;            try
+<i>72</i>&nbsp;            {
+<b class="fc"><i>73</i>&nbsp;                client.delete().guaranteed().forPath(&quot;/test-me&quot;);</b>
+<b class="nc"><i>74</i>&nbsp;                Assert.fail();</b>
+<i>75</i>&nbsp;            }
+<b class="fc"><i>76</i>&nbsp;            catch ( KeeperException.ConnectionLossException e )</b>
+<i>77</i>&nbsp;            {
+<i>78</i>&nbsp;                // expected
+<b class="nc"><i>79</i>&nbsp;            }</b>
+<b class="fc"><i>80</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>81</i>&nbsp;
+<b class="fc"><i>82</i>&nbsp;            timing.sleepABit();</b>
+<i>83</i>&nbsp;
+<b class="fc"><i>84</i>&nbsp;            server = new TestingServer(server.getPort(), server.getTempDirectory());</b>
+<b class="fc"><i>85</i>&nbsp;            Assert.assertTrue(timing.awaitLatch(latch));</b>
+<i>86</i>&nbsp;
+<b class="fc"><i>87</i>&nbsp;            timing.sleepABit();</b>
+<i>88</i>&nbsp;
+<b class="fc"><i>89</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/test-me&quot;));</b>
+<i>90</i>&nbsp;        }
+<i>91</i>&nbsp;        finally
+<i>92</i>&nbsp;        {
+<b class="fc"><i>93</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>94</i>&nbsp;        }</b>
+<b class="fc"><i>95</i>&nbsp;    }</b>
+<i>96</i>&nbsp;
+<i>97</i>&nbsp;    @Test
+<i>98</i>&nbsp;    public void     testWithNamespaceAndLostSession() throws Exception
+<i>99</i>&nbsp;    {
+<b class="fc"><i>100</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>101</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.builder().connectString(server.getConnectString())</b>
+<i>102</i>&nbsp;            .sessionTimeoutMs(timing.session())
+<i>103</i>&nbsp;            .connectionTimeoutMs(timing.connection())
+<i>104</i>&nbsp;            .retryPolicy(new ExponentialBackoffRetry(100, 3))
+<i>105</i>&nbsp;            .namespace(&quot;aisa&quot;)
+<i>106</i>&nbsp;            .build();
+<i>107</i>&nbsp;        try
+<i>108</i>&nbsp;        {
+<b class="fc"><i>109</i>&nbsp;            client.start();</b>
+<i>110</i>&nbsp;
+<b class="fc"><i>111</i>&nbsp;            client.create().forPath(&quot;/test-me&quot;);</b>
+<i>112</i>&nbsp;
+<b class="fc"><i>113</i>&nbsp;            final CountDownLatch            latch = new CountDownLatch(1);</b>
+<b class="fc"><i>114</i>&nbsp;            final Semaphore                 semaphore = new Semaphore(0);</b>
+<b class="fc"><i>115</i>&nbsp;            ConnectionStateListener         listener = new ConnectionStateListener()</b>
+<b class="fc"><i>116</i>&nbsp;            {</b>
+<i>117</i>&nbsp;                @Override
+<i>118</i>&nbsp;                public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>119</i>&nbsp;                {
+<b class="fc"><i>120</i>&nbsp;                    if ( (newState == ConnectionState.LOST) || (newState == ConnectionState.SUSPENDED) )</b>
+<i>121</i>&nbsp;                    {
+<b class="fc"><i>122</i>&nbsp;                        semaphore.release();</b>
+<i>123</i>&nbsp;                    }
+<b class="fc"><i>124</i>&nbsp;                    else if ( newState == ConnectionState.RECONNECTED )</b>
+<i>125</i>&nbsp;                    {
+<b class="fc"><i>126</i>&nbsp;                        latch.countDown();</b>
+<i>127</i>&nbsp;                    }
+<b class="fc"><i>128</i>&nbsp;                }</b>
+<i>129</i>&nbsp;            };
+<b class="fc"><i>130</i>&nbsp;            client.getConnectionStateListenable().addListener(listener);</b>
+<b class="fc"><i>131</i>&nbsp;            server.stop();</b>
+<i>132</i>&nbsp;
+<b class="fc"><i>133</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>134</i>&nbsp;            try
+<i>135</i>&nbsp;            {
+<b class="fc"><i>136</i>&nbsp;                client.delete().guaranteed().forPath(&quot;/test-me&quot;);</b>
+<b class="nc"><i>137</i>&nbsp;                Assert.fail();</b>
+<i>138</i>&nbsp;            }
+<b class="fc"><i>139</i>&nbsp;            catch ( KeeperException.ConnectionLossException e )</b>
+<i>140</i>&nbsp;            {
+<i>141</i>&nbsp;                // expected
+<b class="nc"><i>142</i>&nbsp;            }</b>
+<b class="fc"><i>143</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>144</i>&nbsp;
+<b class="fc"><i>145</i>&nbsp;            timing.sleepABit();</b>
+<i>146</i>&nbsp;
+<b class="fc"><i>147</i>&nbsp;            server = new TestingServer(server.getPort(), server.getTempDirectory());</b>
+<b class="fc"><i>148</i>&nbsp;            Assert.assertTrue(timing.awaitLatch(latch));</b>
+<i>149</i>&nbsp;
+<b class="fc"><i>150</i>&nbsp;            timing.sleepABit();</b>
+<i>151</i>&nbsp;
+<b class="fc"><i>152</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(&quot;/test-me&quot;));</b>
+<i>153</i>&nbsp;        }
+<i>154</i>&nbsp;        finally
+<i>155</i>&nbsp;        {
+<b class="fc"><i>156</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>157</i>&nbsp;        }</b>
+<b class="fc"><i>158</i>&nbsp;    }</b>
+<i>159</i>&nbsp;
+<i>160</i>&nbsp;    @Test
+<i>161</i>&nbsp;    public void     testWithNamespaceAndLostSessionAlt() throws Exception
+<i>162</i>&nbsp;    {
+<b class="fc"><i>163</i>&nbsp;        Timing                  timing = new Timing();</b>
+<b class="fc"><i>164</i>&nbsp;        CuratorFramework        client = CuratorFrameworkFactory.builder().connectString(server.getConnectString())</b>
+<i>165</i>&nbsp;            .sessionTimeoutMs(timing.session())
+<i>166</i>&nbsp;            .connectionTimeoutMs(timing.connection())
+<i>167</i>&nbsp;            .retryPolicy(new ExponentialBackoffRetry(100, 3))
+<i>168</i>&nbsp;            .build();
+<i>169</i>&nbsp;        try
+<i>170</i>&nbsp;        {
+<b class="fc"><i>171</i>&nbsp;            client.start();</b>
+<i>172</i>&nbsp;
+<b class="fc"><i>173</i>&nbsp;            CuratorFramework        namespaceClient = client.usingNamespace(&quot;foo&quot;);</b>
+<b class="fc"><i>174</i>&nbsp;            namespaceClient.create().forPath(&quot;/test-me&quot;);</b>
+<i>175</i>&nbsp;
+<b class="fc"><i>176</i>&nbsp;            final CountDownLatch            latch = new CountDownLatch(1);</b>
+<b class="fc"><i>177</i>&nbsp;            final Semaphore                 semaphore = new Semaphore(0);</b>
+<b class="fc"><i>178</i>&nbsp;            ConnectionStateListener         listener = new ConnectionStateListener()</b>
+<b class="fc"><i>179</i>&nbsp;            {</b>
+<i>180</i>&nbsp;                @Override
+<i>181</i>&nbsp;                public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>182</i>&nbsp;                {
+<b class="fc"><i>183</i>&nbsp;                    if ( (newState == ConnectionState.LOST) || (newState == ConnectionState.SUSPENDED) )</b>
+<i>184</i>&nbsp;                    {
+<b class="fc"><i>185</i>&nbsp;                        semaphore.release();</b>
+<i>186</i>&nbsp;                    }
+<b class="fc"><i>187</i>&nbsp;                    else if ( newState == ConnectionState.RECONNECTED )</b>
+<i>188</i>&nbsp;                    {
+<b class="fc"><i>189</i>&nbsp;                        latch.countDown();</b>
+<i>190</i>&nbsp;                    }
+<b class="fc"><i>191</i>&nbsp;                }</b>
+<i>192</i>&nbsp;            };
+<b class="fc"><i>193</i>&nbsp;            namespaceClient.getConnectionStateListenable().addListener(listener);</b>
+<b class="fc"><i>194</i>&nbsp;            server.stop();</b>
+<i>195</i>&nbsp;
+<b class="fc"><i>196</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>197</i>&nbsp;            try
+<i>198</i>&nbsp;            {
+<b class="fc"><i>199</i>&nbsp;                namespaceClient.delete().guaranteed().forPath(&quot;/test-me&quot;);</b>
+<b class="nc"><i>200</i>&nbsp;                Assert.fail();</b>
+<i>201</i>&nbsp;            }
+<b class="fc"><i>202</i>&nbsp;            catch ( KeeperException.ConnectionLossException e )</b>
+<i>203</i>&nbsp;            {
+<i>204</i>&nbsp;                // expected
+<b class="nc"><i>205</i>&nbsp;            }</b>
+<b class="fc"><i>206</i>&nbsp;            Assert.assertTrue(timing.acquireSemaphore(semaphore));</b>
+<i>207</i>&nbsp;
+<b class="fc"><i>208</i>&nbsp;            timing.sleepABit();</b>
+<i>209</i>&nbsp;
+<b class="fc"><i>210</i>&nbsp;            server = new TestingServer(server.getPort(), server.getTempDirectory());</b>
+<b class="fc"><i>211</i>&nbsp;            Assert.assertTrue(timing.awaitLatch(latch));</b>
+<i>212</i>&nbsp;
+<b class="fc"><i>213</i>&nbsp;            timing.sleepABit();</b>
+<i>214</i>&nbsp;
+<b class="fc"><i>215</i>&nbsp;            Assert.assertNull(namespaceClient.checkExists().forPath(&quot;/test-me&quot;));</b>
+<i>216</i>&nbsp;        }
+<i>217</i>&nbsp;        finally
+<i>218</i>&nbsp;        {
+<b class="fc"><i>219</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>220</i>&nbsp;        }</b>
+<b class="fc"><i>221</i>&nbsp;    }</b>
+<i>222</i>&nbsp;
+<i>223</i>&nbsp;    @Test
+<i>224</i>&nbsp;    public void     testBasic() throws Exception
+<i>225</i>&nbsp;    {
+<b class="fc"><i>226</i>&nbsp;        final String PATH = &quot;/one/two/three&quot;;</b>
+<i>227</i>&nbsp;
+<b class="fc"><i>228</i>&nbsp;        Timing                          timing = new Timing();</b>
+<b class="fc"><i>229</i>&nbsp;        CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder();</b>
+<b class="fc"><i>230</i>&nbsp;        builder.connectString(server.getConnectString()).retryPolicy(new RetryOneTime(1)).connectionTimeoutMs(timing.connection()).sessionTimeoutMs(timing.session());</b>
+<b class="fc"><i>231</i>&nbsp;        CuratorFrameworkImpl            client = new CuratorFrameworkImpl(builder);</b>
+<b class="fc"><i>232</i>&nbsp;        client.start();</b>
+<i>233</i>&nbsp;        try
+<i>234</i>&nbsp;        {
+<b class="fc"><i>235</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(PATH);</b>
+<b class="fc"><i>236</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(PATH));</b>
+<i>237</i>&nbsp;
+<b class="fc"><i>238</i>&nbsp;            File    serverDir = server.getTempDirectory();</b>
+<b class="fc"><i>239</i>&nbsp;            int     serverPort = server.getPort();</b>
+<i>240</i>&nbsp;
+<b class="fc"><i>241</i>&nbsp;            server.stop(); // cause the next delete to fail</b>
+<b class="fc"><i>242</i>&nbsp;            server = null;</b>
+<i>243</i>&nbsp;            try
+<i>244</i>&nbsp;            {
+<b class="fc"><i>245</i>&nbsp;                client.delete().forPath(PATH);</b>
+<b class="nc"><i>246</i>&nbsp;                Assert.fail();</b>
+<i>247</i>&nbsp;            }
+<b class="fc"><i>248</i>&nbsp;            catch ( KeeperException.ConnectionLossException e )</b>
+<i>249</i>&nbsp;            {
+<i>250</i>&nbsp;                // expected
+<b class="nc"><i>251</i>&nbsp;            }</b>
+<i>252</i>&nbsp;            
+<b class="fc"><i>253</i>&nbsp;            server = new TestingServer(serverPort, serverDir);</b>
+<b class="fc"><i>254</i>&nbsp;            Assert.assertNotNull(client.checkExists().forPath(PATH));</b>
+<i>255</i>&nbsp;
+<b class="fc"><i>256</i>&nbsp;            server.stop(); // cause the next delete to fail</b>
+<b class="fc"><i>257</i>&nbsp;            server = null;</b>
+<i>258</i>&nbsp;            try
+<i>259</i>&nbsp;            {
+<b class="fc"><i>260</i>&nbsp;                client.delete().guaranteed().forPath(PATH);</b>
+<b class="nc"><i>261</i>&nbsp;                Assert.fail();</b>
+<i>262</i>&nbsp;            }
+<b class="fc"><i>263</i>&nbsp;            catch ( KeeperException.ConnectionLossException e )</b>
+<i>264</i>&nbsp;            {
+<i>265</i>&nbsp;                // expected
+<b class="nc"><i>266</i>&nbsp;            }</b>
+<i>267</i>&nbsp;
+<b class="fc"><i>268</i>&nbsp;            server = new TestingServer(serverPort, serverDir);</b>
+<i>269</i>&nbsp;
+<b class="fc"><i>270</i>&nbsp;            final int       TRIES = 5;</b>
+<b class="fc"><i>271</i>&nbsp;            for ( int i = 0; i &lt; TRIES; ++i )</b>
+<i>272</i>&nbsp;            {
+<b class="fc"><i>273</i>&nbsp;                if ( client.checkExists().forPath(PATH) != null )</b>
+<i>274</i>&nbsp;                {
+<b class="fc"><i>275</i>&nbsp;                    timing.sleepABit();</b>
+<i>276</i>&nbsp;                }
+<i>277</i>&nbsp;            }
+<b class="fc"><i>278</i>&nbsp;            Assert.assertNull(client.checkExists().forPath(PATH));</b>
+<i>279</i>&nbsp;        }
+<i>280</i>&nbsp;        finally
+<i>281</i>&nbsp;        {
+<b class="fc"><i>282</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>283</i>&nbsp;        }</b>
+<b class="fc"><i>284</i>&nbsp;    }</b>
+<i>285</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

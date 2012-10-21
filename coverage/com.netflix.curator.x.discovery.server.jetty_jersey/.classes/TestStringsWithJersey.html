@@ -1,0 +1,325 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestStringsWithJersey</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.server.jetty_jersey</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestStringsWithJersey (com.netflix.curator.x.discovery.server.jetty_jersey)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestStringsWithJersey</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 29)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestStringsWithJersey$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 10)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestStringsWithJersey$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 7)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestStringsWithJersey$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">TestStringsWithJersey$4</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 7)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 54)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery.server.jetty_jersey;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import com.google.common.collect.Sets;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.ServiceInstance;
+<i>24</i>&nbsp;import com.netflix.curator.x.discovery.ServiceType;
+<i>25</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.JsonServiceInstanceMarshaller;
+<i>26</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.JsonServiceInstancesMarshaller;
+<i>27</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.JsonServiceNamesMarshaller;
+<i>28</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceInstances;
+<i>29</i>&nbsp;import com.netflix.curator.x.discovery.server.entity.ServiceNames;
+<i>30</i>&nbsp;import com.netflix.curator.x.discovery.server.mocks.MockServiceDiscovery;
+<i>31</i>&nbsp;import com.netflix.curator.x.discovery.server.contexts.StringDiscoveryContext;
+<i>32</i>&nbsp;import com.netflix.curator.x.discovery.strategies.RandomStrategy;
+<i>33</i>&nbsp;import com.sun.jersey.api.client.Client;
+<i>34</i>&nbsp;import com.sun.jersey.api.client.GenericType;
+<i>35</i>&nbsp;import com.sun.jersey.api.client.WebResource;
+<i>36</i>&nbsp;import com.sun.jersey.api.client.config.ClientConfig;
+<i>37</i>&nbsp;import com.sun.jersey.api.client.config.DefaultClientConfig;
+<i>38</i>&nbsp;import com.sun.jersey.api.core.DefaultResourceConfig;
+<i>39</i>&nbsp;import com.sun.jersey.spi.container.servlet.ServletContainer;
+<i>40</i>&nbsp;import junit.framework.Assert;
+<i>41</i>&nbsp;import org.junit.After;
+<i>42</i>&nbsp;import org.junit.Before;
+<i>43</i>&nbsp;import org.junit.Test;
+<i>44</i>&nbsp;import org.mortbay.jetty.Server;
+<i>45</i>&nbsp;import org.mortbay.jetty.servlet.Context;
+<i>46</i>&nbsp;import org.mortbay.jetty.servlet.ServletHolder;
+<i>47</i>&nbsp;import javax.ws.rs.core.Application;
+<i>48</i>&nbsp;import javax.ws.rs.core.MediaType;
+<i>49</i>&nbsp;import java.util.Set;
+<i>50</i>&nbsp;
+<b class="nc"><i>51</i>&nbsp;public class TestStringsWithJersey</b>
+<i>52</i>&nbsp;{
+<i>53</i>&nbsp;    private Server server;
+<i>54</i>&nbsp;    private JsonServiceNamesMarshaller serviceNamesMarshaller;
+<i>55</i>&nbsp;    private JsonServiceInstanceMarshaller&lt;String&gt; serviceInstanceMarshaller;
+<i>56</i>&nbsp;    private JsonServiceInstancesMarshaller&lt;String&gt; serviceInstancesMarshaller;
+<i>57</i>&nbsp;    private StringDiscoveryContext context;
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;    @Before
+<i>60</i>&nbsp;    public void         setup() throws Exception
+<i>61</i>&nbsp;    {
+<b class="nc"><i>62</i>&nbsp;        context = new StringDiscoveryContext(new MockServiceDiscovery&lt;String&gt;(), new RandomStrategy&lt;String&gt;(), 1000);</b>
+<b class="nc"><i>63</i>&nbsp;        serviceNamesMarshaller = new JsonServiceNamesMarshaller();</b>
+<b class="nc"><i>64</i>&nbsp;        serviceInstanceMarshaller = new JsonServiceInstanceMarshaller&lt;String&gt;(context);</b>
+<b class="nc"><i>65</i>&nbsp;        serviceInstancesMarshaller = new JsonServiceInstancesMarshaller&lt;String&gt;(context);</b>
+<i>66</i>&nbsp;
+<b class="nc"><i>67</i>&nbsp;        Application                                     application = new DefaultResourceConfig()</b>
+<b class="nc"><i>68</i>&nbsp;        {</b>
+<i>69</i>&nbsp;            @Override
+<i>70</i>&nbsp;            public Set&lt;Class&lt;?&gt;&gt; getClasses()
+<i>71</i>&nbsp;            {
+<b class="nc"><i>72</i>&nbsp;                Set&lt;Class&lt;?&gt;&gt;       classes = Sets.newHashSet();</b>
+<b class="nc"><i>73</i>&nbsp;                classes.add(StringDiscoveryResource.class);</b>
+<b class="nc"><i>74</i>&nbsp;                return classes;</b>
+<i>75</i>&nbsp;            }
+<i>76</i>&nbsp;
+<i>77</i>&nbsp;            @Override
+<i>78</i>&nbsp;            public Set&lt;Object&gt; getSingletons()
+<i>79</i>&nbsp;            {
+<b class="nc"><i>80</i>&nbsp;                Set&lt;Object&gt;     singletons = Sets.newHashSet();</b>
+<b class="nc"><i>81</i>&nbsp;                singletons.add(context);</b>
+<b class="nc"><i>82</i>&nbsp;                singletons.add(serviceNamesMarshaller);</b>
+<b class="nc"><i>83</i>&nbsp;                singletons.add(serviceInstanceMarshaller);</b>
+<b class="nc"><i>84</i>&nbsp;                singletons.add(serviceInstancesMarshaller);</b>
+<b class="nc"><i>85</i>&nbsp;                return singletons;</b>
+<i>86</i>&nbsp;            }
+<i>87</i>&nbsp;        };
+<b class="nc"><i>88</i>&nbsp;        ServletContainer        container = new ServletContainer(application);</b>
+<i>89</i>&nbsp;
+<b class="nc"><i>90</i>&nbsp;        server = new Server(8080);</b>
+<b class="nc"><i>91</i>&nbsp;        Context root = new Context(server, &quot;/&quot;, Context.SESSIONS);</b>
+<b class="nc"><i>92</i>&nbsp;        root.addServlet(new ServletHolder(container), &quot;/*&quot;);</b>
+<b class="nc"><i>93</i>&nbsp;        server.start();</b>
+<i>94</i>&nbsp;    }
+<i>95</i>&nbsp;    
+<i>96</i>&nbsp;    @After
+<i>97</i>&nbsp;    public void         teardown() throws Exception
+<i>98</i>&nbsp;    {
+<b class="nc"><i>99</i>&nbsp;        server.stop();</b>
+<b class="nc"><i>100</i>&nbsp;        server.join();</b>
+<i>101</i>&nbsp;    }
+<i>102</i>&nbsp;
+<i>103</i>&nbsp;    @Test
+<i>104</i>&nbsp;    public void     testRegisterService() throws Exception
+<i>105</i>&nbsp;    {
+<b class="nc"><i>106</i>&nbsp;        ServiceInstance&lt;String&gt; service = ServiceInstance.&lt;String&gt;builder()</b>
+<i>107</i>&nbsp;            .name(&quot;test&quot;)
+<i>108</i>&nbsp;            .payload(&quot;From Test&quot;)
+<i>109</i>&nbsp;            .serviceType(ServiceType.STATIC)
+<i>110</i>&nbsp;            .build();
+<i>111</i>&nbsp;
+<b class="nc"><i>112</i>&nbsp;        ClientConfig    config = new DefaultClientConfig()</b>
+<b class="nc"><i>113</i>&nbsp;        {</b>
+<i>114</i>&nbsp;            @Override
+<i>115</i>&nbsp;            public Set&lt;Object&gt; getSingletons()
+<i>116</i>&nbsp;            {
+<b class="nc"><i>117</i>&nbsp;                Set&lt;Object&gt;     singletons = Sets.newHashSet();</b>
+<b class="nc"><i>118</i>&nbsp;                singletons.add(context);</b>
+<b class="nc"><i>119</i>&nbsp;                singletons.add(serviceNamesMarshaller);</b>
+<b class="nc"><i>120</i>&nbsp;                singletons.add(serviceInstanceMarshaller);</b>
+<b class="nc"><i>121</i>&nbsp;                singletons.add(serviceInstancesMarshaller);</b>
+<b class="nc"><i>122</i>&nbsp;                return singletons;</b>
+<i>123</i>&nbsp;            }
+<i>124</i>&nbsp;        };
+<b class="nc"><i>125</i>&nbsp;        Client          client = Client.create(config);</b>
+<b class="nc"><i>126</i>&nbsp;        WebResource     resource = client.resource(&quot;http://localhost:8080&quot;);</b>
+<b class="nc"><i>127</i>&nbsp;        resource.path(&quot;/v1/service/test/&quot; + service.getId()).type(MediaType.APPLICATION_JSON_TYPE).put(service);</b>
+<i>128</i>&nbsp;
+<b class="nc"><i>129</i>&nbsp;        ServiceNames names = resource.path(&quot;/v1/service&quot;).get(ServiceNames.class);</b>
+<b class="nc"><i>130</i>&nbsp;        Assert.assertEquals(names.getNames(), Lists.newArrayList(&quot;test&quot;));</b>
+<i>131</i>&nbsp;
+<b class="nc"><i>132</i>&nbsp;        GenericType&lt;ServiceInstances&lt;String&gt;&gt; type = new GenericType&lt;ServiceInstances&lt;String&gt;&gt;(){};</b>
+<b class="nc"><i>133</i>&nbsp;        ServiceInstances&lt;String&gt; instances = resource.path(&quot;/v1/service/test&quot;).get(type);</b>
+<b class="nc"><i>134</i>&nbsp;        Assert.assertEquals(instances.getServices().size(), 1);</b>
+<b class="nc"><i>135</i>&nbsp;        Assert.assertEquals(instances.getServices().get(0), service);</b>
+<i>136</i>&nbsp;    }
+<i>137</i>&nbsp;
+<i>138</i>&nbsp;    @Test
+<i>139</i>&nbsp;    public void     testEmptyServiceNames()
+<i>140</i>&nbsp;    {
+<b class="nc"><i>141</i>&nbsp;        ClientConfig    config = new DefaultClientConfig()</b>
+<b class="nc"><i>142</i>&nbsp;        {</b>
+<i>143</i>&nbsp;            @Override
+<i>144</i>&nbsp;            public Set&lt;Object&gt; getSingletons()
+<i>145</i>&nbsp;            {
+<b class="nc"><i>146</i>&nbsp;                Set&lt;Object&gt;     singletons = Sets.newHashSet();</b>
+<b class="nc"><i>147</i>&nbsp;                singletons.add(context);</b>
+<b class="nc"><i>148</i>&nbsp;                singletons.add(serviceNamesMarshaller);</b>
+<b class="nc"><i>149</i>&nbsp;                singletons.add(serviceInstanceMarshaller);</b>
+<b class="nc"><i>150</i>&nbsp;                singletons.add(serviceInstancesMarshaller);</b>
+<b class="nc"><i>151</i>&nbsp;                return singletons;</b>
+<i>152</i>&nbsp;            }
+<i>153</i>&nbsp;        };
+<b class="nc"><i>154</i>&nbsp;        Client          client = Client.create(config);</b>
+<b class="nc"><i>155</i>&nbsp;        WebResource     resource = client.resource(&quot;http://localhost:8080&quot;);</b>
+<b class="nc"><i>156</i>&nbsp;        ServiceNames names = resource.path(&quot;/v1/service&quot;).get(ServiceNames.class);</b>
+<b class="nc"><i>157</i>&nbsp;        Assert.assertEquals(names.getNames(), Lists.&lt;String&gt;newArrayList());</b>
+<i>158</i>&nbsp;    }
+<i>159</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

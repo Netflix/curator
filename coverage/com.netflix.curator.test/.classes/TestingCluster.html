@@ -1,0 +1,309 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestingCluster</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.test</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestingCluster (com.netflix.curator.test)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestingCluster</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.1%
+  </span>
+  <span class="absValue">
+    (48/ 51)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.test;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>22</i>&nbsp;import javassist.ClassPool;
+<i>23</i>&nbsp;import javassist.CtClass;
+<i>24</i>&nbsp;import javassist.CtMethod;
+<i>25</i>&nbsp;import org.apache.zookeeper.ZooKeeper;
+<i>26</i>&nbsp;import java.io.Closeable;
+<i>27</i>&nbsp;import java.io.IOException;
+<i>28</i>&nbsp;import java.lang.reflect.Method;
+<i>29</i>&nbsp;import java.net.InetSocketAddress;
+<i>30</i>&nbsp;import java.util.Collection;
+<i>31</i>&nbsp;import java.util.List;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;/**
+<i>34</i>&nbsp; * manages an internally running ensemble of ZooKeeper servers. FOR TESTING PURPOSES ONLY
+<i>35</i>&nbsp; */
+<i>36</i>&nbsp;public class TestingCluster implements Closeable
+<i>37</i>&nbsp;{
+<i>38</i>&nbsp;    static
+<i>39</i>&nbsp;    {
+<b class="fc"><i>40</i>&nbsp;        ByteCodeRewrite.apply();</b>
+<b class="fc"><i>41</i>&nbsp;    }</b>
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    private final QuorumConfigBuilder           builder;
+<i>44</i>&nbsp;    private final List&lt;TestingZooKeeperServer&gt;  servers;
+<i>45</i>&nbsp;
+<i>46</i>&nbsp;    /**
+<i>47</i>&nbsp;     * Creates an ensemble comprised of &lt;code&gt;n&lt;/code&gt; servers. Each server will use
+<i>48</i>&nbsp;     * a temp directory and random ports
+<i>49</i>&nbsp;     *
+<i>50</i>&nbsp;     * @param instanceQty number of servers to create in the ensemble
+<i>51</i>&nbsp;     */
+<i>52</i>&nbsp;    public TestingCluster(int instanceQty)
+<i>53</i>&nbsp;    {
+<b class="fc"><i>54</i>&nbsp;        this(makeSpecs(instanceQty));</b>
+<b class="fc"><i>55</i>&nbsp;    }</b>
+<i>56</i>&nbsp;
+<i>57</i>&nbsp;    /**
+<i>58</i>&nbsp;     * Creates an ensemble using the given server specs
+<i>59</i>&nbsp;     *
+<i>60</i>&nbsp;     * @param specs the server specs
+<i>61</i>&nbsp;     */
+<i>62</i>&nbsp;    public TestingCluster(InstanceSpec... specs)
+<i>63</i>&nbsp;    {
+<b class="fc"><i>64</i>&nbsp;        this(ImmutableList.copyOf(specs));</b>
+<b class="fc"><i>65</i>&nbsp;    }</b>
+<i>66</i>&nbsp;
+<i>67</i>&nbsp;    /**
+<i>68</i>&nbsp;     * Creates an ensemble using the given server specs
+<i>69</i>&nbsp;     *
+<i>70</i>&nbsp;     * @param specs the server specs
+<i>71</i>&nbsp;     */
+<i>72</i>&nbsp;    public TestingCluster(Collection&lt;InstanceSpec&gt; specs)
+<b class="fc"><i>73</i>&nbsp;    {</b>
+<b class="fc"><i>74</i>&nbsp;        builder = new QuorumConfigBuilder(specs);</b>
+<b class="fc"><i>75</i>&nbsp;        ImmutableList.Builder&lt;TestingZooKeeperServer&gt; serverBuilder = ImmutableList.builder();</b>
+<b class="fc"><i>76</i>&nbsp;        for ( int i = 0; i &lt; specs.size(); ++i )</b>
+<i>77</i>&nbsp;        {
+<b class="fc"><i>78</i>&nbsp;            serverBuilder.add(new TestingZooKeeperServer(builder, i));</b>
+<i>79</i>&nbsp;        }
+<b class="fc"><i>80</i>&nbsp;        servers = serverBuilder.build();</b>
+<b class="fc"><i>81</i>&nbsp;    }</b>
+<i>82</i>&nbsp;
+<i>83</i>&nbsp;    /**
+<i>84</i>&nbsp;     * Returns the set of servers in the ensemble
+<i>85</i>&nbsp;     *
+<i>86</i>&nbsp;     * @return set of servers
+<i>87</i>&nbsp;     */
+<i>88</i>&nbsp;    public Collection&lt;InstanceSpec&gt; getInstances()
+<i>89</i>&nbsp;    {
+<b class="fc"><i>90</i>&nbsp;        return builder.getInstanceSpecs();</b>
+<i>91</i>&nbsp;    }
+<i>92</i>&nbsp;
+<i>93</i>&nbsp;    /**
+<i>94</i>&nbsp;     * Returns the connection string to pass to the ZooKeeper constructor
+<i>95</i>&nbsp;     *
+<i>96</i>&nbsp;     * @return connection string
+<i>97</i>&nbsp;     */
+<i>98</i>&nbsp;    public String   getConnectString()
+<i>99</i>&nbsp;    {
+<b class="fc"><i>100</i>&nbsp;        StringBuilder       str = new StringBuilder();</b>
+<b class="fc"><i>101</i>&nbsp;        for ( InstanceSpec spec : builder.getInstanceSpecs() )</b>
+<i>102</i>&nbsp;        {
+<b class="fc"><i>103</i>&nbsp;            if ( str.length() &gt; 0 )</b>
+<i>104</i>&nbsp;            {
+<b class="fc"><i>105</i>&nbsp;                str.append(&quot;,&quot;);</b>
+<i>106</i>&nbsp;            }
+<b class="fc"><i>107</i>&nbsp;            str.append(spec.getConnectString());</b>
+<i>108</i>&nbsp;        }
+<b class="fc"><i>109</i>&nbsp;        return str.toString();</b>
+<i>110</i>&nbsp;    }
+<i>111</i>&nbsp;
+<i>112</i>&nbsp;    /**
+<i>113</i>&nbsp;     * Start the ensemble. The cluster must be started before use.
+<i>114</i>&nbsp;     *
+<i>115</i>&nbsp;     * @throws Exception errors
+<i>116</i>&nbsp;     */
+<i>117</i>&nbsp;    public void     start() throws Exception
+<i>118</i>&nbsp;    {
+<b class="fc"><i>119</i>&nbsp;        for ( TestingZooKeeperServer server : servers )</b>
+<i>120</i>&nbsp;        {
+<b class="fc"><i>121</i>&nbsp;            server.start();</b>
+<i>122</i>&nbsp;        }
+<b class="fc"><i>123</i>&nbsp;    }</b>
+<i>124</i>&nbsp;
+<i>125</i>&nbsp;    /**
+<i>126</i>&nbsp;     * Shutdown the ensemble WITHOUT freeing resources, etc.
+<i>127</i>&nbsp;     */
+<i>128</i>&nbsp;    public void stop() throws IOException
+<i>129</i>&nbsp;    {
+<b class="fc"><i>130</i>&nbsp;        for ( TestingZooKeeperServer server : servers )</b>
+<i>131</i>&nbsp;        {
+<b class="fc"><i>132</i>&nbsp;            server.stop();</b>
+<i>133</i>&nbsp;        }
+<b class="fc"><i>134</i>&nbsp;    }</b>
+<i>135</i>&nbsp;
+<i>136</i>&nbsp;    /**
+<i>137</i>&nbsp;     * Shutdown the ensemble, free resources, etc. If temp directories were used, they
+<i>138</i>&nbsp;     * are deleted. You should call this in a &lt;code&gt;finally&lt;/code&gt; block.
+<i>139</i>&nbsp;     *
+<i>140</i>&nbsp;     * @throws IOException errors
+<i>141</i>&nbsp;     */
+<i>142</i>&nbsp;    @Override
+<i>143</i>&nbsp;    public void close() throws IOException
+<i>144</i>&nbsp;    {
+<b class="fc"><i>145</i>&nbsp;        for ( TestingZooKeeperServer server : servers )</b>
+<i>146</i>&nbsp;        {
+<b class="fc"><i>147</i>&nbsp;            server.close();</b>
+<i>148</i>&nbsp;        }
+<b class="fc"><i>149</i>&nbsp;    }</b>
+<i>150</i>&nbsp;
+<i>151</i>&nbsp;    /**
+<i>152</i>&nbsp;     * Kills the given server. This simulates the server unexpectedly crashing
+<i>153</i>&nbsp;     *
+<i>154</i>&nbsp;     * @param instance server to kill
+<i>155</i>&nbsp;     * @return true if the instance was found
+<i>156</i>&nbsp;     * @throws Exception errors
+<i>157</i>&nbsp;     */
+<i>158</i>&nbsp;    public boolean killServer(InstanceSpec instance) throws Exception
+<i>159</i>&nbsp;    {
+<b class="fc"><i>160</i>&nbsp;        for ( TestingZooKeeperServer server : servers )</b>
+<i>161</i>&nbsp;        {
+<b class="fc"><i>162</i>&nbsp;            if ( server.getInstanceSpec().equals(instance) )</b>
+<i>163</i>&nbsp;            {
+<b class="fc"><i>164</i>&nbsp;                server.kill();</b>
+<b class="fc"><i>165</i>&nbsp;                return true;</b>
+<i>166</i>&nbsp;            }
+<i>167</i>&nbsp;        }
+<b class="nc"><i>168</i>&nbsp;        return false;</b>
+<i>169</i>&nbsp;    }
+<i>170</i>&nbsp;
+<i>171</i>&nbsp;    /**
+<i>172</i>&nbsp;     * Restart the given server of the cluster
+<i>173</i>&nbsp;     *
+<i>174</i>&nbsp;     * @param instance server instance
+<i>175</i>&nbsp;     * @return true of the server was found
+<i>176</i>&nbsp;     * @throws Exception errors
+<i>177</i>&nbsp;     */
+<i>178</i>&nbsp;    public boolean restartServer(InstanceSpec instance) throws Exception
+<i>179</i>&nbsp;    {
+<b class="fc"><i>180</i>&nbsp;        for ( TestingZooKeeperServer server : servers )</b>
+<i>181</i>&nbsp;        {
+<b class="fc"><i>182</i>&nbsp;            if ( server.getInstanceSpec().equals(instance) )</b>
+<i>183</i>&nbsp;            {
+<b class="fc"><i>184</i>&nbsp;                server.restart();</b>
+<b class="fc"><i>185</i>&nbsp;                return true;</b>
+<i>186</i>&nbsp;            }
+<i>187</i>&nbsp;        }
+<b class="nc"><i>188</i>&nbsp;        return false;</b>
+<i>189</i>&nbsp;    }
+<i>190</i>&nbsp;
+<i>191</i>&nbsp;    /**
+<i>192</i>&nbsp;     * Given a ZooKeeper instance, returns which server it is connected to
+<i>193</i>&nbsp;     *
+<i>194</i>&nbsp;     * @param client ZK instance
+<i>195</i>&nbsp;     * @return the server
+<i>196</i>&nbsp;     * @throws Exception errors
+<i>197</i>&nbsp;     */
+<i>198</i>&nbsp;    public InstanceSpec findConnectionInstance(ZooKeeper client) throws Exception
+<i>199</i>&nbsp;    {
+<b class="fc"><i>200</i>&nbsp;        Method              m = client.getClass().getDeclaredMethod(&quot;testableRemoteSocketAddress&quot;);</b>
+<b class="fc"><i>201</i>&nbsp;        m.setAccessible(true);</b>
+<b class="fc"><i>202</i>&nbsp;        InetSocketAddress   address = (InetSocketAddress)m.invoke(client);</b>
+<b class="fc"><i>203</i>&nbsp;        if ( address != null )</b>
+<i>204</i>&nbsp;        {
+<b class="fc"><i>205</i>&nbsp;            for ( TestingZooKeeperServer server : servers )</b>
+<i>206</i>&nbsp;            {
+<b class="fc"><i>207</i>&nbsp;                if ( server.getInstanceSpec().getPort() == address.getPort() )</b>
+<i>208</i>&nbsp;                {
+<b class="fc"><i>209</i>&nbsp;                    return server.getInstanceSpec();</b>
+<i>210</i>&nbsp;                }
+<i>211</i>&nbsp;            }
+<i>212</i>&nbsp;        }
+<i>213</i>&nbsp;
+<b class="nc"><i>214</i>&nbsp;        return null;</b>
+<i>215</i>&nbsp;    }
+<i>216</i>&nbsp;
+<i>217</i>&nbsp;    private static Collection&lt;InstanceSpec&gt; makeSpecs(int instanceQty)
+<i>218</i>&nbsp;    {
+<b class="fc"><i>219</i>&nbsp;        ImmutableList.Builder&lt;InstanceSpec&gt; builder = ImmutableList.builder();</b>
+<b class="fc"><i>220</i>&nbsp;        for ( int i = 0; i &lt; instanceQty; ++i )</b>
+<i>221</i>&nbsp;        {
+<b class="fc"><i>222</i>&nbsp;            builder.add(InstanceSpec.newInstanceSpec());</b>
+<i>223</i>&nbsp;        }
+<b class="fc"><i>224</i>&nbsp;        return builder.build();</b>
+<i>225</i>&nbsp;    }
+<i>226</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

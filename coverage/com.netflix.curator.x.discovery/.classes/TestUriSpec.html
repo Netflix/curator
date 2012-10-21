@@ -1,0 +1,168 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestUriSpec</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestUriSpec (com.netflix.curator.x.discovery)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestUriSpec</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (52/ 52)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.x.discovery;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.collect.Maps;
+<i>4</i>&nbsp;import junit.framework.Assert;
+<i>5</i>&nbsp;import org.testng.annotations.Test;
+<i>6</i>&nbsp;import java.util.Iterator;
+<i>7</i>&nbsp;import java.util.Map;
+<i>8</i>&nbsp;
+<b class="fc"><i>9</i>&nbsp;public class TestUriSpec</b>
+<i>10</i>&nbsp;{
+<i>11</i>&nbsp;    @Test
+<i>12</i>&nbsp;    public void     testScheme()
+<i>13</i>&nbsp;    {
+<b class="fc"><i>14</i>&nbsp;        UriSpec                             spec = new UriSpec(&quot;{scheme}://foo.com&quot;);</b>
+<i>15</i>&nbsp;
+<b class="fc"><i>16</i>&nbsp;        ServiceInstanceBuilder&lt;Void&gt;        builder = new ServiceInstanceBuilder&lt;Void&gt;();</b>
+<b class="fc"><i>17</i>&nbsp;        builder.id(&quot;x&quot;);</b>
+<b class="fc"><i>18</i>&nbsp;        builder.name(&quot;foo&quot;);</b>
+<b class="fc"><i>19</i>&nbsp;        builder.port(5);</b>
+<b class="fc"><i>20</i>&nbsp;        ServiceInstance&lt;Void&gt;               instance = builder.build();</b>
+<b class="fc"><i>21</i>&nbsp;        Assert.assertEquals(spec.build(instance), &quot;http://foo.com&quot;);</b>
+<i>22</i>&nbsp;
+<b class="fc"><i>23</i>&nbsp;        builder.sslPort(5);</b>
+<b class="fc"><i>24</i>&nbsp;        instance = builder.build();</b>
+<b class="fc"><i>25</i>&nbsp;        Assert.assertEquals(spec.build(instance), &quot;https://foo.com&quot;);</b>
+<b class="fc"><i>26</i>&nbsp;    }</b>
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;    @Test
+<i>29</i>&nbsp;    public void     testFromInstance()
+<i>30</i>&nbsp;    {
+<b class="fc"><i>31</i>&nbsp;        ServiceInstanceBuilder&lt;Void&gt;        builder = new ServiceInstanceBuilder&lt;Void&gt;();</b>
+<b class="fc"><i>32</i>&nbsp;        builder.address(&quot;1.2.3.4&quot;);</b>
+<b class="fc"><i>33</i>&nbsp;        builder.name(&quot;foo&quot;);</b>
+<b class="fc"><i>34</i>&nbsp;        builder.id(&quot;bar&quot;);</b>
+<b class="fc"><i>35</i>&nbsp;        builder.port(5);</b>
+<b class="fc"><i>36</i>&nbsp;        builder.sslPort(6);</b>
+<b class="fc"><i>37</i>&nbsp;        builder.registrationTimeUTC(789);</b>
+<b class="fc"><i>38</i>&nbsp;        builder.serviceType(ServiceType.PERMANENT);</b>
+<b class="fc"><i>39</i>&nbsp;        ServiceInstance&lt;Void&gt;               instance = builder.build();</b>
+<i>40</i>&nbsp;
+<b class="fc"><i>41</i>&nbsp;        UriSpec                             spec = new UriSpec(&quot;{scheme}://{address}:{port}:{ssl-port}/{name}/{id}/{registration-time-utc}/{service-type}&quot;);</b>
+<i>42</i>&nbsp;
+<b class="fc"><i>43</i>&nbsp;        Map&lt;String, Object&gt;     m = Maps.newHashMap();</b>
+<b class="fc"><i>44</i>&nbsp;        m.put(&quot;scheme&quot;, &quot;test&quot;);</b>
+<b class="fc"><i>45</i>&nbsp;        Assert.assertEquals(spec.build(instance, m), &quot;test://1.2.3.4:5:6/foo/bar/789/permanent&quot;);</b>
+<b class="fc"><i>46</i>&nbsp;    }</b>
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    @Test
+<i>49</i>&nbsp;    public void     testEscapes()
+<i>50</i>&nbsp;    {
+<b class="fc"><i>51</i>&nbsp;        UriSpec                 spec = new UriSpec(&quot;{one}two-three-{[}four{]}-five{six}&quot;);</b>
+<b class="fc"><i>52</i>&nbsp;        Iterator&lt;UriSpec.Part&gt;  iterator = spec.iterator();</b>
+<b class="fc"><i>53</i>&nbsp;        checkPart(iterator.next(), &quot;one&quot;, true);</b>
+<b class="fc"><i>54</i>&nbsp;        checkPart(iterator.next(), &quot;two-three-&quot;, false);</b>
+<b class="fc"><i>55</i>&nbsp;        checkPart(iterator.next(), &quot;[&quot;, true);</b>
+<b class="fc"><i>56</i>&nbsp;        checkPart(iterator.next(), &quot;four&quot;, false);</b>
+<b class="fc"><i>57</i>&nbsp;        checkPart(iterator.next(), &quot;]&quot;, true);</b>
+<b class="fc"><i>58</i>&nbsp;        checkPart(iterator.next(), &quot;-five&quot;, false);</b>
+<b class="fc"><i>59</i>&nbsp;        checkPart(iterator.next(), &quot;six&quot;, true);</b>
+<i>60</i>&nbsp;
+<b class="fc"><i>61</i>&nbsp;        Map&lt;String, Object&gt;     m = Maps.newHashMap();</b>
+<b class="fc"><i>62</i>&nbsp;        m.put(&quot;one&quot;, 1);</b>
+<b class="fc"><i>63</i>&nbsp;        m.put(&quot;six&quot;, 6);</b>
+<b class="fc"><i>64</i>&nbsp;        Assert.assertEquals(spec.build(m), &quot;1two-three-{four}-five6&quot;);</b>
+<b class="fc"><i>65</i>&nbsp;    }</b>
+<i>66</i>&nbsp;
+<i>67</i>&nbsp;    @Test
+<i>68</i>&nbsp;    public void     testBasic()
+<i>69</i>&nbsp;    {
+<b class="fc"><i>70</i>&nbsp;        UriSpec                 spec = new UriSpec(&quot;{one}{two}three-four-five{six}seven{eight}&quot;);</b>
+<b class="fc"><i>71</i>&nbsp;        Iterator&lt;UriSpec.Part&gt;  iterator = spec.iterator();</b>
+<b class="fc"><i>72</i>&nbsp;        checkPart(iterator.next(), &quot;one&quot;, true);</b>
+<b class="fc"><i>73</i>&nbsp;        checkPart(iterator.next(), &quot;two&quot;, true);</b>
+<b class="fc"><i>74</i>&nbsp;        checkPart(iterator.next(), &quot;three-four-five&quot;, false);</b>
+<b class="fc"><i>75</i>&nbsp;        checkPart(iterator.next(), &quot;six&quot;, true);</b>
+<b class="fc"><i>76</i>&nbsp;        checkPart(iterator.next(), &quot;seven&quot;, false);</b>
+<b class="fc"><i>77</i>&nbsp;        checkPart(iterator.next(), &quot;eight&quot;, true);</b>
+<b class="fc"><i>78</i>&nbsp;    }</b>
+<i>79</i>&nbsp;
+<i>80</i>&nbsp;    private void    checkPart(UriSpec.Part p, String value, boolean isVariable)
+<i>81</i>&nbsp;    {
+<b class="fc"><i>82</i>&nbsp;        Assert.assertEquals(p.getValue(), value);</b>
+<b class="fc"><i>83</i>&nbsp;        Assert.assertEquals(p.isVariable(), isVariable);</b>
+<b class="fc"><i>84</i>&nbsp;    }</b>
+<i>85</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

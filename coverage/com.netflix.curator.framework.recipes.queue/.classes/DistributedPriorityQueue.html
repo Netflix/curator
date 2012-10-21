@@ -1,0 +1,290 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DistributedPriorityQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DistributedPriorityQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DistributedPriorityQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    53.8%
+  </span>
+  <span class="absValue">
+    (7/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    61.5%
+  </span>
+  <span class="absValue">
+    (16/ 26)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.annotations.VisibleForTesting;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.listen.ListenerContainer;
+<i>22</i>&nbsp;import java.io.Closeable;
+<i>23</i>&nbsp;import java.io.IOException;
+<i>24</i>&nbsp;import java.util.concurrent.Executor;
+<i>25</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>26</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;/**
+<i>29</i>&nbsp; * &lt;p&gt;An implementation of the Distributed Priority Queue ZK recipe.&lt;/p&gt;
+<i>30</i>&nbsp; * &lt;p&gt;Internally, this uses a {@link DistributedQueue}. The only difference is that you specify a
+<i>31</i>&nbsp; * priority when putting into the queue.&lt;/p&gt;
+<i>32</i>&nbsp; * &lt;p&gt;IMPORTANT NOTE: The priority queue will perform far worse than a standard queue. Every time an
+<i>33</i>&nbsp; * item is added to/removed from the queue, every watcher must re-get all the nodes&lt;/p&gt;
+<i>34</i>&nbsp; */
+<i>35</i>&nbsp;public class DistributedPriorityQueue&lt;T&gt; implements Closeable, QueueBase&lt;T&gt;
+<i>36</i>&nbsp;{
+<i>37</i>&nbsp;    private final DistributedQueue&lt;T&gt;      queue;
+<i>38</i>&nbsp;
+<i>39</i>&nbsp;    DistributedPriorityQueue
+<i>40</i>&nbsp;        (
+<i>41</i>&nbsp;            CuratorFramework client,
+<i>42</i>&nbsp;            QueueConsumer&lt;T&gt; consumer,
+<i>43</i>&nbsp;            QueueSerializer&lt;T&gt; serializer,
+<i>44</i>&nbsp;            String queuePath,
+<i>45</i>&nbsp;            ThreadFactory threadFactory,
+<i>46</i>&nbsp;            Executor executor,
+<i>47</i>&nbsp;            int minItemsBeforeRefresh,
+<i>48</i>&nbsp;            String lockPath,
+<i>49</i>&nbsp;            int maxItems,
+<i>50</i>&nbsp;            boolean putInBackground,
+<i>51</i>&nbsp;            int finalFlushMs
+<i>52</i>&nbsp;        )
+<b class="fc"><i>53</i>&nbsp;    {</b>
+<b class="fc"><i>54</i>&nbsp;        Preconditions.checkArgument(minItemsBeforeRefresh &gt;= 0, &quot;minItemsBeforeRefresh cannot be negative&quot;);</b>
+<i>55</i>&nbsp;
+<b class="fc"><i>56</i>&nbsp;        queue = new DistributedQueue&lt;T&gt;</b>
+<i>57</i>&nbsp;        (
+<i>58</i>&nbsp;            client,
+<i>59</i>&nbsp;            consumer, 
+<i>60</i>&nbsp;            serializer,
+<i>61</i>&nbsp;            queuePath,
+<i>62</i>&nbsp;            threadFactory,
+<i>63</i>&nbsp;            executor,
+<i>64</i>&nbsp;            minItemsBeforeRefresh,
+<i>65</i>&nbsp;            true,
+<i>66</i>&nbsp;            lockPath,
+<i>67</i>&nbsp;            maxItems,
+<i>68</i>&nbsp;            putInBackground,
+<i>69</i>&nbsp;            finalFlushMs
+<i>70</i>&nbsp;        );
+<b class="fc"><i>71</i>&nbsp;    }</b>
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    /**
+<i>74</i>&nbsp;     * Start the queue. No other methods work until this is called
+<i>75</i>&nbsp;     *
+<i>76</i>&nbsp;     * @throws Exception startup errors
+<i>77</i>&nbsp;     */
+<i>78</i>&nbsp;    @Override
+<i>79</i>&nbsp;    public void     start() throws Exception
+<i>80</i>&nbsp;    {
+<b class="fc"><i>81</i>&nbsp;        queue.start();</b>
+<b class="fc"><i>82</i>&nbsp;    }</b>
+<i>83</i>&nbsp;
+<i>84</i>&nbsp;    @Override
+<i>85</i>&nbsp;    public void close() throws IOException
+<i>86</i>&nbsp;    {
+<b class="fc"><i>87</i>&nbsp;        queue.close();</b>
+<b class="fc"><i>88</i>&nbsp;    }</b>
+<i>89</i>&nbsp;
+<i>90</i>&nbsp;    /**
+<i>91</i>&nbsp;     * Add an item into the queue. Adding is done in the background - thus, this method will
+<i>92</i>&nbsp;     * return quickly.&lt;br/&gt;&lt;br/&gt;
+<i>93</i>&nbsp;     * NOTE: if an upper bound was set via {@link QueueBuilder#maxItems}, this method will
+<i>94</i>&nbsp;     * block until there is available space in the queue.
+<i>95</i>&nbsp;     *
+<i>96</i>&nbsp;     * @param item item to add
+<i>97</i>&nbsp;     * @param priority item&#39;s priority - lower numbers come out of the queue first
+<i>98</i>&nbsp;     * @throws Exception connection issues
+<i>99</i>&nbsp;     */
+<i>100</i>&nbsp;    public void     put(T item, int priority) throws Exception
+<i>101</i>&nbsp;    {
+<b class="fc"><i>102</i>&nbsp;        put(item, priority, 0, null);</b>
+<b class="fc"><i>103</i>&nbsp;    }</b>
+<i>104</i>&nbsp;
+<i>105</i>&nbsp;    /**
+<i>106</i>&nbsp;     * Same as {@link #put(Object, int)} but allows a maximum wait time if an upper bound was set
+<i>107</i>&nbsp;     * via {@link QueueBuilder#maxItems}.
+<i>108</i>&nbsp;     *
+<i>109</i>&nbsp;     * @param item item to add
+<i>110</i>&nbsp;     * @param priority item&#39;s priority - lower numbers come out of the queue first
+<i>111</i>&nbsp;     * @param maxWait maximum wait
+<i>112</i>&nbsp;     * @param unit wait unit
+<i>113</i>&nbsp;     * @return true if items was added, false if timed out
+<i>114</i>&nbsp;     * @throws Exception
+<i>115</i>&nbsp;     */
+<i>116</i>&nbsp;    public boolean     put(T item, int priority, int maxWait, TimeUnit unit) throws Exception
+<i>117</i>&nbsp;    {
+<b class="fc"><i>118</i>&nbsp;        queue.checkState();</b>
+<i>119</i>&nbsp;
+<b class="fc"><i>120</i>&nbsp;        String      priorityHex = priorityToString(priority);</b>
+<b class="fc"><i>121</i>&nbsp;        return queue.internalPut(item, null, queue.makeItemPath() + priorityHex, maxWait, unit);</b>
+<i>122</i>&nbsp;    }
+<i>123</i>&nbsp;
+<i>124</i>&nbsp;    /**
+<i>125</i>&nbsp;     * Add a set of items with the same priority into the queue. Adding is done in the background - thus, this method will
+<i>126</i>&nbsp;     * return quickly.&lt;br/&gt;&lt;br/&gt;
+<i>127</i>&nbsp;     * NOTE: if an upper bound was set via {@link QueueBuilder#maxItems}, this method will
+<i>128</i>&nbsp;     * block until there is available space in the queue.
+<i>129</i>&nbsp;     *
+<i>130</i>&nbsp;     * @param items items to add
+<i>131</i>&nbsp;     * @param priority item priority - lower numbers come out of the queue first
+<i>132</i>&nbsp;     * @throws Exception connection issues
+<i>133</i>&nbsp;     */
+<i>134</i>&nbsp;    public void     putMulti(MultiItem&lt;T&gt; items, int priority) throws Exception
+<i>135</i>&nbsp;    {
+<b class="nc"><i>136</i>&nbsp;        putMulti(items, priority, 0, null);</b>
+<b class="nc"><i>137</i>&nbsp;    }</b>
+<i>138</i>&nbsp;
+<i>139</i>&nbsp;    /**
+<i>140</i>&nbsp;     * Same as {@link #putMulti(MultiItem, int)} but allows a maximum wait time if an upper bound was set
+<i>141</i>&nbsp;     * via {@link QueueBuilder#maxItems}.
+<i>142</i>&nbsp;     *
+<i>143</i>&nbsp;     * @param items items to add
+<i>144</i>&nbsp;     * @param priority item priority - lower numbers come out of the queue first
+<i>145</i>&nbsp;     * @param maxWait maximum wait
+<i>146</i>&nbsp;     * @param unit wait unit
+<i>147</i>&nbsp;     * @return true if items was added, false if timed out
+<i>148</i>&nbsp;     * @throws Exception
+<i>149</i>&nbsp;     */
+<i>150</i>&nbsp;    public boolean      putMulti(MultiItem&lt;T&gt; items, int priority, int maxWait, TimeUnit unit) throws Exception
+<i>151</i>&nbsp;    {
+<b class="nc"><i>152</i>&nbsp;        queue.checkState();</b>
+<i>153</i>&nbsp;
+<b class="nc"><i>154</i>&nbsp;        String      priorityHex = priorityToString(priority);</b>
+<b class="nc"><i>155</i>&nbsp;        return queue.internalPut(null, items, queue.makeItemPath() + priorityHex, maxWait, unit);</b>
+<i>156</i>&nbsp;    }
+<i>157</i>&nbsp;
+<i>158</i>&nbsp;    @Override
+<i>159</i>&nbsp;    public void setErrorMode(ErrorMode newErrorMode)
+<i>160</i>&nbsp;    {
+<b class="nc"><i>161</i>&nbsp;        queue.setErrorMode(newErrorMode);</b>
+<b class="nc"><i>162</i>&nbsp;    }</b>
+<i>163</i>&nbsp;
+<i>164</i>&nbsp;    @Override
+<i>165</i>&nbsp;    public boolean flushPuts(long waitTime, TimeUnit timeUnit) throws InterruptedException
+<i>166</i>&nbsp;    {
+<b class="nc"><i>167</i>&nbsp;        return queue.flushPuts(waitTime, timeUnit);</b>
+<i>168</i>&nbsp;    }
+<i>169</i>&nbsp;
+<i>170</i>&nbsp;    /**
+<i>171</i>&nbsp;     * Return the manager for put listeners
+<i>172</i>&nbsp;     *
+<i>173</i>&nbsp;     * @return put listener container
+<i>174</i>&nbsp;     */
+<i>175</i>&nbsp;    @Override
+<i>176</i>&nbsp;    public ListenerContainer&lt;QueuePutListener&lt;T&gt;&gt; getPutListenerContainer()
+<i>177</i>&nbsp;    {
+<b class="nc"><i>178</i>&nbsp;        return queue.getPutListenerContainer();</b>
+<i>179</i>&nbsp;    }
+<i>180</i>&nbsp;
+<i>181</i>&nbsp;    /**
+<i>182</i>&nbsp;     * Return the most recent message count from the queue. This is useful for debugging/information
+<i>183</i>&nbsp;     * purposes only.
+<i>184</i>&nbsp;     *
+<i>185</i>&nbsp;     * @return count (can be 0)
+<i>186</i>&nbsp;     */
+<i>187</i>&nbsp;    @Override
+<i>188</i>&nbsp;    public int getLastMessageCount()
+<i>189</i>&nbsp;    {
+<b class="nc"><i>190</i>&nbsp;        return queue.getLastMessageCount();</b>
+<i>191</i>&nbsp;    }
+<i>192</i>&nbsp;
+<i>193</i>&nbsp;    @VisibleForTesting
+<i>194</i>&nbsp;    ChildrenCache getCache()
+<i>195</i>&nbsp;    {
+<b class="fc"><i>196</i>&nbsp;        return queue.getCache();</b>
+<i>197</i>&nbsp;    }
+<i>198</i>&nbsp;
+<i>199</i>&nbsp;    @VisibleForTesting
+<i>200</i>&nbsp;    static String priorityToString(int priority)
+<i>201</i>&nbsp;    {
+<i>202</i>&nbsp;        // the padded hex val of the number prefixed with a 0 for negative numbers
+<i>203</i>&nbsp;        // and a 1 for positive (so that it sorts correctly)
+<b class="fc"><i>204</i>&nbsp;        long        l = (long)priority &amp; 0xFFFFFFFFL;</b>
+<b class="fc"><i>205</i>&nbsp;        return String.format(&quot;%s%08X&quot;, (priority &gt;= 0) ? &quot;1&quot; : &quot;0&quot;, l);</b>
+<i>206</i>&nbsp;    }
+<i>207</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

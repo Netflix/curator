@@ -1,0 +1,456 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: UriSpec</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery</a> ]
+</div>
+
+<h1>Coverage Summary for Class: UriSpec (com.netflix.curator.x.discovery)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">UriSpec</td>
+<td class="coverageStat">
+  <span class="percent">
+    76.9%
+  </span>
+  <span class="absValue">
+    (10/ 13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.7%
+  </span>
+  <span class="absValue">
+    (57/ 65)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">UriSpec$Part</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (5/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    69.6%
+  </span>
+  <span class="absValue">
+    (16/ 23)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    78.9%
+  </span>
+  <span class="absValue">
+    (15/ 19)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    83%
+  </span>
+  <span class="absValue">
+    (73/ 88)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.x.discovery;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.base.Preconditions;
+<i>4</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>5</i>&nbsp;import com.google.common.collect.Iterators;
+<i>6</i>&nbsp;import com.google.common.collect.Lists;
+<i>7</i>&nbsp;import com.google.common.collect.Maps;
+<i>8</i>&nbsp;import org.slf4j.Logger;
+<i>9</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>10</i>&nbsp;import java.util.Iterator;
+<i>11</i>&nbsp;import java.util.List;
+<i>12</i>&nbsp;import java.util.Map;
+<i>13</i>&nbsp;import java.util.StringTokenizer;
+<i>14</i>&nbsp;
+<i>15</i>&nbsp;/**
+<i>16</i>&nbsp; * &lt;p&gt;
+<i>17</i>&nbsp; *     An abstraction for specifying a URI for an instance allowing for variable substitutions.
+<i>18</i>&nbsp; * &lt;/p&gt;
+<i>19</i>&nbsp; *
+<i>20</i>&nbsp; * &lt;p&gt;
+<i>21</i>&nbsp; *     A Uri spec is a string with optional replacement fields. A replacement field begins with
+<i>22</i>&nbsp; *     an open brace and ends with a close brace. The value between the braces is the name of the
+<i>23</i>&nbsp; *     field. e.g. &quot;{scheme}://foo.com:{port}&quot; has two replacement fields named &quot;scheme&quot; and &quot;port&quot;.
+<i>24</i>&nbsp; *     Several pre-defined fields are listed as constants in this class (e.g. {@link #FIELD_SCHEME}).
+<i>25</i>&nbsp; * &lt;/p&gt;
+<i>26</i>&nbsp; */
+<i>27</i>&nbsp;public class UriSpec implements Iterable&lt;UriSpec.Part&gt;
+<i>28</i>&nbsp;{
+<b class="fc"><i>29</i>&nbsp;    private final Logger            log = LoggerFactory.getLogger(getClass());</b>
+<b class="fc"><i>30</i>&nbsp;    private final List&lt;Part&gt;        parts = Lists.newArrayList();</b>
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;    /**
+<i>33</i>&nbsp;     * This defaults to &quot;http&quot;. If a {@link ServiceInstance} is passed when building and an sslPort
+<i>34</i>&nbsp;     * is specified in the instance, the replacement is &quot;https&quot;.
+<i>35</i>&nbsp;     */
+<i>36</i>&nbsp;    public static final String      FIELD_SCHEME = &quot;scheme&quot;;
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;    /**
+<i>39</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getName()}
+<i>40</i>&nbsp;     */
+<i>41</i>&nbsp;    public static final String      FIELD_NAME = &quot;name&quot;;
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    /**
+<i>44</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getId()}
+<i>45</i>&nbsp;     */
+<i>46</i>&nbsp;    public static final String      FIELD_ID = &quot;id&quot;;
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    /**
+<i>49</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getAddress()}
+<i>50</i>&nbsp;     */
+<i>51</i>&nbsp;    public static final String      FIELD_ADDRESS = &quot;address&quot;;
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;    /**
+<i>54</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getPort()}
+<i>55</i>&nbsp;     */
+<i>56</i>&nbsp;    public static final String      FIELD_PORT = &quot;port&quot;;
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;    /**
+<i>59</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getSslPort()}
+<i>60</i>&nbsp;     */
+<i>61</i>&nbsp;    public static final String      FIELD_SSL_PORT = &quot;ssl-port&quot;;
+<i>62</i>&nbsp;
+<i>63</i>&nbsp;    /**
+<i>64</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getRegistrationTimeUTC()}
+<i>65</i>&nbsp;     */
+<i>66</i>&nbsp;    public static final String      FIELD_REGISTRATION_TIME_UTC = &quot;registration-time-utc&quot;;
+<i>67</i>&nbsp;
+<i>68</i>&nbsp;    /**
+<i>69</i>&nbsp;     * If a {@link ServiceInstance} is passed when building, the replacement is {@link ServiceInstance#getServiceType()}
+<i>70</i>&nbsp;     */
+<i>71</i>&nbsp;    public static final String      FIELD_SERVICE_TYPE = &quot;service-type&quot;;
+<i>72</i>&nbsp;
+<i>73</i>&nbsp;    /**
+<i>74</i>&nbsp;     * Always replaced with &#39;{&#39; - i.e. this is how to insert a literal &#39;{&#39;
+<i>75</i>&nbsp;     */
+<i>76</i>&nbsp;    public static final String      FIELD_OPEN_BRACE = &quot;[&quot;;
+<i>77</i>&nbsp;
+<i>78</i>&nbsp;    /**
+<i>79</i>&nbsp;     * Always replaced with &#39;}&#39; - i.e. this is how to insert a literal &#39;}&#39;
+<i>80</i>&nbsp;     */
+<i>81</i>&nbsp;    public static final String      FIELD_CLOSE_BRACE = &quot;]&quot;;
+<i>82</i>&nbsp;
+<i>83</i>&nbsp;    /**
+<i>84</i>&nbsp;     * Represents one token in the Uri spec
+<i>85</i>&nbsp;     */
+<i>86</i>&nbsp;    public static class Part
+<i>87</i>&nbsp;    {
+<i>88</i>&nbsp;        private final String        value;
+<i>89</i>&nbsp;        private final boolean       variable;
+<i>90</i>&nbsp;
+<i>91</i>&nbsp;        /**
+<i>92</i>&nbsp;         * @param value the token value
+<i>93</i>&nbsp;         * @param isVariable if true, a replacement field. If false, a literal string
+<i>94</i>&nbsp;         */
+<i>95</i>&nbsp;        public Part(String value, boolean isVariable)
+<b class="fc"><i>96</i>&nbsp;        {</b>
+<b class="fc"><i>97</i>&nbsp;            this.value = value;</b>
+<b class="fc"><i>98</i>&nbsp;            this.variable = isVariable;</b>
+<b class="fc"><i>99</i>&nbsp;        }</b>
+<i>100</i>&nbsp;
+<i>101</i>&nbsp;        public Part()
+<b class="fc"><i>102</i>&nbsp;        {</b>
+<b class="fc"><i>103</i>&nbsp;            value = &quot;&quot;;</b>
+<b class="fc"><i>104</i>&nbsp;            variable = false;</b>
+<b class="fc"><i>105</i>&nbsp;        }</b>
+<i>106</i>&nbsp;
+<i>107</i>&nbsp;        public String getValue()
+<i>108</i>&nbsp;        {
+<b class="fc"><i>109</i>&nbsp;            return value;</b>
+<i>110</i>&nbsp;        }
+<i>111</i>&nbsp;
+<i>112</i>&nbsp;        public boolean isVariable()
+<i>113</i>&nbsp;        {
+<b class="fc"><i>114</i>&nbsp;            return variable;</b>
+<i>115</i>&nbsp;        }
+<i>116</i>&nbsp;
+<i>117</i>&nbsp;        @SuppressWarnings(&quot;RedundantIfStatement&quot;)
+<i>118</i>&nbsp;        @Override
+<i>119</i>&nbsp;        public boolean equals(Object o)
+<i>120</i>&nbsp;        {
+<b class="fc"><i>121</i>&nbsp;            if ( this == o )</b>
+<i>122</i>&nbsp;            {
+<b class="nc"><i>123</i>&nbsp;                return true;</b>
+<i>124</i>&nbsp;            }
+<b class="fc"><i>125</i>&nbsp;            if ( o == null || getClass() != o.getClass() )</b>
+<i>126</i>&nbsp;            {
+<b class="nc"><i>127</i>&nbsp;                return false;</b>
+<i>128</i>&nbsp;            }
+<i>129</i>&nbsp;
+<b class="fc"><i>130</i>&nbsp;            Part part = (Part)o;</b>
+<i>131</i>&nbsp;
+<b class="fc"><i>132</i>&nbsp;            if ( variable != part.variable )</b>
+<i>133</i>&nbsp;            {
+<b class="nc"><i>134</i>&nbsp;                return false;</b>
+<i>135</i>&nbsp;            }
+<b class="fc"><i>136</i>&nbsp;            if ( !value.equals(part.value) )</b>
+<i>137</i>&nbsp;            {
+<b class="nc"><i>138</i>&nbsp;                return false;</b>
+<i>139</i>&nbsp;            }
+<i>140</i>&nbsp;
+<b class="fc"><i>141</i>&nbsp;            return true;</b>
+<i>142</i>&nbsp;        }
+<i>143</i>&nbsp;
+<i>144</i>&nbsp;        @Override
+<i>145</i>&nbsp;        public int hashCode()
+<i>146</i>&nbsp;        {
+<b class="nc"><i>147</i>&nbsp;            int result = value.hashCode();</b>
+<b class="nc"><i>148</i>&nbsp;            result = 31 * result + (variable ? 1 : 0);</b>
+<b class="nc"><i>149</i>&nbsp;            return result;</b>
+<i>150</i>&nbsp;        }
+<i>151</i>&nbsp;    }
+<i>152</i>&nbsp;
+<i>153</i>&nbsp;    public UriSpec()
+<b class="fc"><i>154</i>&nbsp;    {</b>
+<i>155</i>&nbsp;        // NOP
+<b class="fc"><i>156</i>&nbsp;    }</b>
+<i>157</i>&nbsp;
+<i>158</i>&nbsp;    /**
+<i>159</i>&nbsp;     * @param rawSpec the spec to parse
+<i>160</i>&nbsp;     */
+<i>161</i>&nbsp;    public UriSpec(String rawSpec)
+<b class="fc"><i>162</i>&nbsp;    {</b>
+<b class="fc"><i>163</i>&nbsp;        boolean             isInsideVariable = false;</b>
+<b class="fc"><i>164</i>&nbsp;        StringTokenizer     tokenizer = new StringTokenizer(rawSpec, &quot;{}&quot;, true);</b>
+<b class="fc"><i>165</i>&nbsp;        while ( tokenizer.hasMoreTokens() )</b>
+<i>166</i>&nbsp;        {
+<b class="fc"><i>167</i>&nbsp;            String  token = tokenizer.nextToken();</b>
+<b class="fc"><i>168</i>&nbsp;            if ( token.equals(&quot;{&quot;) )</b>
+<i>169</i>&nbsp;            {
+<b class="fc"><i>170</i>&nbsp;                Preconditions.checkState(!isInsideVariable, &quot;{ is not allowed inside of a variable specification&quot;);</b>
+<b class="fc"><i>171</i>&nbsp;                isInsideVariable = true;</b>
+<i>172</i>&nbsp;            }
+<b class="fc"><i>173</i>&nbsp;            else if ( token.equals(&quot;}&quot;) )</b>
+<i>174</i>&nbsp;            {
+<b class="fc"><i>175</i>&nbsp;                Preconditions.checkState(isInsideVariable, &quot;} must be preceded by {&quot;);</b>
+<b class="fc"><i>176</i>&nbsp;                isInsideVariable = false;</b>
+<i>177</i>&nbsp;            }
+<i>178</i>&nbsp;            else
+<i>179</i>&nbsp;            {
+<b class="fc"><i>180</i>&nbsp;                if ( isInsideVariable )</b>
+<i>181</i>&nbsp;                {
+<b class="fc"><i>182</i>&nbsp;                    token = token.trim();</b>
+<i>183</i>&nbsp;                }
+<b class="fc"><i>184</i>&nbsp;                add(new Part(token, isInsideVariable));</b>
+<i>185</i>&nbsp;            }
+<b class="fc"><i>186</i>&nbsp;        }</b>
+<i>187</i>&nbsp;
+<b class="fc"><i>188</i>&nbsp;        Preconditions.checkState(!isInsideVariable, &quot;Final variable not closed - expected }&quot;);</b>
+<b class="fc"><i>189</i>&nbsp;    }</b>
+<i>190</i>&nbsp;
+<i>191</i>&nbsp;    /**
+<i>192</i>&nbsp;     * Build into a UriSpec string
+<i>193</i>&nbsp;     *
+<i>194</i>&nbsp;     * @return UriSpec string
+<i>195</i>&nbsp;     */
+<i>196</i>&nbsp;    public String   build()
+<i>197</i>&nbsp;    {
+<b class="nc"><i>198</i>&nbsp;        return build(null, Maps.&lt;String, Object&gt;newHashMap());</b>
+<i>199</i>&nbsp;    }
+<i>200</i>&nbsp;
+<i>201</i>&nbsp;    /**
+<i>202</i>&nbsp;     * Build into a UriSpec string
+<i>203</i>&nbsp;     *
+<i>204</i>&nbsp;     * @param serviceInstance instance to use for pre-defined replacement fields
+<i>205</i>&nbsp;     * @return UriSpec string
+<i>206</i>&nbsp;     */
+<i>207</i>&nbsp;    public String   build(ServiceInstance&lt;?&gt; serviceInstance)
+<i>208</i>&nbsp;    {
+<b class="fc"><i>209</i>&nbsp;        return build(serviceInstance, Maps.&lt;String, Object&gt;newHashMap());</b>
+<i>210</i>&nbsp;    }
+<i>211</i>&nbsp;
+<i>212</i>&nbsp;    /**
+<i>213</i>&nbsp;     * Build into a UriSpec string
+<i>214</i>&nbsp;     *
+<i>215</i>&nbsp;     * @param variables a mapping of field replacement names to values. Note: any fields listed
+<i>216</i>&nbsp;     *                  in this map override pre-defined fields
+<i>217</i>&nbsp;     * @return UriSpec string
+<i>218</i>&nbsp;     */
+<i>219</i>&nbsp;    public String   build(Map&lt;String, Object&gt; variables)
+<i>220</i>&nbsp;    {
+<b class="fc"><i>221</i>&nbsp;        return build(null, variables);</b>
+<i>222</i>&nbsp;    }
+<i>223</i>&nbsp;
+<i>224</i>&nbsp;    /**
+<i>225</i>&nbsp;     * Build into a UriSpec string
+<i>226</i>&nbsp;     *
+<i>227</i>&nbsp;     * @param serviceInstance instance to use for pre-defined replacement fields
+<i>228</i>&nbsp;     * @param variables a mapping of field replacement names to values. Note: any fields listed
+<i>229</i>&nbsp;     *                  in this map override pre-defined fields
+<i>230</i>&nbsp;     * @return UriSpec string
+<i>231</i>&nbsp;     */
+<i>232</i>&nbsp;    public String   build(ServiceInstance&lt;?&gt; serviceInstance, Map&lt;String, Object&gt; variables)
+<i>233</i>&nbsp;    {
+<b class="fc"><i>234</i>&nbsp;        Map&lt;String, Object&gt;     localVariables = Maps.newHashMap();</b>
+<b class="fc"><i>235</i>&nbsp;        localVariables.put(FIELD_OPEN_BRACE, &quot;{&quot;);</b>
+<b class="fc"><i>236</i>&nbsp;        localVariables.put(FIELD_CLOSE_BRACE, &quot;}&quot;);</b>
+<b class="fc"><i>237</i>&nbsp;        localVariables.put(FIELD_SCHEME, &quot;http&quot;);</b>
+<i>238</i>&nbsp;
+<b class="fc"><i>239</i>&nbsp;        if ( serviceInstance != null )</b>
+<i>240</i>&nbsp;        {
+<b class="fc"><i>241</i>&nbsp;            localVariables.put(FIELD_NAME, nullCheck(serviceInstance.getName()));</b>
+<b class="fc"><i>242</i>&nbsp;            localVariables.put(FIELD_ID, nullCheck(serviceInstance.getId()));</b>
+<b class="fc"><i>243</i>&nbsp;            localVariables.put(FIELD_ADDRESS, nullCheck(serviceInstance.getAddress()));</b>
+<b class="fc"><i>244</i>&nbsp;            localVariables.put(FIELD_PORT, nullCheck(serviceInstance.getPort()));</b>
+<b class="fc"><i>245</i>&nbsp;            localVariables.put(FIELD_SSL_PORT, nullCheck(serviceInstance.getSslPort()));</b>
+<b class="fc"><i>246</i>&nbsp;            localVariables.put(FIELD_REGISTRATION_TIME_UTC, nullCheck(serviceInstance.getRegistrationTimeUTC()));</b>
+<b class="fc"><i>247</i>&nbsp;            localVariables.put(FIELD_SERVICE_TYPE, (serviceInstance.getServiceType() != null) ? serviceInstance.getServiceType().name().toLowerCase() : &quot;&quot;);</b>
+<b class="fc"><i>248</i>&nbsp;            if ( serviceInstance.getSslPort() != null )</b>
+<i>249</i>&nbsp;            {
+<b class="fc"><i>250</i>&nbsp;                localVariables.put(FIELD_SCHEME, &quot;https&quot;);</b>
+<i>251</i>&nbsp;            }
+<i>252</i>&nbsp;        }
+<i>253</i>&nbsp;
+<b class="fc"><i>254</i>&nbsp;        localVariables.putAll(variables);</b>
+<i>255</i>&nbsp;
+<b class="fc"><i>256</i>&nbsp;        StringBuilder       str = new StringBuilder();</b>
+<b class="fc"><i>257</i>&nbsp;        for ( Part p : parts )</b>
+<i>258</i>&nbsp;        {
+<b class="fc"><i>259</i>&nbsp;            if ( p.isVariable() )</b>
+<i>260</i>&nbsp;            {
+<b class="fc"><i>261</i>&nbsp;                Object value = localVariables.get(p.getValue());</b>
+<b class="fc"><i>262</i>&nbsp;                if ( value == null )</b>
+<i>263</i>&nbsp;                {
+<b class="nc"><i>264</i>&nbsp;                    log.debug(&quot;Variable not found: &quot; + p.getValue());</b>
+<i>265</i>&nbsp;                }
+<i>266</i>&nbsp;                else
+<i>267</i>&nbsp;                {
+<b class="fc"><i>268</i>&nbsp;                    str.append(value);</b>
+<i>269</i>&nbsp;                }
+<b class="fc"><i>270</i>&nbsp;            }</b>
+<i>271</i>&nbsp;            else
+<i>272</i>&nbsp;            {
+<b class="fc"><i>273</i>&nbsp;                str.append(p.getValue());</b>
+<i>274</i>&nbsp;            }
+<i>275</i>&nbsp;        }
+<i>276</i>&nbsp;
+<b class="fc"><i>277</i>&nbsp;        return str.toString();</b>
+<i>278</i>&nbsp;    }
+<i>279</i>&nbsp;
+<i>280</i>&nbsp;    @Override
+<i>281</i>&nbsp;    public Iterator&lt;Part&gt; iterator()
+<i>282</i>&nbsp;    {
+<b class="fc"><i>283</i>&nbsp;        return Iterators.unmodifiableIterator(parts.iterator());</b>
+<i>284</i>&nbsp;    }
+<i>285</i>&nbsp;
+<i>286</i>&nbsp;    /**
+<i>287</i>&nbsp;     * @return the parts
+<i>288</i>&nbsp;     */
+<i>289</i>&nbsp;    public List&lt;Part&gt;   getParts()
+<i>290</i>&nbsp;    {
+<b class="fc"><i>291</i>&nbsp;        return ImmutableList.copyOf(parts);</b>
+<i>292</i>&nbsp;    }
+<i>293</i>&nbsp;
+<i>294</i>&nbsp;    /**
+<i>295</i>&nbsp;     * Add a part to the end of the list
+<i>296</i>&nbsp;     *
+<i>297</i>&nbsp;     * @param part part to add
+<i>298</i>&nbsp;     */
+<i>299</i>&nbsp;    public void     add(Part part)
+<i>300</i>&nbsp;    {
+<b class="fc"><i>301</i>&nbsp;        parts.add(part);</b>
+<b class="fc"><i>302</i>&nbsp;    }</b>
+<i>303</i>&nbsp;
+<i>304</i>&nbsp;    /**
+<i>305</i>&nbsp;     * Remove the given part
+<i>306</i>&nbsp;     *
+<i>307</i>&nbsp;     * @param part the part
+<i>308</i>&nbsp;     */
+<i>309</i>&nbsp;    public void     remove(Part part)
+<i>310</i>&nbsp;    {
+<b class="nc"><i>311</i>&nbsp;        parts.remove(part);</b>
+<b class="nc"><i>312</i>&nbsp;    }</b>
+<i>313</i>&nbsp;
+<i>314</i>&nbsp;    @SuppressWarnings(&quot;RedundantIfStatement&quot;)
+<i>315</i>&nbsp;    @Override
+<i>316</i>&nbsp;    public boolean equals(Object o)
+<i>317</i>&nbsp;    {
+<b class="fc"><i>318</i>&nbsp;        if ( this == o )</b>
+<i>319</i>&nbsp;        {
+<b class="nc"><i>320</i>&nbsp;            return true;</b>
+<i>321</i>&nbsp;        }
+<b class="fc"><i>322</i>&nbsp;        if ( o == null || getClass() != o.getClass() )</b>
+<i>323</i>&nbsp;        {
+<b class="nc"><i>324</i>&nbsp;            return false;</b>
+<i>325</i>&nbsp;        }
+<i>326</i>&nbsp;
+<b class="fc"><i>327</i>&nbsp;        UriSpec spec = (UriSpec)o;</b>
+<i>328</i>&nbsp;
+<b class="fc"><i>329</i>&nbsp;        if ( !parts.equals(spec.parts) )</b>
+<i>330</i>&nbsp;        {
+<b class="nc"><i>331</i>&nbsp;            return false;</b>
+<i>332</i>&nbsp;        }
+<i>333</i>&nbsp;
+<b class="fc"><i>334</i>&nbsp;        return true;</b>
+<i>335</i>&nbsp;    }
+<i>336</i>&nbsp;
+<i>337</i>&nbsp;    @Override
+<i>338</i>&nbsp;    public int hashCode()
+<i>339</i>&nbsp;    {
+<b class="nc"><i>340</i>&nbsp;        return parts.hashCode();</b>
+<i>341</i>&nbsp;    }
+<i>342</i>&nbsp;
+<i>343</i>&nbsp;    private Object nullCheck(Object o)
+<i>344</i>&nbsp;    {
+<b class="fc"><i>345</i>&nbsp;        return (o != null) ? o : &quot;&quot;;</b>
+<i>346</i>&nbsp;    }
+<i>347</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

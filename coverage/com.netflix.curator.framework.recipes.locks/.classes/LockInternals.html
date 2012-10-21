@@ -1,0 +1,499 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: LockInternals</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: LockInternals (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">LockInternals</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (16/ 18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91.3%
+  </span>
+  <span class="absValue">
+    (94/ 103)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">LockInternals$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">LockInternals$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">LockInternals$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">LockInternals$4</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (24/ 26)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.1%
+  </span>
+  <span class="absValue">
+    (105/ 114)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.base.Function;
+<i>20</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>21</i>&nbsp;import com.google.common.collect.Iterables;
+<i>22</i>&nbsp;import com.google.common.collect.Lists;
+<i>23</i>&nbsp;import com.netflix.curator.RetryLoop;
+<i>24</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>25</i>&nbsp;import com.netflix.curator.framework.api.CuratorWatcher;
+<i>26</i>&nbsp;import com.netflix.curator.utils.ZKPaths;
+<i>27</i>&nbsp;import org.apache.zookeeper.CreateMode;
+<i>28</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>29</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>30</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>31</i>&nbsp;import org.apache.zookeeper.common.PathUtils;
+<i>32</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>33</i>&nbsp;import java.util.Arrays;
+<i>34</i>&nbsp;import java.util.Collection;
+<i>35</i>&nbsp;import java.util.Collections;
+<i>36</i>&nbsp;import java.util.Comparator;
+<i>37</i>&nbsp;import java.util.List;
+<i>38</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>39</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>40</i>&nbsp;
+<b class="fc"><i>41</i>&nbsp;public class LockInternals</b>
+<i>42</i>&nbsp;{
+<i>43</i>&nbsp;    private final CuratorFramework                  client;
+<i>44</i>&nbsp;    private final String                            path;
+<i>45</i>&nbsp;    private final String                            basePath;
+<i>46</i>&nbsp;    private final LockInternalsDriver               driver;
+<i>47</i>&nbsp;    private final String                            lockName;
+<b class="fc"><i>48</i>&nbsp;    private final AtomicReference&lt;RevocationSpec&gt;   revocable = new AtomicReference&lt;RevocationSpec&gt;(null);</b>
+<b class="fc"><i>49</i>&nbsp;    private final CuratorWatcher                    revocableWatcher = new CuratorWatcher()</b>
+<b class="fc"><i>50</i>&nbsp;    {</b>
+<i>51</i>&nbsp;        @Override
+<i>52</i>&nbsp;        public void process(WatchedEvent event) throws Exception
+<i>53</i>&nbsp;        {
+<b class="fc"><i>54</i>&nbsp;            if ( event.getType() == Watcher.Event.EventType.NodeDataChanged )</b>
+<i>55</i>&nbsp;            {
+<b class="fc"><i>56</i>&nbsp;                checkRevocableWatcher(event.getPath());</b>
+<i>57</i>&nbsp;            }
+<b class="fc"><i>58</i>&nbsp;        }</b>
+<i>59</i>&nbsp;    };
+<i>60</i>&nbsp;
+<b class="fc"><i>61</i>&nbsp;    private final Watcher watcher = new Watcher()</b>
+<b class="fc"><i>62</i>&nbsp;    {</b>
+<i>63</i>&nbsp;        @Override
+<i>64</i>&nbsp;        public void process(WatchedEvent event)
+<i>65</i>&nbsp;        {
+<b class="fc"><i>66</i>&nbsp;            notifyFromWatcher();</b>
+<b class="fc"><i>67</i>&nbsp;        }</b>
+<i>68</i>&nbsp;    };
+<i>69</i>&nbsp;
+<i>70</i>&nbsp;    private volatile int    maxLeases;
+<i>71</i>&nbsp;
+<b class="fc"><i>72</i>&nbsp;    static final byte[]             REVOKE_MESSAGE = &quot;__REVOKE__&quot;.getBytes();</b>
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    /**
+<i>75</i>&nbsp;     * Attempt to delete the lock node so that sequence numbers get reset
+<i>76</i>&nbsp;     *
+<i>77</i>&nbsp;     * @throws Exception errors
+<i>78</i>&nbsp;     */
+<i>79</i>&nbsp;    public void clean() throws Exception
+<i>80</i>&nbsp;    {
+<i>81</i>&nbsp;        try
+<i>82</i>&nbsp;        {
+<b class="nc"><i>83</i>&nbsp;            client.delete().forPath(basePath);</b>
+<i>84</i>&nbsp;        }
+<b class="nc"><i>85</i>&nbsp;        catch ( KeeperException.BadVersionException ignore )</b>
+<i>86</i>&nbsp;        {
+<i>87</i>&nbsp;            // ignore - another thread/process got the lock
+<i>88</i>&nbsp;        }
+<b class="nc"><i>89</i>&nbsp;        catch ( KeeperException.NotEmptyException ignore )</b>
+<i>90</i>&nbsp;        {
+<i>91</i>&nbsp;            // ignore - other threads/processes are waiting
+<b class="nc"><i>92</i>&nbsp;        }</b>
+<b class="nc"><i>93</i>&nbsp;    }</b>
+<i>94</i>&nbsp;
+<i>95</i>&nbsp;    LockInternals(CuratorFramework client, LockInternalsDriver driver, String path, String lockName, int maxLeases)
+<b class="fc"><i>96</i>&nbsp;    {</b>
+<b class="fc"><i>97</i>&nbsp;        this.driver = driver;</b>
+<b class="fc"><i>98</i>&nbsp;        this.lockName = lockName;</b>
+<b class="fc"><i>99</i>&nbsp;        this.maxLeases = maxLeases;</b>
+<b class="fc"><i>100</i>&nbsp;        PathUtils.validatePath(path);</b>
+<i>101</i>&nbsp;
+<b class="fc"><i>102</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>103</i>&nbsp;        this.basePath = path;</b>
+<b class="fc"><i>104</i>&nbsp;        this.path = ZKPaths.makePath(path, lockName);</b>
+<b class="fc"><i>105</i>&nbsp;    }</b>
+<i>106</i>&nbsp;
+<i>107</i>&nbsp;    synchronized void setMaxLeases(int maxLeases)
+<i>108</i>&nbsp;    {
+<b class="nc"><i>109</i>&nbsp;        this.maxLeases = maxLeases;</b>
+<b class="nc"><i>110</i>&nbsp;        notifyAll();</b>
+<b class="nc"><i>111</i>&nbsp;    }</b>
+<i>112</i>&nbsp;
+<i>113</i>&nbsp;    void makeRevocable(RevocationSpec entry)
+<i>114</i>&nbsp;    {
+<b class="fc"><i>115</i>&nbsp;        revocable.set(entry);</b>
+<b class="fc"><i>116</i>&nbsp;    }</b>
+<i>117</i>&nbsp;
+<i>118</i>&nbsp;    void releaseLock(String lockPath) throws Exception
+<i>119</i>&nbsp;    {
+<b class="fc"><i>120</i>&nbsp;        revocable.set(null);</b>
+<b class="fc"><i>121</i>&nbsp;        deleteOurPath(lockPath);</b>
+<b class="fc"><i>122</i>&nbsp;    }</b>
+<i>123</i>&nbsp;
+<i>124</i>&nbsp;    CuratorFramework getClient()
+<i>125</i>&nbsp;    {
+<b class="fc"><i>126</i>&nbsp;        return client;</b>
+<i>127</i>&nbsp;    }
+<i>128</i>&nbsp;
+<i>129</i>&nbsp;    public static Collection&lt;String&gt; getParticipantNodes(CuratorFramework client, final String basePath, String lockName, LockInternalsSorter sorter) throws Exception
+<i>130</i>&nbsp;    {
+<b class="fc"><i>131</i>&nbsp;        List&lt;String&gt;        names = getSortedChildren(client, basePath, lockName, sorter);</b>
+<b class="fc"><i>132</i>&nbsp;        Iterable&lt;String&gt;    transformed = Iterables.transform</b>
+<i>133</i>&nbsp;            (
+<i>134</i>&nbsp;                names,
+<i>135</i>&nbsp;                new Function&lt;String, String&gt;()
+<b class="fc"><i>136</i>&nbsp;                {</b>
+<i>137</i>&nbsp;                    @Override
+<i>138</i>&nbsp;                    public String apply(String name)
+<i>139</i>&nbsp;                    {
+<b class="fc"><i>140</i>&nbsp;                        return ZKPaths.makePath(basePath, name);</b>
+<i>141</i>&nbsp;                    }
+<i>142</i>&nbsp;                }
+<i>143</i>&nbsp;            );
+<b class="fc"><i>144</i>&nbsp;        return ImmutableList.copyOf(transformed);</b>
+<i>145</i>&nbsp;    }
+<i>146</i>&nbsp;
+<i>147</i>&nbsp;    public static List&lt;String&gt; getSortedChildren(CuratorFramework client, String basePath, final String lockName, final LockInternalsSorter sorter) throws Exception
+<i>148</i>&nbsp;    {
+<b class="fc"><i>149</i>&nbsp;        List&lt;String&gt; children = client.getChildren().forPath(basePath);</b>
+<b class="fc"><i>150</i>&nbsp;        List&lt;String&gt; sortedList = Lists.newArrayList(children);</b>
+<b class="fc"><i>151</i>&nbsp;        Collections.sort</b>
+<i>152</i>&nbsp;        (
+<i>153</i>&nbsp;            sortedList,
+<i>154</i>&nbsp;            new Comparator&lt;String&gt;()
+<b class="fc"><i>155</i>&nbsp;            {</b>
+<i>156</i>&nbsp;                @Override
+<i>157</i>&nbsp;                public int compare(String lhs, String rhs)
+<i>158</i>&nbsp;                {
+<b class="fc"><i>159</i>&nbsp;                    return sorter.fixForSorting(lhs, lockName).compareTo(sorter.fixForSorting(rhs, lockName));</b>
+<i>160</i>&nbsp;                }
+<i>161</i>&nbsp;            }
+<i>162</i>&nbsp;        );
+<b class="fc"><i>163</i>&nbsp;        return sortedList;</b>
+<i>164</i>&nbsp;    }
+<i>165</i>&nbsp;
+<i>166</i>&nbsp;    List&lt;String&gt; getSortedChildren() throws Exception
+<i>167</i>&nbsp;    {
+<b class="fc"><i>168</i>&nbsp;        return getSortedChildren(client, basePath, lockName, driver);</b>
+<i>169</i>&nbsp;    }
+<i>170</i>&nbsp;
+<i>171</i>&nbsp;    String getLockName()
+<i>172</i>&nbsp;    {
+<b class="fc"><i>173</i>&nbsp;        return lockName;</b>
+<i>174</i>&nbsp;    }
+<i>175</i>&nbsp;
+<i>176</i>&nbsp;    LockInternalsDriver getDriver()
+<i>177</i>&nbsp;    {
+<b class="fc"><i>178</i>&nbsp;        return driver;</b>
+<i>179</i>&nbsp;    }
+<i>180</i>&nbsp;
+<i>181</i>&nbsp;    String attemptLock(long time, TimeUnit unit, byte[] lockNodeBytes) throws Exception
+<i>182</i>&nbsp;    {
+<b class="fc"><i>183</i>&nbsp;        final long      startMillis = System.currentTimeMillis();</b>
+<b class="fc"><i>184</i>&nbsp;        final Long      millisToWait = (unit != null) ? unit.toMillis(time) : null;</b>
+<b class="fc"><i>185</i>&nbsp;        final byte[]    localLockNodeBytes = (revocable.get() != null) ? new byte[0] : lockNodeBytes;</b>
+<b class="fc"><i>186</i>&nbsp;        int             retryCount = 0;</b>
+<i>187</i>&nbsp;
+<b class="fc"><i>188</i>&nbsp;        String          ourPath = null;</b>
+<b class="fc"><i>189</i>&nbsp;        boolean         hasTheLock = false;</b>
+<b class="fc"><i>190</i>&nbsp;        boolean         isDone = false;</b>
+<b class="fc"><i>191</i>&nbsp;        while ( !isDone )</b>
+<i>192</i>&nbsp;        {
+<b class="fc"><i>193</i>&nbsp;            isDone = true;</b>
+<i>194</i>&nbsp;
+<i>195</i>&nbsp;            try
+<i>196</i>&nbsp;            {
+<b class="fc"><i>197</i>&nbsp;                if ( localLockNodeBytes != null )</b>
+<i>198</i>&nbsp;                {
+<b class="fc"><i>199</i>&nbsp;                    ourPath = client.create().creatingParentsIfNeeded().withProtection().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(path, localLockNodeBytes);</b>
+<i>200</i>&nbsp;                }
+<i>201</i>&nbsp;                else
+<i>202</i>&nbsp;                {
+<b class="fc"><i>203</i>&nbsp;                    ourPath = client.create().creatingParentsIfNeeded().withProtection().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(path);</b>
+<i>204</i>&nbsp;                }
+<b class="fc"><i>205</i>&nbsp;                hasTheLock = internalLockLoop(startMillis, millisToWait, ourPath);</b>
+<i>206</i>&nbsp;            }
+<b class="fc"><i>207</i>&nbsp;            catch ( KeeperException.NoNodeException e )</b>
+<i>208</i>&nbsp;            {
+<i>209</i>&nbsp;                // gets thrown by StandardLockInternalsDriver when it can&#39;t find the lock node
+<i>210</i>&nbsp;                // this can happen when the session expires, etc. So, if the retry allows, just try it all again
+<b class="fc"><i>211</i>&nbsp;                if ( client.getZookeeperClient().getRetryPolicy().allowRetry(retryCount++, System.currentTimeMillis() - startMillis, RetryLoop.getDefaultRetrySleeper()) )</b>
+<i>212</i>&nbsp;                {
+<b class="fc"><i>213</i>&nbsp;                    isDone = false;</b>
+<i>214</i>&nbsp;                }
+<i>215</i>&nbsp;                else
+<i>216</i>&nbsp;                {
+<b class="fc"><i>217</i>&nbsp;                    throw e;</b>
+<i>218</i>&nbsp;                }
+<b class="fc"><i>219</i>&nbsp;            }</b>
+<i>220</i>&nbsp;        }
+<i>221</i>&nbsp;
+<b class="fc"><i>222</i>&nbsp;        if ( hasTheLock )</b>
+<i>223</i>&nbsp;        {
+<b class="fc"><i>224</i>&nbsp;            return ourPath;</b>
+<i>225</i>&nbsp;        }
+<i>226</i>&nbsp;
+<b class="fc"><i>227</i>&nbsp;        return null;</b>
+<i>228</i>&nbsp;    }
+<i>229</i>&nbsp;
+<i>230</i>&nbsp;    private void checkRevocableWatcher(String path) throws Exception
+<i>231</i>&nbsp;    {
+<b class="fc"><i>232</i>&nbsp;        RevocationSpec  entry = revocable.get();</b>
+<b class="fc"><i>233</i>&nbsp;        if ( entry != null )</b>
+<i>234</i>&nbsp;        {
+<i>235</i>&nbsp;            try
+<i>236</i>&nbsp;            {
+<b class="fc"><i>237</i>&nbsp;                byte[]      bytes = client.getData().usingWatcher(revocableWatcher).forPath(path);</b>
+<b class="fc"><i>238</i>&nbsp;                if ( Arrays.equals(bytes, REVOKE_MESSAGE) )</b>
+<i>239</i>&nbsp;                {
+<b class="fc"><i>240</i>&nbsp;                    entry.getExecutor().execute(entry.getRunnable());</b>
+<i>241</i>&nbsp;                }
+<i>242</i>&nbsp;            }
+<b class="nc"><i>243</i>&nbsp;            catch ( KeeperException.NoNodeException ignore )</b>
+<i>244</i>&nbsp;            {
+<i>245</i>&nbsp;                // ignore
+<b class="fc"><i>246</i>&nbsp;            }</b>
+<i>247</i>&nbsp;        }
+<b class="fc"><i>248</i>&nbsp;    }</b>
+<i>249</i>&nbsp;
+<i>250</i>&nbsp;    private boolean internalLockLoop(long startMillis, Long millisToWait, String ourPath) throws Exception
+<i>251</i>&nbsp;    {
+<b class="fc"><i>252</i>&nbsp;        boolean     haveTheLock = false;</b>
+<b class="fc"><i>253</i>&nbsp;        boolean     doDelete = false;</b>
+<i>254</i>&nbsp;        try
+<i>255</i>&nbsp;        {
+<b class="fc"><i>256</i>&nbsp;            if ( revocable.get() != null )</b>
+<i>257</i>&nbsp;            {
+<b class="fc"><i>258</i>&nbsp;                client.getData().usingWatcher(revocableWatcher).forPath(ourPath);</b>
+<i>259</i>&nbsp;            }
+<i>260</i>&nbsp;
+<b class="fc"><i>261</i>&nbsp;            while ( client.isStarted() &amp;&amp; !haveTheLock )</b>
+<i>262</i>&nbsp;            {
+<b class="fc"><i>263</i>&nbsp;                List&lt;String&gt;        children = getSortedChildren();</b>
+<b class="fc"><i>264</i>&nbsp;                String              sequenceNodeName = ourPath.substring(basePath.length() + 1); // +1 to include the slash</b>
+<i>265</i>&nbsp;
+<b class="fc"><i>266</i>&nbsp;                PredicateResults    predicateResults = driver.getsTheLock(client, children, sequenceNodeName, maxLeases);</b>
+<b class="fc"><i>267</i>&nbsp;                if ( predicateResults.getsTheLock() )</b>
+<i>268</i>&nbsp;                {
+<b class="fc"><i>269</i>&nbsp;                    haveTheLock = true;</b>
+<i>270</i>&nbsp;                }
+<i>271</i>&nbsp;                else
+<i>272</i>&nbsp;                {
+<b class="fc"><i>273</i>&nbsp;                    String  previousSequencePath = basePath + &quot;/&quot; + predicateResults.getPathToWatch();</b>
+<i>274</i>&nbsp;
+<b class="fc"><i>275</i>&nbsp;                    synchronized(this)</b>
+<i>276</i>&nbsp;                    {
+<b class="fc"><i>277</i>&nbsp;                        Stat stat = client.checkExists().usingWatcher(watcher).forPath(previousSequencePath);</b>
+<b class="fc"><i>278</i>&nbsp;                        if ( stat != null )</b>
+<i>279</i>&nbsp;                        {
+<b class="fc"><i>280</i>&nbsp;                            if ( millisToWait != null )</b>
+<i>281</i>&nbsp;                            {
+<b class="fc"><i>282</i>&nbsp;                                millisToWait -= (System.currentTimeMillis() - startMillis);</b>
+<b class="fc"><i>283</i>&nbsp;                                startMillis = System.currentTimeMillis();</b>
+<b class="fc"><i>284</i>&nbsp;                                if ( millisToWait &lt;= 0 )</b>
+<i>285</i>&nbsp;                                {
+<b class="fc"><i>286</i>&nbsp;                                    doDelete = true;    // timed out - delete our node</b>
+<b class="fc"><i>287</i>&nbsp;                                    break;</b>
+<i>288</i>&nbsp;                                }
+<i>289</i>&nbsp;
+<b class="fc"><i>290</i>&nbsp;                                wait(millisToWait);</b>
+<i>291</i>&nbsp;                            }
+<i>292</i>&nbsp;                            else
+<i>293</i>&nbsp;                            {
+<b class="fc"><i>294</i>&nbsp;                                wait();</b>
+<i>295</i>&nbsp;                            }
+<i>296</i>&nbsp;                        }
+<b class="fc"><i>297</i>&nbsp;                    }</b>
+<i>298</i>&nbsp;                    // else it may have been deleted (i.e. lock released). Try to acquire again
+<i>299</i>&nbsp;                }
+<b class="fc"><i>300</i>&nbsp;            }</b>
+<i>301</i>&nbsp;        }
+<b class="fc"><i>302</i>&nbsp;        catch ( Exception e )</b>
+<i>303</i>&nbsp;        {
+<b class="fc"><i>304</i>&nbsp;            doDelete = true;</b>
+<b class="fc"><i>305</i>&nbsp;            throw e;</b>
+<i>306</i>&nbsp;        }
+<i>307</i>&nbsp;        finally
+<i>308</i>&nbsp;        {
+<b class="fc"><i>309</i>&nbsp;            if ( doDelete )</b>
+<i>310</i>&nbsp;            {
+<b class="fc"><i>311</i>&nbsp;                deleteOurPath(ourPath);</b>
+<i>312</i>&nbsp;            }
+<i>313</i>&nbsp;        }
+<b class="fc"><i>314</i>&nbsp;        return haveTheLock;</b>
+<i>315</i>&nbsp;    }
+<i>316</i>&nbsp;
+<i>317</i>&nbsp;    private void deleteOurPath(String ourPath) throws Exception
+<i>318</i>&nbsp;    {
+<i>319</i>&nbsp;        try
+<i>320</i>&nbsp;        {
+<b class="fc"><i>321</i>&nbsp;            client.delete().guaranteed().forPath(ourPath);</b>
+<i>322</i>&nbsp;        }
+<b class="fc"><i>323</i>&nbsp;        catch ( KeeperException.NoNodeException e )</b>
+<i>324</i>&nbsp;        {
+<i>325</i>&nbsp;            // ignore - already deleted (possibly expired session, etc.)
+<b class="fc"><i>326</i>&nbsp;        }</b>
+<b class="fc"><i>327</i>&nbsp;    }</b>
+<i>328</i>&nbsp;
+<i>329</i>&nbsp;    private synchronized void notifyFromWatcher()
+<i>330</i>&nbsp;    {
+<b class="fc"><i>331</i>&nbsp;        notifyAll();</b>
+<b class="fc"><i>332</i>&nbsp;    }</b>
+<i>333</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

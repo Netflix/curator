@@ -1,0 +1,207 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: PathChildrenCacheEvent</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.cache</a> ]
+</div>
+
+<h1>Coverage Summary for Class: PathChildrenCacheEvent (com.netflix.curator.framework.recipes.cache)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PathChildrenCacheEvent</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (3/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    85.7%
+  </span>
+  <span class="absValue">
+    (6/ 7)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">PathChildrenCacheEvent$Type</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (5/ 6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.9%
+  </span>
+  <span class="absValue">
+    (13/ 14)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.cache;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>19</i>&nbsp;
+<i>20</i>&nbsp;/**
+<i>21</i>&nbsp; * POJO that abstracts a change to a path
+<i>22</i>&nbsp; */
+<i>23</i>&nbsp;public class PathChildrenCacheEvent
+<i>24</i>&nbsp;{
+<i>25</i>&nbsp;    private final Type type;
+<i>26</i>&nbsp;    private final ChildData data;
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;    /**
+<i>29</i>&nbsp;     * Type of change
+<i>30</i>&nbsp;     */
+<b class="fc"><i>31</i>&nbsp;    public enum Type</b>
+<i>32</i>&nbsp;    {
+<i>33</i>&nbsp;        /**
+<i>34</i>&nbsp;         * A child was added to the path
+<i>35</i>&nbsp;         */
+<b class="fc"><i>36</i>&nbsp;        CHILD_ADDED,</b>
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;        /**
+<i>39</i>&nbsp;         * A child&#39;s data was changed
+<i>40</i>&nbsp;         */
+<b class="fc"><i>41</i>&nbsp;        CHILD_UPDATED,</b>
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;        /**
+<i>44</i>&nbsp;         * A child was removed from the path
+<i>45</i>&nbsp;         */
+<b class="fc"><i>46</i>&nbsp;        CHILD_REMOVED,</b>
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;        /**
+<i>49</i>&nbsp;         * Called when the connection has changed to {@link ConnectionState#SUSPENDED}
+<i>50</i>&nbsp;         */
+<b class="fc"><i>51</i>&nbsp;        CONNECTION_SUSPENDED,</b>
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;        /**
+<i>54</i>&nbsp;         * Called when the connection has changed to {@link ConnectionState#RECONNECTED}
+<i>55</i>&nbsp;         */
+<b class="fc"><i>56</i>&nbsp;        CONNECTION_RECONNECTED,</b>
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;        /**
+<i>59</i>&nbsp;         * Called when the connection has changed to {@link ConnectionState#LOST}
+<i>60</i>&nbsp;         */
+<b class="fc"><i>61</i>&nbsp;        CONNECTION_LOST</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    /**
+<i>65</i>&nbsp;     * @param type event type
+<i>66</i>&nbsp;     * @param data event data or null
+<i>67</i>&nbsp;     */
+<i>68</i>&nbsp;    public PathChildrenCacheEvent(Type type, ChildData data)
+<b class="fc"><i>69</i>&nbsp;    {</b>
+<b class="fc"><i>70</i>&nbsp;        this.type = type;</b>
+<b class="fc"><i>71</i>&nbsp;        this.data = data;</b>
+<b class="fc"><i>72</i>&nbsp;    }</b>
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    /**
+<i>75</i>&nbsp;     * @return change type
+<i>76</i>&nbsp;     */
+<i>77</i>&nbsp;    public Type getType()
+<i>78</i>&nbsp;    {
+<b class="fc"><i>79</i>&nbsp;        return type;</b>
+<i>80</i>&nbsp;    }
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    /**
+<i>83</i>&nbsp;     * @return the node&#39;s data
+<i>84</i>&nbsp;     */
+<i>85</i>&nbsp;    public ChildData getData()
+<i>86</i>&nbsp;    {
+<b class="fc"><i>87</i>&nbsp;        return data;</b>
+<i>88</i>&nbsp;    }
+<i>89</i>&nbsp;
+<i>90</i>&nbsp;    @Override
+<i>91</i>&nbsp;    public String toString()
+<i>92</i>&nbsp;    {
+<b class="nc"><i>93</i>&nbsp;        return &quot;PathChildrenCacheEvent{&quot; +</b>
+<i>94</i>&nbsp;            &quot;type=&quot; + type +
+<i>95</i>&nbsp;            &quot;, data=&quot; + data +
+<i>96</i>&nbsp;            &#39;}&#39;;
+<i>97</i>&nbsp;    }
+<i>98</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

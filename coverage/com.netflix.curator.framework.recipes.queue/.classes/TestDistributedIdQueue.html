@@ -1,0 +1,233 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestDistributedIdQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestDistributedIdQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestDistributedIdQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (41/ 41)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestDistributedIdQueue$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (4/ 5)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    85.7%
+  </span>
+  <span class="absValue">
+    (6/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    97.8%
+  </span>
+  <span class="absValue">
+    (45/ 46)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.collect.Lists;
+<i>19</i>&nbsp;import com.google.common.io.Closeables;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>22</i>&nbsp;import com.netflix.curator.framework.recipes.BaseClassForTests;
+<i>23</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>24</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>25</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>26</i>&nbsp;import org.mockito.Mockito;
+<i>27</i>&nbsp;import org.testng.Assert;
+<i>28</i>&nbsp;import org.testng.annotations.Test;
+<i>29</i>&nbsp;import java.util.List;
+<i>30</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>31</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;@SuppressWarnings({&quot;SynchronizationOnLocalVariableOrMethodParameter&quot;})
+<b class="fc"><i>34</i>&nbsp;public class TestDistributedIdQueue extends BaseClassForTests</b>
+<i>35</i>&nbsp;{
+<i>36</i>&nbsp;    private static final String     QUEUE_PATH = &quot;/a/queue&quot;;
+<i>37</i>&nbsp;
+<b class="fc"><i>38</i>&nbsp;    private static final QueueSerializer&lt;TestQueueItem&gt;  serializer = new QueueItemSerializer();</b>
+<i>39</i>&nbsp;
+<i>40</i>&nbsp;    @Test
+<i>41</i>&nbsp;    public void testDeletingWithLock() throws Exception
+<i>42</i>&nbsp;    {
+<b class="fc"><i>43</i>&nbsp;        DistributedIdQueue&lt;TestQueueItem&gt;  queue = null;</b>
+<b class="fc"><i>44</i>&nbsp;        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<b class="fc"><i>45</i>&nbsp;        client.start();</b>
+<i>46</i>&nbsp;        try
+<i>47</i>&nbsp;        {
+<b class="fc"><i>48</i>&nbsp;            final CountDownLatch        consumingLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>49</i>&nbsp;            final CountDownLatch        waitLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>50</i>&nbsp;            QueueConsumer&lt;TestQueueItem&gt; consumer = new QueueConsumer&lt;TestQueueItem&gt;()</b>
+<b class="fc"><i>51</i>&nbsp;            {</b>
+<i>52</i>&nbsp;                @Override
+<i>53</i>&nbsp;                public void consumeMessage(TestQueueItem message) throws Exception
+<i>54</i>&nbsp;                {
+<b class="fc"><i>55</i>&nbsp;                    consumingLatch.countDown();</b>
+<b class="fc"><i>56</i>&nbsp;                    waitLatch.await();</b>
+<b class="fc"><i>57</i>&nbsp;                }</b>
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;                @Override
+<i>60</i>&nbsp;                public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>61</i>&nbsp;                {
+<b class="nc"><i>62</i>&nbsp;                }</b>
+<i>63</i>&nbsp;            };
+<i>64</i>&nbsp;
+<b class="fc"><i>65</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, serializer, QUEUE_PATH).lockPath(&quot;/locks&quot;).buildIdQueue();</b>
+<b class="fc"><i>66</i>&nbsp;            queue.start();</b>
+<i>67</i>&nbsp;
+<b class="fc"><i>68</i>&nbsp;            queue.put(new TestQueueItem(&quot;test&quot;), &quot;id&quot;);</b>
+<i>69</i>&nbsp;            
+<b class="fc"><i>70</i>&nbsp;            Assert.assertTrue(consumingLatch.await(10, TimeUnit.SECONDS));  // wait until consumer has it</b>
+<b class="fc"><i>71</i>&nbsp;            Assert.assertEquals(queue.remove(&quot;id&quot;), 0);</b>
+<i>72</i>&nbsp;
+<b class="fc"><i>73</i>&nbsp;            waitLatch.countDown();</b>
+<i>74</i>&nbsp;        }
+<i>75</i>&nbsp;        finally
+<i>76</i>&nbsp;        {
+<b class="fc"><i>77</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>78</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>79</i>&nbsp;        }</b>
+<b class="fc"><i>80</i>&nbsp;    }</b>
+<i>81</i>&nbsp;
+<i>82</i>&nbsp;    @Test
+<i>83</i>&nbsp;    public void testOrdering() throws Exception
+<i>84</i>&nbsp;    {
+<b class="fc"><i>85</i>&nbsp;        final int                   ITEM_QTY = 100;</b>
+<i>86</i>&nbsp;
+<b class="fc"><i>87</i>&nbsp;        DistributedIdQueue&lt;TestQueueItem&gt;  queue = null;</b>
+<b class="fc"><i>88</i>&nbsp;        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));</b>
+<b class="fc"><i>89</i>&nbsp;        client.start();</b>
+<i>90</i>&nbsp;        try
+<i>91</i>&nbsp;        {
+<b class="fc"><i>92</i>&nbsp;            BlockingQueueConsumer&lt;TestQueueItem&gt; consumer = new BlockingQueueConsumer&lt;TestQueueItem&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<i>93</i>&nbsp;
+<b class="fc"><i>94</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, serializer, QUEUE_PATH).buildIdQueue();</b>
+<b class="fc"><i>95</i>&nbsp;            queue.start();</b>
+<i>96</i>&nbsp;            
+<b class="fc"><i>97</i>&nbsp;            List&lt;String&gt;        ids = Lists.newArrayList();</b>
+<b class="fc"><i>98</i>&nbsp;            for ( int i = 0; i &lt; ITEM_QTY; ++i )</b>
+<i>99</i>&nbsp;            {
+<b class="fc"><i>100</i>&nbsp;                String  id = Double.toString(Math.random());</b>
+<b class="fc"><i>101</i>&nbsp;                ids.add(id);</b>
+<b class="fc"><i>102</i>&nbsp;                queue.put(new TestQueueItem(id), id);</b>
+<i>103</i>&nbsp;            }
+<i>104</i>&nbsp;
+<b class="fc"><i>105</i>&nbsp;            int                 iteration = 0;</b>
+<b class="fc"><i>106</i>&nbsp;            while ( consumer.size() &lt; ITEM_QTY )</b>
+<i>107</i>&nbsp;            {
+<b class="fc"><i>108</i>&nbsp;                Assert.assertTrue(++iteration &lt; ITEM_QTY);</b>
+<b class="fc"><i>109</i>&nbsp;                Thread.sleep(1000);</b>
+<i>110</i>&nbsp;            }
+<i>111</i>&nbsp;
+<b class="fc"><i>112</i>&nbsp;            int                 i = 0;</b>
+<b class="fc"><i>113</i>&nbsp;            for ( TestQueueItem item : consumer.getItems() )</b>
+<i>114</i>&nbsp;            {
+<b class="fc"><i>115</i>&nbsp;                Assert.assertEquals(item.str, ids.get(i++));</b>
+<i>116</i>&nbsp;            }
+<i>117</i>&nbsp;        }
+<i>118</i>&nbsp;        finally
+<i>119</i>&nbsp;        {
+<b class="fc"><i>120</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>121</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>122</i>&nbsp;        }</b>
+<b class="fc"><i>123</i>&nbsp;    }</b>
+<i>124</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

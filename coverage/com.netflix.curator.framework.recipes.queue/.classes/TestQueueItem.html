@@ -1,0 +1,147 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestQueueItem</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestQueueItem (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestQueueItem</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    82.4%
+  </span>
+  <span class="absValue">
+    (14/ 17)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<b class="fc"><i>18</i>&nbsp;class TestQueueItem implements Comparable&lt;TestQueueItem&gt;</b>
+<i>19</i>&nbsp;{
+<i>20</i>&nbsp;    final String    str;
+<i>21</i>&nbsp;
+<i>22</i>&nbsp;    TestQueueItem(String str)
+<b class="fc"><i>23</i>&nbsp;    {</b>
+<b class="fc"><i>24</i>&nbsp;        this.str = str;</b>
+<b class="fc"><i>25</i>&nbsp;    }</b>
+<i>26</i>&nbsp;
+<i>27</i>&nbsp;    @Override
+<i>28</i>&nbsp;    public int compareTo(TestQueueItem rhs)
+<i>29</i>&nbsp;    {
+<b class="fc"><i>30</i>&nbsp;        if ( this == rhs )</b>
+<i>31</i>&nbsp;        {
+<b class="nc"><i>32</i>&nbsp;            return 0;</b>
+<i>33</i>&nbsp;        }
+<i>34</i>&nbsp;
+<b class="fc"><i>35</i>&nbsp;        int         val = Integer.parseInt(str);</b>
+<b class="fc"><i>36</i>&nbsp;        int         rhsVal = Integer.parseInt(rhs.str);</b>
+<b class="fc"><i>37</i>&nbsp;        int         diff = val - rhsVal;</b>
+<b class="fc"><i>38</i>&nbsp;        return (diff &lt; 0) ? -1 : ((diff &gt; 0) ? 1 : 0);</b>
+<i>39</i>&nbsp;    }
+<i>40</i>&nbsp;
+<i>41</i>&nbsp;    @Override
+<i>42</i>&nbsp;    public boolean equals(Object o)
+<i>43</i>&nbsp;    {
+<b class="fc"><i>44</i>&nbsp;        if ( this == o )</b>
+<i>45</i>&nbsp;        {
+<b class="nc"><i>46</i>&nbsp;            return true;</b>
+<i>47</i>&nbsp;        }
+<b class="fc"><i>48</i>&nbsp;        if ( o == null || getClass() != o.getClass() )</b>
+<i>49</i>&nbsp;        {
+<b class="nc"><i>50</i>&nbsp;            return false;</b>
+<i>51</i>&nbsp;        }
+<i>52</i>&nbsp;
+<b class="fc"><i>53</i>&nbsp;        TestQueueItem that = (TestQueueItem)o;</b>
+<i>54</i>&nbsp;
+<b class="fc"><i>55</i>&nbsp;        return str.equals(that.str);</b>
+<i>56</i>&nbsp;
+<i>57</i>&nbsp;    }
+<i>58</i>&nbsp;
+<i>59</i>&nbsp;    @Override
+<i>60</i>&nbsp;    public int hashCode()
+<i>61</i>&nbsp;    {
+<b class="fc"><i>62</i>&nbsp;        return str.hashCode();</b>
+<i>63</i>&nbsp;    }
+<i>64</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

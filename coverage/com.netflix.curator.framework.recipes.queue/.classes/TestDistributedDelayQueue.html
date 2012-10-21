@@ -1,0 +1,256 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestDistributedDelayQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestDistributedDelayQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestDistributedDelayQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (59/ 59)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestDistributedDelayQueue$1</td>
+  </tr>
+  <tr>
+    <td class="name">TestDistributedDelayQueue$LongSerializer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (62/ 62)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.io.Closeables;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>22</i>&nbsp;import com.netflix.curator.framework.recipes.BaseClassForTests;
+<i>23</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>24</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>25</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>26</i>&nbsp;import org.mockito.Mockito;
+<i>27</i>&nbsp;import org.testng.Assert;
+<i>28</i>&nbsp;import org.testng.annotations.Test;
+<i>29</i>&nbsp;import java.util.Random;
+<i>30</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>31</i>&nbsp;
+<b class="fc"><i>32</i>&nbsp;public class TestDistributedDelayQueue extends BaseClassForTests</b>
+<i>33</i>&nbsp;{
+<i>34</i>&nbsp;    @Test
+<i>35</i>&nbsp;    public void     testLateAddition() throws Exception
+<i>36</i>&nbsp;    {
+<b class="fc"><i>37</i>&nbsp;        Timing                          timing = new Timing();</b>
+<b class="fc"><i>38</i>&nbsp;        DistributedDelayQueue&lt;Long&gt;     queue = null;</b>
+<b class="fc"><i>39</i>&nbsp;        CuratorFramework                client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>40</i>&nbsp;        client.start();</b>
+<i>41</i>&nbsp;        try
+<i>42</i>&nbsp;        {
+<b class="fc"><i>43</i>&nbsp;            BlockingQueueConsumer&lt;Long&gt; consumer = new BlockingQueueConsumer&lt;Long&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<b class="fc"><i>44</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new LongSerializer(), &quot;/test&quot;).buildDelayQueue();</b>
+<b class="fc"><i>45</i>&nbsp;            queue.start();</b>
+<i>46</i>&nbsp;
+<b class="fc"><i>47</i>&nbsp;            queue.put(1L, System.currentTimeMillis() + Integer.MAX_VALUE);  // never come out</b>
+<b class="fc"><i>48</i>&nbsp;            Long        value = consumer.take(1, TimeUnit.SECONDS);</b>
+<b class="fc"><i>49</i>&nbsp;            Assert.assertNull(value);</b>
+<i>50</i>&nbsp;
+<b class="fc"><i>51</i>&nbsp;            queue.put(2L, System.currentTimeMillis());</b>
+<b class="fc"><i>52</i>&nbsp;            value = consumer.take(timing.seconds(), TimeUnit.SECONDS);</b>
+<b class="fc"><i>53</i>&nbsp;            Assert.assertEquals(value, Long.valueOf(2));</b>
+<i>54</i>&nbsp;
+<b class="fc"><i>55</i>&nbsp;            value = consumer.take(1, TimeUnit.SECONDS);</b>
+<b class="fc"><i>56</i>&nbsp;            Assert.assertNull(value);</b>
+<i>57</i>&nbsp;        }
+<i>58</i>&nbsp;        finally
+<i>59</i>&nbsp;        {
+<b class="fc"><i>60</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>61</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>62</i>&nbsp;        }</b>
+<b class="fc"><i>63</i>&nbsp;    }</b>
+<i>64</i>&nbsp;
+<i>65</i>&nbsp;    @Test
+<i>66</i>&nbsp;    public void     testBasic() throws Exception
+<i>67</i>&nbsp;    {
+<b class="fc"><i>68</i>&nbsp;        Timing                          timing = new Timing();</b>
+<b class="fc"><i>69</i>&nbsp;        DistributedDelayQueue&lt;Long&gt;     queue = null;</b>
+<b class="fc"><i>70</i>&nbsp;        CuratorFramework                client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>71</i>&nbsp;        client.start();</b>
+<i>72</i>&nbsp;        try
+<i>73</i>&nbsp;        {
+<b class="fc"><i>74</i>&nbsp;            BlockingQueueConsumer&lt;Long&gt; consumer = new BlockingQueueConsumer&lt;Long&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<b class="fc"><i>75</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new LongSerializer(), &quot;/test&quot;).buildDelayQueue();</b>
+<b class="fc"><i>76</i>&nbsp;            queue.start();</b>
+<i>77</i>&nbsp;
+<b class="fc"><i>78</i>&nbsp;            queue.put(1L, System.currentTimeMillis() + 1000);</b>
+<b class="fc"><i>79</i>&nbsp;            Thread.sleep(100);</b>
+<b class="fc"><i>80</i>&nbsp;            Assert.assertEquals(consumer.size(), 0);    // delay hasn&#39;t been reached</b>
+<i>81</i>&nbsp;
+<b class="fc"><i>82</i>&nbsp;            Long        value = consumer.take(timing.forWaiting().seconds(), TimeUnit.SECONDS);</b>
+<b class="fc"><i>83</i>&nbsp;            Assert.assertEquals(value, Long.valueOf(1));</b>
+<i>84</i>&nbsp;        }
+<i>85</i>&nbsp;        finally
+<i>86</i>&nbsp;        {
+<b class="fc"><i>87</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>88</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>89</i>&nbsp;        }</b>
+<b class="fc"><i>90</i>&nbsp;    }</b>
+<i>91</i>&nbsp;
+<i>92</i>&nbsp;    @Test
+<i>93</i>&nbsp;    public void     testSimple() throws Exception
+<i>94</i>&nbsp;    {
+<b class="fc"><i>95</i>&nbsp;        final int QTY = 10;</b>
+<i>96</i>&nbsp;
+<b class="fc"><i>97</i>&nbsp;        Timing                          timing = new Timing();</b>
+<b class="fc"><i>98</i>&nbsp;        DistributedDelayQueue&lt;Long&gt;     queue = null;</b>
+<b class="fc"><i>99</i>&nbsp;        CuratorFramework                client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>100</i>&nbsp;        client.start();</b>
+<i>101</i>&nbsp;        try
+<i>102</i>&nbsp;        {
+<b class="fc"><i>103</i>&nbsp;            BlockingQueueConsumer&lt;Long&gt; consumer = new BlockingQueueConsumer&lt;Long&gt;(Mockito.mock(ConnectionStateListener.class));</b>
+<b class="fc"><i>104</i>&nbsp;            queue = QueueBuilder.builder(client, consumer, new LongSerializer(), &quot;/test&quot;).buildDelayQueue();</b>
+<b class="fc"><i>105</i>&nbsp;            queue.start();</b>
+<i>106</i>&nbsp;
+<b class="fc"><i>107</i>&nbsp;            Random random = new Random();</b>
+<b class="fc"><i>108</i>&nbsp;            for ( int i = 0; i &lt; 10; ++i )</b>
+<i>109</i>&nbsp;            {
+<b class="fc"><i>110</i>&nbsp;                long    delay = System.currentTimeMillis() + random.nextInt(100);</b>
+<b class="fc"><i>111</i>&nbsp;                queue.put(delay, delay);</b>
+<i>112</i>&nbsp;            }
+<i>113</i>&nbsp;
+<b class="fc"><i>114</i>&nbsp;            long            lastValue = -1;</b>
+<b class="fc"><i>115</i>&nbsp;            for ( int i = 0; i &lt; QTY; ++i )</b>
+<i>116</i>&nbsp;            {
+<b class="fc"><i>117</i>&nbsp;                Long        value = consumer.take(timing.forWaiting().seconds(), TimeUnit.SECONDS);</b>
+<b class="fc"><i>118</i>&nbsp;                Assert.assertNotNull(value);</b>
+<b class="fc"><i>119</i>&nbsp;                Assert.assertTrue(value &gt;= lastValue);</b>
+<b class="fc"><i>120</i>&nbsp;                lastValue = value;</b>
+<i>121</i>&nbsp;            }
+<i>122</i>&nbsp;        }
+<i>123</i>&nbsp;        finally
+<i>124</i>&nbsp;        {
+<b class="fc"><i>125</i>&nbsp;            Closeables.closeQuietly(queue);</b>
+<b class="fc"><i>126</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>127</i>&nbsp;        }</b>
+<b class="fc"><i>128</i>&nbsp;    }</b>
+<i>129</i>&nbsp;
+<b class="fc"><i>130</i>&nbsp;    private static class LongSerializer implements QueueSerializer&lt;Long&gt;</b>
+<i>131</i>&nbsp;    {
+<i>132</i>&nbsp;        @Override
+<i>133</i>&nbsp;        public byte[] serialize(Long item)
+<i>134</i>&nbsp;        {
+<b class="fc"><i>135</i>&nbsp;            return Long.toString(item).getBytes();</b>
+<i>136</i>&nbsp;        }
+<i>137</i>&nbsp;
+<i>138</i>&nbsp;        @Override
+<i>139</i>&nbsp;        public Long deserialize(byte[] bytes)
+<i>140</i>&nbsp;        {
+<b class="fc"><i>141</i>&nbsp;            return Long.parseLong(new String(bytes));</b>
+<i>142</i>&nbsp;        }
+<i>143</i>&nbsp;    }
+<i>144</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

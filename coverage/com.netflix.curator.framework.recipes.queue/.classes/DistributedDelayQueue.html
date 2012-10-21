@@ -1,0 +1,376 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DistributedDelayQueue</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.queue</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DistributedDelayQueue (com.netflix.curator.framework.recipes.queue)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DistributedDelayQueue</td>
+<td class="coverageStat">
+  <span class="percent">
+    57.1%
+  </span>
+  <span class="absValue">
+    (8/ 14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    62.5%
+  </span>
+  <span class="absValue">
+    (20/ 32)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DistributedDelayQueue$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DistributedDelayQueue$1$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    68.4%
+  </span>
+  <span class="absValue">
+    (13/ 19)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70%
+  </span>
+  <span class="absValue">
+    (28/ 40)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.queue;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.annotations.VisibleForTesting;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.listen.ListenerContainer;
+<i>22</i>&nbsp;import java.io.Closeable;
+<i>23</i>&nbsp;import java.io.IOException;
+<i>24</i>&nbsp;import java.util.Collections;
+<i>25</i>&nbsp;import java.util.Comparator;
+<i>26</i>&nbsp;import java.util.List;
+<i>27</i>&nbsp;import java.util.concurrent.Executor;
+<i>28</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>29</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>30</i>&nbsp;
+<i>31</i>&nbsp;/**
+<i>32</i>&nbsp; * &lt;p&gt;
+<i>33</i>&nbsp; *     A variation of the DistributedPriorityQueue that uses time as the priority. When items
+<i>34</i>&nbsp; *     are added to the queue, a delay value is given. The item will not be sent to a consumer
+<i>35</i>&nbsp; *     until the time elapses.
+<i>36</i>&nbsp; * &lt;/p&gt;
+<i>37</i>&nbsp; */
+<b class="fc"><i>38</i>&nbsp;public class DistributedDelayQueue&lt;T&gt; implements Closeable, QueueBase&lt;T&gt;</b>
+<i>39</i>&nbsp;{
+<i>40</i>&nbsp;    private final DistributedQueue&lt;T&gt;      queue;
+<i>41</i>&nbsp;
+<i>42</i>&nbsp;    private static final String            SEPARATOR = &quot;|&quot;;
+<i>43</i>&nbsp;
+<i>44</i>&nbsp;    DistributedDelayQueue
+<i>45</i>&nbsp;        (
+<i>46</i>&nbsp;            CuratorFramework client,
+<i>47</i>&nbsp;            QueueConsumer&lt;T&gt; consumer,
+<i>48</i>&nbsp;            QueueSerializer&lt;T&gt; serializer,
+<i>49</i>&nbsp;            String queuePath,
+<i>50</i>&nbsp;            ThreadFactory threadFactory,
+<i>51</i>&nbsp;            Executor executor,
+<i>52</i>&nbsp;            int minItemsBeforeRefresh,
+<i>53</i>&nbsp;            String lockPath,
+<i>54</i>&nbsp;            int maxItems,
+<i>55</i>&nbsp;            boolean putInBackground,
+<i>56</i>&nbsp;            int finalFlushMs
+<i>57</i>&nbsp;        )
+<b class="fc"><i>58</i>&nbsp;    {</b>
+<b class="fc"><i>59</i>&nbsp;        Preconditions.checkArgument(minItemsBeforeRefresh &gt;= 0, &quot;minItemsBeforeRefresh cannot be negative&quot;);</b>
+<i>60</i>&nbsp;
+<b class="fc"><i>61</i>&nbsp;        queue = new DistributedQueue&lt;T&gt;</b>
+<i>62</i>&nbsp;        (
+<i>63</i>&nbsp;            client,
+<i>64</i>&nbsp;            consumer, 
+<i>65</i>&nbsp;            serializer,
+<i>66</i>&nbsp;            queuePath,
+<i>67</i>&nbsp;            threadFactory,
+<i>68</i>&nbsp;            executor,
+<i>69</i>&nbsp;            minItemsBeforeRefresh,
+<i>70</i>&nbsp;            true,
+<i>71</i>&nbsp;            lockPath,
+<i>72</i>&nbsp;            maxItems,
+<i>73</i>&nbsp;            putInBackground,
+<i>74</i>&nbsp;            finalFlushMs
+<i>75</i>&nbsp;        )
+<b class="fc"><i>76</i>&nbsp;        {</b>
+<i>77</i>&nbsp;            protected long getDelay(String itemNode)
+<i>78</i>&nbsp;            {
+<b class="fc"><i>79</i>&nbsp;                long epoch = getEpoch(itemNode);</b>
+<b class="fc"><i>80</i>&nbsp;                return epoch - System.currentTimeMillis();</b>
+<i>81</i>&nbsp;            }
+<i>82</i>&nbsp;
+<i>83</i>&nbsp;            protected void sortChildren(List&lt;String&gt; children)
+<i>84</i>&nbsp;            {
+<b class="fc"><i>85</i>&nbsp;                Collections.sort</b>
+<i>86</i>&nbsp;                (
+<i>87</i>&nbsp;                    children,
+<i>88</i>&nbsp;                    new Comparator&lt;String&gt;()
+<b class="fc"><i>89</i>&nbsp;                    {</b>
+<i>90</i>&nbsp;                        @Override
+<i>91</i>&nbsp;                        public int compare(String o1, String o2)
+<i>92</i>&nbsp;                        {
+<b class="fc"><i>93</i>&nbsp;                            long        diff = getDelay(o1) - getDelay(o2);</b>
+<b class="fc"><i>94</i>&nbsp;                            return (diff &lt; 0) ? -1 : ((diff &gt; 0) ? 1 : 0);</b>
+<i>95</i>&nbsp;                        }
+<i>96</i>&nbsp;                    }
+<i>97</i>&nbsp;                );
+<b class="fc"><i>98</i>&nbsp;            }</b>
+<i>99</i>&nbsp;        };
+<b class="fc"><i>100</i>&nbsp;    }</b>
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;    /**
+<i>103</i>&nbsp;     * Start the queue. No other methods work until this is called
+<i>104</i>&nbsp;     *
+<i>105</i>&nbsp;     * @throws Exception startup errors
+<i>106</i>&nbsp;     */
+<i>107</i>&nbsp;    @Override
+<i>108</i>&nbsp;    public void     start() throws Exception
+<i>109</i>&nbsp;    {
+<b class="fc"><i>110</i>&nbsp;        queue.start();</b>
+<b class="fc"><i>111</i>&nbsp;    }</b>
+<i>112</i>&nbsp;
+<i>113</i>&nbsp;    @Override
+<i>114</i>&nbsp;    public void close() throws IOException
+<i>115</i>&nbsp;    {
+<b class="fc"><i>116</i>&nbsp;        queue.close();</b>
+<b class="fc"><i>117</i>&nbsp;    }</b>
+<i>118</i>&nbsp;
+<i>119</i>&nbsp;    /**
+<i>120</i>&nbsp;     * Add an item into the queue. Adding is done in the background - thus, this method will
+<i>121</i>&nbsp;     * return quickly.&lt;br/&gt;&lt;br/&gt;
+<i>122</i>&nbsp;     * NOTE: if an upper bound was set via {@link QueueBuilder#maxItems}, this method will
+<i>123</i>&nbsp;     * block until there is available space in the queue.
+<i>124</i>&nbsp;     *
+<i>125</i>&nbsp;     * @param item item to add
+<i>126</i>&nbsp;     * @param delayUntilEpoch future epoch (milliseconds) when this item will be available to consumers
+<i>127</i>&nbsp;     * @throws Exception connection issues
+<i>128</i>&nbsp;     */
+<i>129</i>&nbsp;    public void     put(T item, long delayUntilEpoch) throws Exception
+<i>130</i>&nbsp;    {
+<b class="fc"><i>131</i>&nbsp;        put(item, delayUntilEpoch, 0, null);</b>
+<b class="fc"><i>132</i>&nbsp;    }</b>
+<i>133</i>&nbsp;
+<i>134</i>&nbsp;    /**
+<i>135</i>&nbsp;     * Same as {@link #put(Object, long)} but allows a maximum wait time if an upper bound was set
+<i>136</i>&nbsp;     * via {@link QueueBuilder#maxItems}.
+<i>137</i>&nbsp;     *
+<i>138</i>&nbsp;     * @param item item to add
+<i>139</i>&nbsp;     * @param delayUntilEpoch future epoch (milliseconds) when this item will be available to consumers
+<i>140</i>&nbsp;     * @param maxWait maximum wait
+<i>141</i>&nbsp;     * @param unit wait unit
+<i>142</i>&nbsp;     * @return true if items was added, false if timed out
+<i>143</i>&nbsp;     * @throws Exception
+<i>144</i>&nbsp;     */
+<i>145</i>&nbsp;    public boolean      put(T item, long delayUntilEpoch, int maxWait, TimeUnit unit) throws Exception
+<i>146</i>&nbsp;    {
+<b class="fc"><i>147</i>&nbsp;        Preconditions.checkArgument(delayUntilEpoch &gt; 0, &quot;delayUntilEpoch cannot be negative&quot;);</b>
+<i>148</i>&nbsp;
+<b class="fc"><i>149</i>&nbsp;        queue.checkState();</b>
+<i>150</i>&nbsp;
+<b class="fc"><i>151</i>&nbsp;        return queue.internalPut(item, null, queue.makeItemPath() + epochToString(delayUntilEpoch), maxWait, unit);</b>
+<i>152</i>&nbsp;    }
+<i>153</i>&nbsp;
+<i>154</i>&nbsp;    /**
+<i>155</i>&nbsp;     * Add a set of items with the same priority into the queue. Adding is done in the background - thus, this method will
+<i>156</i>&nbsp;     * return quickly.&lt;br/&gt;&lt;br/&gt;
+<i>157</i>&nbsp;     * NOTE: if an upper bound was set via {@link QueueBuilder#maxItems}, this method will
+<i>158</i>&nbsp;     * block until there is available space in the queue.
+<i>159</i>&nbsp;     *
+<i>160</i>&nbsp;     * @param items items to add
+<i>161</i>&nbsp;     * @param delayUntilEpoch future epoch (milliseconds) when this item will be available to consumers
+<i>162</i>&nbsp;     * @throws Exception connection issues
+<i>163</i>&nbsp;     */
+<i>164</i>&nbsp;    public void     putMulti(MultiItem&lt;T&gt; items, long delayUntilEpoch) throws Exception
+<i>165</i>&nbsp;    {
+<b class="nc"><i>166</i>&nbsp;        putMulti(items, delayUntilEpoch, 0, null);</b>
+<b class="nc"><i>167</i>&nbsp;    }</b>
+<i>168</i>&nbsp;
+<i>169</i>&nbsp;    /**
+<i>170</i>&nbsp;     * Same as {@link #putMulti(MultiItem, long)} but allows a maximum wait time if an upper bound was set
+<i>171</i>&nbsp;     * via {@link QueueBuilder#maxItems}.
+<i>172</i>&nbsp;     *
+<i>173</i>&nbsp;     * @param items items to add
+<i>174</i>&nbsp;     * @param delayUntilEpoch future epoch (milliseconds) when this item will be available to consumers
+<i>175</i>&nbsp;     * @param maxWait maximum wait
+<i>176</i>&nbsp;     * @param unit wait unit
+<i>177</i>&nbsp;     * @return true if items was added, false if timed out
+<i>178</i>&nbsp;     * @throws Exception
+<i>179</i>&nbsp;     */
+<i>180</i>&nbsp;    public boolean      putMulti(MultiItem&lt;T&gt; items, long delayUntilEpoch, int maxWait, TimeUnit unit) throws Exception
+<i>181</i>&nbsp;    {
+<b class="nc"><i>182</i>&nbsp;        Preconditions.checkArgument(delayUntilEpoch &gt; 0, &quot;delayUntilEpoch cannot be negative&quot;);</b>
+<i>183</i>&nbsp;
+<b class="nc"><i>184</i>&nbsp;        queue.checkState();</b>
+<i>185</i>&nbsp;
+<b class="nc"><i>186</i>&nbsp;        return queue.internalPut(null, items, queue.makeItemPath() + epochToString(delayUntilEpoch), maxWait, unit);</b>
+<i>187</i>&nbsp;    }
+<i>188</i>&nbsp;
+<i>189</i>&nbsp;    @Override
+<i>190</i>&nbsp;    public void setErrorMode(ErrorMode newErrorMode)
+<i>191</i>&nbsp;    {
+<b class="nc"><i>192</i>&nbsp;        queue.setErrorMode(newErrorMode);</b>
+<b class="nc"><i>193</i>&nbsp;    }</b>
+<i>194</i>&nbsp;
+<i>195</i>&nbsp;    @Override
+<i>196</i>&nbsp;    public boolean flushPuts(long waitTime, TimeUnit timeUnit) throws InterruptedException
+<i>197</i>&nbsp;    {
+<b class="nc"><i>198</i>&nbsp;        return queue.flushPuts(waitTime, timeUnit);</b>
+<i>199</i>&nbsp;    }
+<i>200</i>&nbsp;
+<i>201</i>&nbsp;    /**
+<i>202</i>&nbsp;     * Return the manager for put listeners
+<i>203</i>&nbsp;     *
+<i>204</i>&nbsp;     * @return put listener container
+<i>205</i>&nbsp;     */
+<i>206</i>&nbsp;    @Override
+<i>207</i>&nbsp;    public ListenerContainer&lt;QueuePutListener&lt;T&gt;&gt; getPutListenerContainer()
+<i>208</i>&nbsp;    {
+<b class="nc"><i>209</i>&nbsp;        return queue.getPutListenerContainer();</b>
+<i>210</i>&nbsp;    }
+<i>211</i>&nbsp;
+<i>212</i>&nbsp;    /**
+<i>213</i>&nbsp;     * Return the most recent message count from the queue. This is useful for debugging/information
+<i>214</i>&nbsp;     * purposes only.
+<i>215</i>&nbsp;     *
+<i>216</i>&nbsp;     * @return count (can be 0)
+<i>217</i>&nbsp;     */
+<i>218</i>&nbsp;    @Override
+<i>219</i>&nbsp;    public int getLastMessageCount()
+<i>220</i>&nbsp;    {
+<b class="nc"><i>221</i>&nbsp;        return queue.getLastMessageCount();</b>
+<i>222</i>&nbsp;    }
+<i>223</i>&nbsp;
+<i>224</i>&nbsp;    @VisibleForTesting
+<i>225</i>&nbsp;    static String epochToString(long epoch)
+<i>226</i>&nbsp;    {
+<b class="fc"><i>227</i>&nbsp;        return SEPARATOR + String.format(&quot;%08X&quot;, epoch) + SEPARATOR;</b>
+<i>228</i>&nbsp;    }
+<i>229</i>&nbsp;
+<i>230</i>&nbsp;    private static long getEpoch(String itemNode)
+<i>231</i>&nbsp;    {
+<b class="fc"><i>232</i>&nbsp;        int     index2 = itemNode.lastIndexOf(SEPARATOR);</b>
+<b class="fc"><i>233</i>&nbsp;        int     index1 = (index2 &gt; 0) ? itemNode.lastIndexOf(SEPARATOR, index2 - 1) : -1;</b>
+<b class="fc"><i>234</i>&nbsp;        if ( (index1 &gt; 0) &amp;&amp; (index2 &gt; (index1 + 1)) )</b>
+<i>235</i>&nbsp;        {
+<i>236</i>&nbsp;            try
+<i>237</i>&nbsp;            {
+<b class="fc"><i>238</i>&nbsp;                String  epochStr = itemNode.substring(index1 + 1, index2);</b>
+<b class="fc"><i>239</i>&nbsp;                return Long.parseLong(epochStr, 16);</b>
+<i>240</i>&nbsp;            }
+<b class="nc"><i>241</i>&nbsp;            catch ( NumberFormatException ignore )</b>
+<i>242</i>&nbsp;            {
+<i>243</i>&nbsp;                // ignore
+<i>244</i>&nbsp;            }
+<i>245</i>&nbsp;        }
+<b class="nc"><i>246</i>&nbsp;        return 0;</b>
+<i>247</i>&nbsp;    }
+<i>248</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

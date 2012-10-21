@@ -1,0 +1,231 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: SemaphoreClient</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.locks</a> ]
+</div>
+
+<h1>Coverage Summary for Class: SemaphoreClient (com.netflix.curator.framework.recipes.locks)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SemaphoreClient</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (8/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.1%
+  </span>
+  <span class="absValue">
+    (37/ 42)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.locks;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.io.Closeables;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>22</i>&nbsp;import com.netflix.curator.framework.state.ConnectionState;
+<i>23</i>&nbsp;import com.netflix.curator.framework.state.ConnectionStateListener;
+<i>24</i>&nbsp;import com.netflix.curator.retry.ExponentialBackoffRetry;
+<i>25</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>26</i>&nbsp;import java.io.Closeable;
+<i>27</i>&nbsp;import java.io.IOException;
+<i>28</i>&nbsp;import java.util.concurrent.Callable;
+<i>29</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>30</i>&nbsp;
+<b class="fc"><i>31</i>&nbsp;class SemaphoreClient implements Callable&lt;Void&gt;, ConnectionStateListener, Closeable</b>
+<i>32</i>&nbsp;{
+<i>33</i>&nbsp;    private final CuratorFramework client;
+<i>34</i>&nbsp;    private final String semaphorePath;
+<i>35</i>&nbsp;    private final Callable&lt;Void&gt; operation;
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    private volatile boolean shouldRun;
+<i>38</i>&nbsp;    private volatile boolean hasAcquired;
+<i>39</i>&nbsp;
+<i>40</i>&nbsp;    private static final int CLIENT_EXCEPTION_HANDLER_SLEEP_TIME_SECS = 10;
+<i>41</i>&nbsp;    private static final int MAX_SEMAPHORE_LEASES = 1;
+<i>42</i>&nbsp;
+<b class="fc"><i>43</i>&nbsp;    private static final AtomicReference&lt;SemaphoreClient&gt;       activeClient = new AtomicReference&lt;SemaphoreClient&gt;(null);</b>
+<i>44</i>&nbsp;
+<i>45</i>&nbsp;    SemaphoreClient(String connectionString, String semaphorePath, Callable&lt;Void&gt; operation) throws IOException
+<b class="fc"><i>46</i>&nbsp;    {</b>
+<b class="fc"><i>47</i>&nbsp;        Timing timing = new Timing();</b>
+<b class="fc"><i>48</i>&nbsp;        this.client = CuratorFrameworkFactory.newClient(connectionString, timing.session(), timing.connection(), new ExponentialBackoffRetry(100, 3));</b>
+<b class="fc"><i>49</i>&nbsp;        client.start();</b>
+<i>50</i>&nbsp;
+<b class="fc"><i>51</i>&nbsp;        this.semaphorePath = semaphorePath;</b>
+<b class="fc"><i>52</i>&nbsp;        this.operation = operation;</b>
+<b class="fc"><i>53</i>&nbsp;    }</b>
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    @Override
+<i>56</i>&nbsp;    public void close() throws IOException
+<i>57</i>&nbsp;    {
+<b class="fc"><i>58</i>&nbsp;        shouldRun = false;</b>
+<b class="fc"><i>59</i>&nbsp;    }</b>
+<i>60</i>&nbsp;
+<i>61</i>&nbsp;    boolean hasAcquired()
+<i>62</i>&nbsp;    {
+<b class="nc"><i>63</i>&nbsp;        return hasAcquired;</b>
+<i>64</i>&nbsp;    }
+<i>65</i>&nbsp;
+<i>66</i>&nbsp;    @Override
+<i>67</i>&nbsp;    public void stateChanged(CuratorFramework client, ConnectionState newState)
+<i>68</i>&nbsp;    {
+<b class="fc"><i>69</i>&nbsp;        hasAcquired = false;</b>
+<b class="fc"><i>70</i>&nbsp;    }</b>
+<i>71</i>&nbsp;
+<i>72</i>&nbsp;    static SemaphoreClient getActiveClient()
+<i>73</i>&nbsp;    {
+<b class="fc"><i>74</i>&nbsp;        return activeClient.get();</b>
+<i>75</i>&nbsp;    }
+<i>76</i>&nbsp;
+<i>77</i>&nbsp;    @Override
+<i>78</i>&nbsp;    public Void call() throws Exception
+<i>79</i>&nbsp;    {
+<b class="fc"><i>80</i>&nbsp;        shouldRun = true;</b>
+<b class="fc"><i>81</i>&nbsp;        client.getConnectionStateListenable().addListener(this);</b>
+<i>82</i>&nbsp;        try
+<i>83</i>&nbsp;        {
+<b class="fc"><i>84</i>&nbsp;            while ( shouldRun )</b>
+<i>85</i>&nbsp;            {
+<i>86</i>&nbsp;                try
+<i>87</i>&nbsp;                {
+<b class="fc"><i>88</i>&nbsp;                    acquireAndRun();</b>
+<i>89</i>&nbsp;                }
+<b class="nc"><i>90</i>&nbsp;                catch ( InterruptedException e )</b>
+<i>91</i>&nbsp;                {
+<b class="nc"><i>92</i>&nbsp;                    Thread.currentThread().interrupt();</b>
+<i>93</i>&nbsp;                    // propagate up, don&#39;t sleep
+<b class="nc"><i>94</i>&nbsp;                    throw e;</b>
+<i>95</i>&nbsp;
+<i>96</i>&nbsp;                }
+<b class="fc"><i>97</i>&nbsp;                catch ( Exception e )</b>
+<i>98</i>&nbsp;                {
+<b class="fc"><i>99</i>&nbsp;                    Thread.sleep(CLIENT_EXCEPTION_HANDLER_SLEEP_TIME_SECS * 1000L);</b>
+<b class="fc"><i>100</i>&nbsp;                }</b>
+<i>101</i>&nbsp;            }
+<i>102</i>&nbsp;
+<i>103</i>&nbsp;        }
+<b class="fc"><i>104</i>&nbsp;        catch ( InterruptedException e )</b>
+<i>105</i>&nbsp;        {
+<b class="fc"><i>106</i>&nbsp;            Thread.currentThread().interrupt();</b>
+<i>107</i>&nbsp;        }
+<i>108</i>&nbsp;        finally
+<i>109</i>&nbsp;        {
+<b class="fc"><i>110</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>111</i>&nbsp;        }</b>
+<b class="fc"><i>112</i>&nbsp;        return null;</b>
+<i>113</i>&nbsp;    }
+<i>114</i>&nbsp;
+<i>115</i>&nbsp;    private void acquireAndRun() throws Exception
+<i>116</i>&nbsp;    {
+<b class="fc"><i>117</i>&nbsp;        InterProcessSemaphoreV2 semaphore = new InterProcessSemaphoreV2(client, semaphorePath, MAX_SEMAPHORE_LEASES);</b>
+<b class="fc"><i>118</i>&nbsp;        Lease lease = semaphore.acquire();</b>
+<i>119</i>&nbsp;        try
+<i>120</i>&nbsp;        {
+<b class="fc"><i>121</i>&nbsp;            hasAcquired = true;</b>
+<b class="fc"><i>122</i>&nbsp;            if ( activeClient.compareAndSet(null, this) )</b>
+<i>123</i>&nbsp;            {
+<b class="fc"><i>124</i>&nbsp;                throw new Exception(&quot;Multiple acquirers&quot;);</b>
+<i>125</i>&nbsp;            }
+<i>126</i>&nbsp;
+<i>127</i>&nbsp;            try
+<i>128</i>&nbsp;            {
+<b class="fc"><i>129</i>&nbsp;                while ( hasAcquired &amp;&amp; shouldRun )</b>
+<i>130</i>&nbsp;                {
+<b class="fc"><i>131</i>&nbsp;                    operation.call();</b>
+<i>132</i>&nbsp;                }
+<i>133</i>&nbsp;            }
+<i>134</i>&nbsp;            finally
+<i>135</i>&nbsp;            {
+<b class="fc"><i>136</i>&nbsp;                if ( activeClient.compareAndSet(this, null) )</b>
+<i>137</i>&nbsp;                {
+<i>138</i>&nbsp;                    //noinspection ThrowFromFinallyBlock
+<b class="nc"><i>139</i>&nbsp;                    throw new Exception(&quot;Bad release&quot;);</b>
+<i>140</i>&nbsp;                }
+<i>141</i>&nbsp;            }
+<i>142</i>&nbsp;        }
+<i>143</i>&nbsp;        finally
+<i>144</i>&nbsp;        {
+<b class="fc"><i>145</i>&nbsp;            semaphore.returnLease(lease);</b>
+<b class="fc"><i>146</i>&nbsp;        }</b>
+<b class="fc"><i>147</i>&nbsp;    }</b>
+<i>148</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

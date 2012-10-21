@@ -1,0 +1,403 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: SessionFailRetryLoop</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator</a> ]
+</div>
+
+<h1>Coverage Summary for Class: SessionFailRetryLoop (com.netflix.curator)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SessionFailRetryLoop</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (44/ 44)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">SessionFailRetryLoop$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/ 5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">SessionFailRetryLoop$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">SessionFailRetryLoop$Mode</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">SessionFailRetryLoop$SessionFailedException</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (15/ 15)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (54/ 54)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.base.Preconditions;
+<i>4</i>&nbsp;import com.google.common.collect.Maps;
+<i>5</i>&nbsp;import com.google.common.collect.Sets;
+<i>6</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>7</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>8</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>9</i>&nbsp;import java.io.Closeable;
+<i>10</i>&nbsp;import java.util.Set;
+<i>11</i>&nbsp;import java.util.concurrent.Callable;
+<i>12</i>&nbsp;import java.util.concurrent.atomic.AtomicBoolean;
+<i>13</i>&nbsp;
+<i>14</i>&nbsp;/**
+<i>15</i>&nbsp; * &lt;p&gt;
+<i>16</i>&nbsp; *     See {@link RetryLoop} for the main details on retry loops. &lt;b&gt;All Curator/ZooKeeper operations
+<i>17</i>&nbsp; *     should be done in a retry loop.&lt;/b&gt;
+<i>18</i>&nbsp; * &lt;/p&gt;
+<i>19</i>&nbsp; *
+<i>20</i>&nbsp; * &lt;p&gt;
+<i>21</i>&nbsp; *     The standard retry loop treats session failure as a type of connection failure. i.e. the fact
+<i>22</i>&nbsp; *     that it is a session failure isn&#39;t considered. This can be problematic if you are performing
+<i>23</i>&nbsp; *     a series of operations that rely on ephemeral nodes. If the session fails after the ephemeral
+<i>24</i>&nbsp; *     node has been created, future Curator/ZooKeeper operations may succeed even though the
+<i>25</i>&nbsp; *     ephemeral node has been removed by ZooKeeper.
+<i>26</i>&nbsp; * &lt;/p&gt;
+<i>27</i>&nbsp; *
+<i>28</i>&nbsp; * &lt;p&gt;
+<i>29</i>&nbsp; *     Here&#39;s an example:
+<i>30</i>&nbsp; *     &lt;ul&gt;
+<i>31</i>&nbsp; *         &lt;li&gt;You create an ephemeral/sequential node as a kind of lock/marker&lt;/li&gt;
+<i>32</i>&nbsp; *         &lt;li&gt;You perform some other operations&lt;/li&gt;
+<i>33</i>&nbsp; *         &lt;li&gt;The session fails for some reason&lt;/li&gt;
+<i>34</i>&nbsp; *         &lt;li&gt;You attempt to create a node assuming that the lock/marker still exists&lt;/li&gt;
+<i>35</i>&nbsp; *         &lt;ul&gt;
+<i>36</i>&nbsp; *             &lt;li&gt;Curator will notice the session failure and try to reconnect&lt;/li&gt;
+<i>37</i>&nbsp; *             &lt;li&gt;In most cases, the reconnect will succeed and, thus, the node creation will succeed
+<i>38</i>&nbsp; *             even though the ephemeral node will have been deleted by ZooKeeper.&lt;/li&gt;
+<i>39</i>&nbsp; *         &lt;/ul&gt;
+<i>40</i>&nbsp; *     &lt;/ul&gt;
+<i>41</i>&nbsp; * &lt;/p&gt;
+<i>42</i>&nbsp; *
+<i>43</i>&nbsp; * &lt;p&gt;
+<i>44</i>&nbsp; *     The SessionFailRetryLoop prevents this type of scenario. When a session failure is detected,
+<i>45</i>&nbsp; *     the thread is marked as failed which will cause all future Curator operations to fail. The
+<i>46</i>&nbsp; *     SessionFailRetryLoop will then either retry the entire
+<i>47</i>&nbsp; *     set of operations or fail (depending on {@link SessionFailRetryLoop.Mode})
+<i>48</i>&nbsp; * &lt;/p&gt;
+<i>49</i>&nbsp; *
+<i>50</i>&nbsp; * Canonical usage:&lt;br/&gt;
+<i>51</i>&nbsp; * &lt;code&gt;&lt;pre&gt;
+<i>52</i>&nbsp; * SessionFailRetryLoop    retryLoop = client.newSessionFailRetryLoop(mode);
+<i>53</i>&nbsp; * retryLoop.start();
+<i>54</i>&nbsp; * try
+<i>55</i>&nbsp; * {
+<i>56</i>&nbsp; *     while ( retryLoop.shouldContinue() )
+<i>57</i>&nbsp; *     {
+<i>58</i>&nbsp; *         try
+<i>59</i>&nbsp; *         {
+<i>60</i>&nbsp; *             // do work
+<i>61</i>&nbsp; *         }
+<i>62</i>&nbsp; *         catch ( Exception e )
+<i>63</i>&nbsp; *         {
+<i>64</i>&nbsp; *             retryLoop.takeException(e);
+<i>65</i>&nbsp; *         }
+<i>66</i>&nbsp; *     }
+<i>67</i>&nbsp; * }
+<i>68</i>&nbsp; * finally
+<i>69</i>&nbsp; * {
+<i>70</i>&nbsp; *     retryLoop.close();
+<i>71</i>&nbsp; * }
+<i>72</i>&nbsp; * &lt;/pre&gt;&lt;/code&gt;
+<i>73</i>&nbsp; */
+<b class="fc"><i>74</i>&nbsp;public class SessionFailRetryLoop implements Closeable</b>
+<i>75</i>&nbsp;{
+<i>76</i>&nbsp;    private final CuratorZookeeperClient    client;
+<i>77</i>&nbsp;    private final Mode                      mode;
+<b class="fc"><i>78</i>&nbsp;    private final Thread                    ourThread = Thread.currentThread();</b>
+<b class="fc"><i>79</i>&nbsp;    private final AtomicBoolean             sessionHasFailed = new AtomicBoolean(false);</b>
+<b class="fc"><i>80</i>&nbsp;    private final AtomicBoolean             isDone = new AtomicBoolean(false);</b>
+<i>81</i>&nbsp;    private final RetryLoop                 retryLoop;
+<i>82</i>&nbsp;
+<b class="fc"><i>83</i>&nbsp;    private final Watcher         watcher = new Watcher()</b>
+<b class="fc"><i>84</i>&nbsp;    {</b>
+<i>85</i>&nbsp;        @Override
+<i>86</i>&nbsp;        public void process(WatchedEvent event)
+<i>87</i>&nbsp;        {
+<b class="fc"><i>88</i>&nbsp;            if ( event.getState() == Event.KeeperState.Expired )</b>
+<i>89</i>&nbsp;            {
+<b class="fc"><i>90</i>&nbsp;                sessionHasFailed.set(true);</b>
+<b class="fc"><i>91</i>&nbsp;                failedSessionThreads.add(ourThread);</b>
+<i>92</i>&nbsp;            }
+<b class="fc"><i>93</i>&nbsp;        }</b>
+<i>94</i>&nbsp;    };
+<i>95</i>&nbsp;
+<b class="fc"><i>96</i>&nbsp;    private static final Set&lt;Thread&gt;        failedSessionThreads = Sets.newSetFromMap(Maps.&lt;Thread, Boolean&gt;newConcurrentMap());</b>
+<i>97</i>&nbsp;
+<b class="fc"><i>98</i>&nbsp;    public static class SessionFailedException extends Exception</b>
+<i>99</i>&nbsp;    {
+<i>100</i>&nbsp;    }
+<i>101</i>&nbsp;
+<b class="fc"><i>102</i>&nbsp;    public enum Mode</b>
+<i>103</i>&nbsp;    {
+<i>104</i>&nbsp;        /**
+<i>105</i>&nbsp;         * If the session fails, retry the entire set of operations when {@link SessionFailRetryLoop#shouldContinue()}
+<i>106</i>&nbsp;         * is called
+<i>107</i>&nbsp;         */
+<b class="fc"><i>108</i>&nbsp;        RETRY,</b>
+<i>109</i>&nbsp;
+<i>110</i>&nbsp;        /**
+<i>111</i>&nbsp;         * If the session fails, throw {@link KeeperException.SessionExpiredException} when
+<i>112</i>&nbsp;         * {@link SessionFailRetryLoop#shouldContinue()} is called
+<i>113</i>&nbsp;         */
+<b class="fc"><i>114</i>&nbsp;        FAIL</b>
+<i>115</i>&nbsp;    }
+<i>116</i>&nbsp;
+<i>117</i>&nbsp;    /**
+<i>118</i>&nbsp;     * Convenience utility: creates a &quot;session fail&quot; retry loop calling the given proc
+<i>119</i>&nbsp;     *
+<i>120</i>&nbsp;     * @param client Zookeeper
+<i>121</i>&nbsp;     * @param mode how to handle session failures
+<i>122</i>&nbsp;     * @param proc procedure to call with retry
+<i>123</i>&nbsp;     * @param &lt;T&gt; return type
+<i>124</i>&nbsp;     * @return procedure result
+<i>125</i>&nbsp;     * @throws Exception any non-retriable errors
+<i>126</i>&nbsp;     */
+<i>127</i>&nbsp;    public static&lt;T&gt; T      callWithRetry(CuratorZookeeperClient client, Mode mode, Callable&lt;T&gt; proc) throws Exception
+<i>128</i>&nbsp;    {
+<b class="fc"><i>129</i>&nbsp;        T                       result = null;</b>
+<b class="fc"><i>130</i>&nbsp;        SessionFailRetryLoop    retryLoop = client.newSessionFailRetryLoop(mode);</b>
+<b class="fc"><i>131</i>&nbsp;        retryLoop.start();</b>
+<i>132</i>&nbsp;        try
+<i>133</i>&nbsp;        {
+<b class="fc"><i>134</i>&nbsp;            while ( retryLoop.shouldContinue() )</b>
+<i>135</i>&nbsp;            {
+<i>136</i>&nbsp;                try
+<i>137</i>&nbsp;                {
+<b class="fc"><i>138</i>&nbsp;                    result = proc.call();</b>
+<i>139</i>&nbsp;                }
+<b class="fc"><i>140</i>&nbsp;                catch ( Exception e )</b>
+<i>141</i>&nbsp;                {
+<b class="fc"><i>142</i>&nbsp;                    retryLoop.takeException(e);</b>
+<b class="fc"><i>143</i>&nbsp;                }</b>
+<i>144</i>&nbsp;            }
+<i>145</i>&nbsp;        }
+<i>146</i>&nbsp;        finally
+<i>147</i>&nbsp;        {
+<b class="fc"><i>148</i>&nbsp;            retryLoop.close();</b>
+<b class="fc"><i>149</i>&nbsp;        }</b>
+<b class="fc"><i>150</i>&nbsp;        return result;</b>
+<i>151</i>&nbsp;    }
+<i>152</i>&nbsp;
+<i>153</i>&nbsp;    SessionFailRetryLoop(CuratorZookeeperClient client, Mode mode)
+<b class="fc"><i>154</i>&nbsp;    {</b>
+<b class="fc"><i>155</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>156</i>&nbsp;        this.mode = mode;</b>
+<b class="fc"><i>157</i>&nbsp;        retryLoop = client.newRetryLoop();</b>
+<b class="fc"><i>158</i>&nbsp;    }</b>
+<i>159</i>&nbsp;
+<i>160</i>&nbsp;    static boolean sessionForThreadHasFailed()
+<i>161</i>&nbsp;    {
+<b class="fc"><i>162</i>&nbsp;        return (failedSessionThreads.size() &gt; 0) &amp;&amp; failedSessionThreads.contains(Thread.currentThread());</b>
+<i>163</i>&nbsp;    }
+<i>164</i>&nbsp;
+<i>165</i>&nbsp;    /**
+<i>166</i>&nbsp;     * SessionFailRetryLoop must be started
+<i>167</i>&nbsp;     */
+<i>168</i>&nbsp;    public void     start()
+<i>169</i>&nbsp;    {
+<b class="fc"><i>170</i>&nbsp;        Preconditions.checkState(Thread.currentThread().equals(ourThread), &quot;Not in the correct thread&quot;);</b>
+<i>171</i>&nbsp;
+<b class="fc"><i>172</i>&nbsp;        client.addParentWatcher(watcher);</b>
+<b class="fc"><i>173</i>&nbsp;    }</b>
+<i>174</i>&nbsp;
+<i>175</i>&nbsp;    /**
+<i>176</i>&nbsp;     * If true is returned, make an attempt at the set of operations
+<i>177</i>&nbsp;     *
+<i>178</i>&nbsp;     * @return true/false
+<i>179</i>&nbsp;     */
+<i>180</i>&nbsp;    public boolean      shouldContinue()
+<i>181</i>&nbsp;    {
+<b class="fc"><i>182</i>&nbsp;        boolean     localIsDone = isDone.getAndSet(true);</b>
+<b class="fc"><i>183</i>&nbsp;        return !localIsDone;</b>
+<i>184</i>&nbsp;    }
+<i>185</i>&nbsp;
+<i>186</i>&nbsp;    /**
+<i>187</i>&nbsp;     * Must be called in a finally handler when done with the loop
+<i>188</i>&nbsp;     */
+<i>189</i>&nbsp;    @Override
+<i>190</i>&nbsp;    public void close()
+<i>191</i>&nbsp;    {
+<b class="fc"><i>192</i>&nbsp;        Preconditions.checkState(Thread.currentThread().equals(ourThread), &quot;Not in the correct thread&quot;);</b>
+<b class="fc"><i>193</i>&nbsp;        failedSessionThreads.remove(ourThread);</b>
+<i>194</i>&nbsp;
+<b class="fc"><i>195</i>&nbsp;        client.removeParentWatcher(watcher);</b>
+<b class="fc"><i>196</i>&nbsp;    }</b>
+<i>197</i>&nbsp;
+<i>198</i>&nbsp;    /**
+<i>199</i>&nbsp;     * Pass any caught exceptions here
+<i>200</i>&nbsp;     *
+<i>201</i>&nbsp;     * @param exception the exception
+<i>202</i>&nbsp;     * @throws Exception if not retry-able or the retry policy returned negative
+<i>203</i>&nbsp;     */
+<i>204</i>&nbsp;    public void         takeException(Exception exception) throws Exception
+<i>205</i>&nbsp;    {
+<b class="fc"><i>206</i>&nbsp;        Preconditions.checkState(Thread.currentThread().equals(ourThread), &quot;Not in the correct thread&quot;);</b>
+<i>207</i>&nbsp;
+<b class="fc"><i>208</i>&nbsp;        boolean     passUp = true;</b>
+<b class="fc"><i>209</i>&nbsp;        if ( sessionHasFailed.get() )</b>
+<i>210</i>&nbsp;        {
+<b class="fc"><i>211</i>&nbsp;            switch ( mode )</b>
+<i>212</i>&nbsp;            {
+<i>213</i>&nbsp;                case RETRY:
+<i>214</i>&nbsp;                {
+<b class="fc"><i>215</i>&nbsp;                    sessionHasFailed.set(false);</b>
+<b class="fc"><i>216</i>&nbsp;                    failedSessionThreads.remove(ourThread);</b>
+<b class="fc"><i>217</i>&nbsp;                    if ( exception instanceof SessionFailedException )</b>
+<i>218</i>&nbsp;                    {
+<b class="fc"><i>219</i>&nbsp;                        isDone.set(false);</b>
+<b class="fc"><i>220</i>&nbsp;                        passUp = false;</b>
+<i>221</i>&nbsp;                    }
+<i>222</i>&nbsp;                    break;
+<i>223</i>&nbsp;                }
+<i>224</i>&nbsp;
+<i>225</i>&nbsp;                case FAIL:
+<i>226</i>&nbsp;                {
+<i>227</i>&nbsp;                    break;
+<i>228</i>&nbsp;                }
+<i>229</i>&nbsp;            }
+<i>230</i>&nbsp;        }
+<i>231</i>&nbsp;
+<b class="fc"><i>232</i>&nbsp;        if ( passUp )</b>
+<i>233</i>&nbsp;        {
+<b class="fc"><i>234</i>&nbsp;            retryLoop.takeException(exception);</b>
+<i>235</i>&nbsp;        }
+<b class="fc"><i>236</i>&nbsp;    }</b>
+<i>237</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,194 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: JsonServiceInstancesMarshaller</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.server.entity</a> ]
+</div>
+
+<h1>Coverage Summary for Class: JsonServiceInstancesMarshaller (com.netflix.curator.x.discovery.server.entity)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">JsonServiceInstancesMarshaller</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 24)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator.x.discovery.server.entity;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.google.common.collect.Lists;
+<i>22</i>&nbsp;import com.netflix.curator.x.discovery.ServiceInstance;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.server.rest.DiscoveryContext;
+<i>24</i>&nbsp;import org.codehaus.jackson.JsonNode;
+<i>25</i>&nbsp;import org.codehaus.jackson.map.ObjectMapper;
+<i>26</i>&nbsp;import org.codehaus.jackson.node.ArrayNode;
+<i>27</i>&nbsp;import org.codehaus.jackson.node.ObjectNode;
+<i>28</i>&nbsp;import javax.ws.rs.Consumes;
+<i>29</i>&nbsp;import javax.ws.rs.Produces;
+<i>30</i>&nbsp;import javax.ws.rs.WebApplicationException;
+<i>31</i>&nbsp;import javax.ws.rs.core.MediaType;
+<i>32</i>&nbsp;import javax.ws.rs.core.MultivaluedMap;
+<i>33</i>&nbsp;import javax.ws.rs.ext.MessageBodyReader;
+<i>34</i>&nbsp;import javax.ws.rs.ext.MessageBodyWriter;
+<i>35</i>&nbsp;import javax.ws.rs.ext.Provider;
+<i>36</i>&nbsp;import java.io.IOException;
+<i>37</i>&nbsp;import java.io.InputStream;
+<i>38</i>&nbsp;import java.io.OutputStream;
+<i>39</i>&nbsp;import java.lang.annotation.Annotation;
+<i>40</i>&nbsp;import java.lang.reflect.Type;
+<i>41</i>&nbsp;import java.util.List;
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;/**
+<i>44</i>&nbsp; * Message body reader/writer. Inject this as appropriate for the JAX-RS implementation you are using
+<i>45</i>&nbsp; */
+<b class="nc"><i>46</i>&nbsp;@Provider</b>
+<i>47</i>&nbsp;@Consumes(MediaType.APPLICATION_JSON)
+<i>48</i>&nbsp;@Produces(MediaType.APPLICATION_JSON)
+<i>49</i>&nbsp;public class JsonServiceInstancesMarshaller&lt;T&gt; implements MessageBodyReader&lt;ServiceInstances&lt;T&gt;&gt;, MessageBodyWriter&lt;ServiceInstances&lt;T&gt;&gt;
+<i>50</i>&nbsp;{
+<i>51</i>&nbsp;    private final DiscoveryContext&lt;T&gt; context;
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;    public JsonServiceInstancesMarshaller(DiscoveryContext&lt;T&gt; context)
+<b class="nc"><i>54</i>&nbsp;    {</b>
+<b class="nc"><i>55</i>&nbsp;        this.context = context;</b>
+<i>56</i>&nbsp;    }
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;    @Override
+<i>59</i>&nbsp;    public boolean isReadable(Class&lt;?&gt; type, Type genericType, Annotation[] annotations, MediaType mediaType)
+<i>60</i>&nbsp;    {
+<b class="nc"><i>61</i>&nbsp;        return isWriteable(type, genericType, annotations, mediaType);</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    @Override
+<i>65</i>&nbsp;    public boolean isWriteable(Class&lt;?&gt; type, Type genericType, Annotation[] annotations, MediaType mediaType)
+<i>66</i>&nbsp;    {
+<b class="nc"><i>67</i>&nbsp;        return ServiceInstances.class.isAssignableFrom(type) &amp;&amp; mediaType.equals(MediaType.APPLICATION_JSON_TYPE);</b>
+<i>68</i>&nbsp;    }
+<i>69</i>&nbsp;
+<i>70</i>&nbsp;    @Override
+<i>71</i>&nbsp;    public long getSize(ServiceInstances&lt;T&gt; serviceInstances, Class&lt;?&gt; type, Type genericType, Annotation[] annotations, MediaType mediaType)
+<i>72</i>&nbsp;    {
+<b class="nc"><i>73</i>&nbsp;        return -1;</b>
+<i>74</i>&nbsp;    }
+<i>75</i>&nbsp;
+<i>76</i>&nbsp;    @Override
+<i>77</i>&nbsp;    public ServiceInstances&lt;T&gt; readFrom(Class&lt;ServiceInstances&lt;T&gt;&gt; type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap&lt;String, String&gt; httpHeaders, InputStream entityStream) throws IOException, WebApplicationException
+<i>78</i>&nbsp;    {
+<i>79</i>&nbsp;        try
+<i>80</i>&nbsp;        {
+<b class="nc"><i>81</i>&nbsp;            List&lt;ServiceInstance&lt;T&gt;&gt;    instances = Lists.newArrayList();</b>
+<b class="nc"><i>82</i>&nbsp;            ObjectMapper                mapper = new ObjectMapper();</b>
+<b class="nc"><i>83</i>&nbsp;            JsonNode                    tree = mapper.reader().readTree(entityStream);</b>
+<b class="nc"><i>84</i>&nbsp;            for ( int i = 0; i &lt; tree.size(); ++i )</b>
+<i>85</i>&nbsp;            {
+<b class="nc"><i>86</i>&nbsp;                JsonNode                    node = tree.get(i);</b>
+<b class="nc"><i>87</i>&nbsp;                ServiceInstance&lt;T&gt; instance = JsonServiceInstanceMarshaller.readInstance(node, context);</b>
+<b class="nc"><i>88</i>&nbsp;                instances.add(instance);</b>
+<i>89</i>&nbsp;            }
+<b class="nc"><i>90</i>&nbsp;            return new ServiceInstances&lt;T&gt;(instances);</b>
+<i>91</i>&nbsp;        }
+<b class="nc"><i>92</i>&nbsp;        catch ( Exception e )</b>
+<i>93</i>&nbsp;        {
+<b class="nc"><i>94</i>&nbsp;            throw new WebApplicationException(e);</b>
+<i>95</i>&nbsp;        }
+<i>96</i>&nbsp;    }
+<i>97</i>&nbsp;
+<i>98</i>&nbsp;    @Override
+<i>99</i>&nbsp;    public void writeTo(ServiceInstances&lt;T&gt; serviceInstances, Class&lt;?&gt; type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap&lt;String, Object&gt; httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException
+<i>100</i>&nbsp;    {
+<b class="nc"><i>101</i>&nbsp;        ObjectMapper mapper = new ObjectMapper();</b>
+<b class="nc"><i>102</i>&nbsp;        ArrayNode arrayNode = mapper.createArrayNode();</b>
+<b class="nc"><i>103</i>&nbsp;        List&lt;? extends ServiceInstance&lt;T&gt;&gt; instanceList = serviceInstances.getServices();</b>
+<b class="nc"><i>104</i>&nbsp;        for ( ServiceInstance&lt;T&gt; instance : instanceList )</b>
+<i>105</i>&nbsp;        {
+<b class="nc"><i>106</i>&nbsp;            ObjectNode node = JsonServiceInstanceMarshaller.writeInstance(mapper, instance, context);</b>
+<b class="nc"><i>107</i>&nbsp;            arrayNode.add(node);</b>
+<b class="nc"><i>108</i>&nbsp;        }</b>
+<b class="nc"><i>109</i>&nbsp;        mapper.writer().writeValue(entityStream, arrayNode);</b>
+<i>110</i>&nbsp;    }
+<i>111</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

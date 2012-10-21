@@ -1,0 +1,384 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ServiceCacheImpl</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.x.discovery.details</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ServiceCacheImpl (com.netflix.curator.x.discovery.details)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ServiceCacheImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (8/ 10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    85.2%
+  </span>
+  <span class="absValue">
+    (46/ 54)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">ServiceCacheImpl$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ServiceCacheImpl$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ServiceCacheImpl$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ServiceCacheImpl$4</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ServiceCacheImpl$State</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    90%
+  </span>
+  <span class="absValue">
+    (18/ 20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.6%
+  </span>
+  <span class="absValue">
+    (62/ 70)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.x.discovery.details;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import com.google.common.base.Function;
+<i>19</i>&nbsp;import com.google.common.base.Preconditions;
+<i>20</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>21</i>&nbsp;import com.netflix.curator.framework.listen.ListenerContainer;
+<i>22</i>&nbsp;import com.netflix.curator.x.discovery.ServiceInstance;
+<i>23</i>&nbsp;import com.netflix.curator.x.discovery.ServiceCache;
+<i>24</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>25</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>26</i>&nbsp;import org.slf4j.Logger;
+<i>27</i>&nbsp;import org.slf4j.LoggerFactory;
+<i>28</i>&nbsp;import java.io.IOException;
+<i>29</i>&nbsp;import java.util.List;
+<i>30</i>&nbsp;import java.util.concurrent.Callable;
+<i>31</i>&nbsp;import java.util.concurrent.Executor;
+<i>32</i>&nbsp;import java.util.concurrent.ExecutorService;
+<i>33</i>&nbsp;import java.util.concurrent.Executors;
+<i>34</i>&nbsp;import java.util.concurrent.ThreadFactory;
+<i>35</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>36</i>&nbsp;
+<b class="fc"><i>37</i>&nbsp;public class ServiceCacheImpl&lt;T&gt; implements ServiceCache&lt;T&gt;</b>
+<i>38</i>&nbsp;{
+<b class="fc"><i>39</i>&nbsp;    private final Logger                                            log = LoggerFactory.getLogger(getClass());</b>
+<b class="fc"><i>40</i>&nbsp;    private final ListenerContainer&lt;ServiceCacheListener&gt;           listenerContainer = new ListenerContainer&lt;ServiceCacheListener&gt;();</b>
+<i>41</i>&nbsp;    private final ServiceDiscoveryImpl&lt;T&gt; discovery;
+<i>42</i>&nbsp;    private final String                                            name;
+<i>43</i>&nbsp;    private final int                                               refreshPaddingMs;
+<i>44</i>&nbsp;    private final ExecutorService                                   executorService;
+<b class="fc"><i>45</i>&nbsp;    private final Latch refreshLatch = new Latch();</b>
+<b class="fc"><i>46</i>&nbsp;    private final AtomicReference&lt;State&gt;                            state = new AtomicReference&lt;State&gt;(State.LATENT);</b>
+<b class="fc"><i>47</i>&nbsp;    private final AtomicReference&lt;List&lt;ServiceInstance&lt;T&gt;&gt;&gt;         instances = new AtomicReference&lt;List&lt;ServiceInstance&lt;T&gt;&gt;&gt;(ImmutableList.&lt;ServiceInstance&lt;T&gt;&gt;of());</b>
+<b class="fc"><i>48</i>&nbsp;    private final Watcher                                           watcher = new Watcher()</b>
+<b class="fc"><i>49</i>&nbsp;    {</b>
+<i>50</i>&nbsp;        @Override
+<i>51</i>&nbsp;        public void process(WatchedEvent event)
+<i>52</i>&nbsp;        {
+<b class="fc"><i>53</i>&nbsp;            refreshLatch.set();</b>
+<b class="fc"><i>54</i>&nbsp;        }</b>
+<i>55</i>&nbsp;    };
+<i>56</i>&nbsp;
+<b class="fc"><i>57</i>&nbsp;    private enum State</b>
+<i>58</i>&nbsp;    {
+<b class="fc"><i>59</i>&nbsp;        LATENT,</b>
+<b class="fc"><i>60</i>&nbsp;        STARTED,</b>
+<b class="fc"><i>61</i>&nbsp;        STOPPED</b>
+<i>62</i>&nbsp;    }
+<i>63</i>&nbsp;
+<i>64</i>&nbsp;    ServiceCacheImpl(ServiceDiscoveryImpl&lt;T&gt; discovery, String name, ThreadFactory threadFactory, int refreshPaddingMs)
+<b class="fc"><i>65</i>&nbsp;    {</b>
+<b class="fc"><i>66</i>&nbsp;        Preconditions.checkNotNull(threadFactory, &quot;threadFactory cannot be null&quot;);</b>
+<b class="fc"><i>67</i>&nbsp;        Preconditions.checkArgument(refreshPaddingMs &gt;= 0, &quot;refreshPaddingMs cannot be negative&quot;);</b>
+<i>68</i>&nbsp;
+<b class="fc"><i>69</i>&nbsp;        this.discovery = discovery;</b>
+<b class="fc"><i>70</i>&nbsp;        this.name = name;</b>
+<b class="fc"><i>71</i>&nbsp;        this.refreshPaddingMs = refreshPaddingMs;</b>
+<i>72</i>&nbsp;
+<b class="fc"><i>73</i>&nbsp;        executorService = Executors.newSingleThreadExecutor(threadFactory);</b>
+<b class="fc"><i>74</i>&nbsp;    }</b>
+<i>75</i>&nbsp;
+<i>76</i>&nbsp;    @Override public List&lt;ServiceInstance&lt;T&gt;&gt; getInstances()
+<i>77</i>&nbsp;    {
+<b class="fc"><i>78</i>&nbsp;        return instances.get();</b>
+<i>79</i>&nbsp;    }
+<i>80</i>&nbsp;
+<i>81</i>&nbsp;    @Override public void start() throws Exception
+<i>82</i>&nbsp;    {
+<b class="fc"><i>83</i>&nbsp;        Preconditions.checkState(state.compareAndSet(State.LATENT, State.STARTED), &quot;already started&quot;);</b>
+<i>84</i>&nbsp;
+<b class="fc"><i>85</i>&nbsp;        executorService.submit</b>
+<i>86</i>&nbsp;        (
+<i>87</i>&nbsp;            new Callable&lt;Void&gt;()
+<b class="fc"><i>88</i>&nbsp;            {</b>
+<i>89</i>&nbsp;                @Override
+<i>90</i>&nbsp;                public Void call() throws Exception
+<i>91</i>&nbsp;                {
+<b class="fc"><i>92</i>&nbsp;                    doWork();</b>
+<b class="fc"><i>93</i>&nbsp;                    return null;</b>
+<i>94</i>&nbsp;                }
+<i>95</i>&nbsp;            }
+<i>96</i>&nbsp;        );
+<i>97</i>&nbsp;
+<b class="fc"><i>98</i>&nbsp;        refresh(false);</b>
+<i>99</i>&nbsp;        
+<b class="fc"><i>100</i>&nbsp;        discovery.cacheOpened(this);</b>
+<b class="fc"><i>101</i>&nbsp;    }</b>
+<i>102</i>&nbsp;
+<i>103</i>&nbsp;    @Override
+<i>104</i>&nbsp;    public void close() throws IOException
+<i>105</i>&nbsp;    {
+<b class="fc"><i>106</i>&nbsp;        Preconditions.checkState(state.compareAndSet(State.STARTED, State.STOPPED), &quot;not started&quot;);</b>
+<i>107</i>&nbsp;
+<b class="fc"><i>108</i>&nbsp;        listenerContainer.forEach</b>
+<i>109</i>&nbsp;            (
+<i>110</i>&nbsp;                new Function&lt;ServiceCacheListener, Void&gt;()
+<b class="fc"><i>111</i>&nbsp;                {</b>
+<i>112</i>&nbsp;                    @Override
+<i>113</i>&nbsp;                    public Void apply(ServiceCacheListener listener)
+<i>114</i>&nbsp;                    {
+<b class="fc"><i>115</i>&nbsp;                        discovery.getClient().getConnectionStateListenable().removeListener(listener);</b>
+<b class="fc"><i>116</i>&nbsp;                        return null;</b>
+<i>117</i>&nbsp;                    }
+<i>118</i>&nbsp;                }
+<i>119</i>&nbsp;            );
+<b class="fc"><i>120</i>&nbsp;        listenerContainer.clear();</b>
+<i>121</i>&nbsp;
+<i>122</i>&nbsp;        // Interrupt our own worker thread and shutdown thread pool
+<b class="fc"><i>123</i>&nbsp;        executorService.shutdownNow();</b>
+<i>124</i>&nbsp;
+<b class="fc"><i>125</i>&nbsp;        discovery.cacheClosed(this);</b>
+<b class="fc"><i>126</i>&nbsp;    }</b>
+<i>127</i>&nbsp;
+<i>128</i>&nbsp;    @Override
+<i>129</i>&nbsp;    public void addListener(ServiceCacheListener listener)
+<i>130</i>&nbsp;    {
+<b class="fc"><i>131</i>&nbsp;        listenerContainer.addListener(listener);</b>
+<b class="fc"><i>132</i>&nbsp;        discovery.getClient().getConnectionStateListenable().addListener(listener);</b>
+<b class="fc"><i>133</i>&nbsp;    }</b>
+<i>134</i>&nbsp;
+<i>135</i>&nbsp;    @Override
+<i>136</i>&nbsp;    public void addListener(ServiceCacheListener listener, Executor executor)
+<i>137</i>&nbsp;    {
+<b class="nc"><i>138</i>&nbsp;        listenerContainer.addListener(listener, executor);</b>
+<b class="nc"><i>139</i>&nbsp;        discovery.getClient().getConnectionStateListenable().addListener(listener, executor);</b>
+<b class="nc"><i>140</i>&nbsp;    }</b>
+<i>141</i>&nbsp;
+<i>142</i>&nbsp;    @Override
+<i>143</i>&nbsp;    public void removeListener(ServiceCacheListener listener)
+<i>144</i>&nbsp;    {
+<b class="nc"><i>145</i>&nbsp;        listenerContainer.removeListener(listener);</b>
+<b class="nc"><i>146</i>&nbsp;        discovery.getClient().getConnectionStateListenable().removeListener(listener);</b>
+<b class="nc"><i>147</i>&nbsp;    }</b>
+<i>148</i>&nbsp;
+<i>149</i>&nbsp;    private void doWork()
+<i>150</i>&nbsp;    {
+<b class="fc"><i>151</i>&nbsp;        while ( !Thread.currentThread().isInterrupted() )</b>
+<i>152</i>&nbsp;        {
+<i>153</i>&nbsp;            try
+<i>154</i>&nbsp;            {
+<b class="fc"><i>155</i>&nbsp;                if ( refreshPaddingMs &gt; 0 )</b>
+<i>156</i>&nbsp;                {
+<b class="fc"><i>157</i>&nbsp;                    Thread.sleep(refreshPaddingMs);</b>
+<i>158</i>&nbsp;                }
+<i>159</i>&nbsp;                
+<b class="fc"><i>160</i>&nbsp;                refreshLatch.await();</b>
+<b class="fc"><i>161</i>&nbsp;                refresh(true);</b>
+<i>162</i>&nbsp;            }
+<b class="fc"><i>163</i>&nbsp;            catch ( InterruptedException e )</b>
+<i>164</i>&nbsp;            {
+<b class="fc"><i>165</i>&nbsp;                Thread.currentThread().interrupt();</b>
+<b class="fc"><i>166</i>&nbsp;                break;</b>
+<b class="fc"><i>167</i>&nbsp;            }</b>
+<i>168</i>&nbsp;        }
+<b class="fc"><i>169</i>&nbsp;    }</b>
+<i>170</i>&nbsp;
+<i>171</i>&nbsp;    private void refresh(boolean notifyListeners)
+<i>172</i>&nbsp;    {
+<i>173</i>&nbsp;        try
+<i>174</i>&nbsp;        {
+<b class="fc"><i>175</i>&nbsp;            List&lt;ServiceInstance&lt;T&gt;&gt; theInstances = discovery.queryForInstances(name, watcher);</b>
+<b class="fc"><i>176</i>&nbsp;            instances.set(theInstances);</b>
+<i>177</i>&nbsp;
+<b class="fc"><i>178</i>&nbsp;            if ( notifyListeners )</b>
+<i>179</i>&nbsp;            {
+<b class="fc"><i>180</i>&nbsp;                listenerContainer.forEach</b>
+<i>181</i>&nbsp;                (
+<i>182</i>&nbsp;                    new Function&lt;ServiceCacheListener, Void&gt;()
+<b class="fc"><i>183</i>&nbsp;                    {</b>
+<i>184</i>&nbsp;                        @Override
+<i>185</i>&nbsp;                        public Void apply(ServiceCacheListener listener)
+<i>186</i>&nbsp;                        {
+<b class="fc"><i>187</i>&nbsp;                            listener.cacheChanged();</b>
+<b class="fc"><i>188</i>&nbsp;                            return null;</b>
+<i>189</i>&nbsp;                        }
+<i>190</i>&nbsp;                    }
+<i>191</i>&nbsp;                );
+<i>192</i>&nbsp;            }
+<i>193</i>&nbsp;        }
+<b class="nc"><i>194</i>&nbsp;        catch ( Exception e )</b>
+<i>195</i>&nbsp;        {
+<b class="nc"><i>196</i>&nbsp;            log.error(&quot;ServiceCache.refresh()&quot;, e);</b>
+<b class="fc"><i>197</i>&nbsp;        }</b>
+<b class="fc"><i>198</i>&nbsp;    }</b>
+<i>199</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

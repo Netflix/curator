@@ -1,0 +1,163 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: QuorumConfigBuilder</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.test</a> ]
+</div>
+
+<h1>Coverage Summary for Class: QuorumConfigBuilder (com.netflix.curator.test)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">QuorumConfigBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (6/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (24/ 26)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.test;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.google.common.collect.ImmutableList;
+<i>4</i>&nbsp;import com.google.common.io.Files;
+<i>5</i>&nbsp;import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+<i>6</i>&nbsp;import java.io.File;
+<i>7</i>&nbsp;import java.util.Collection;
+<i>8</i>&nbsp;import java.util.List;
+<i>9</i>&nbsp;import java.util.Properties;
+<i>10</i>&nbsp;
+<i>11</i>&nbsp;@SuppressWarnings(&quot;UnusedDeclaration&quot;)
+<i>12</i>&nbsp;public class QuorumConfigBuilder
+<i>13</i>&nbsp;{
+<i>14</i>&nbsp;    private final ImmutableList&lt;InstanceSpec&gt; instanceSpecs;
+<i>15</i>&nbsp;    private final boolean fromRandom;
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;    public QuorumConfigBuilder(Collection&lt;InstanceSpec&gt; specs)
+<i>18</i>&nbsp;    {
+<b class="fc"><i>19</i>&nbsp;        this(specs.toArray(new InstanceSpec[specs.size()]));</b>
+<b class="fc"><i>20</i>&nbsp;    }</b>
+<i>21</i>&nbsp;
+<i>22</i>&nbsp;    public QuorumConfigBuilder(InstanceSpec... specs)
+<b class="fc"><i>23</i>&nbsp;    {</b>
+<b class="fc"><i>24</i>&nbsp;        fromRandom = (specs == null) || (specs.length == 0);</b>
+<b class="fc"><i>25</i>&nbsp;        instanceSpecs = fromRandom ? ImmutableList.of(InstanceSpec.newInstanceSpec()) : ImmutableList.copyOf(specs);</b>
+<b class="fc"><i>26</i>&nbsp;    }</b>
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;    public boolean isFromRandom()
+<i>29</i>&nbsp;    {
+<b class="nc"><i>30</i>&nbsp;        return fromRandom;</b>
+<i>31</i>&nbsp;    }
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;    public QuorumPeerConfig buildConfig() throws Exception
+<i>34</i>&nbsp;    {
+<b class="nc"><i>35</i>&nbsp;        return buildConfig(0);</b>
+<i>36</i>&nbsp;    }
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;    public InstanceSpec     getInstanceSpec(int index)
+<i>39</i>&nbsp;    {
+<b class="fc"><i>40</i>&nbsp;        return instanceSpecs.get(index);</b>
+<i>41</i>&nbsp;    }
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    public List&lt;InstanceSpec&gt; getInstanceSpecs()
+<i>44</i>&nbsp;    {
+<b class="fc"><i>45</i>&nbsp;        return instanceSpecs;</b>
+<i>46</i>&nbsp;    }
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    public int  size()
+<i>49</i>&nbsp;    {
+<b class="fc"><i>50</i>&nbsp;        return instanceSpecs.size();</b>
+<i>51</i>&nbsp;    }
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;    public QuorumPeerConfig buildConfig(int instanceIndex) throws Exception
+<i>54</i>&nbsp;    {
+<b class="fc"><i>55</i>&nbsp;        boolean       isCluster = (instanceSpecs.size() &gt; 1);</b>
+<b class="fc"><i>56</i>&nbsp;        InstanceSpec  spec = instanceSpecs.get(instanceIndex);</b>
+<i>57</i>&nbsp;
+<b class="fc"><i>58</i>&nbsp;        if ( isCluster )</b>
+<i>59</i>&nbsp;        {
+<b class="fc"><i>60</i>&nbsp;            Files.write(Integer.toString(spec.getServerId()).getBytes(), new File(spec.getDataDirectory(), &quot;myid&quot;));</b>
+<i>61</i>&nbsp;        }
+<i>62</i>&nbsp;
+<b class="fc"><i>63</i>&nbsp;        Properties properties = new Properties();</b>
+<b class="fc"><i>64</i>&nbsp;        properties.setProperty(&quot;initLimit&quot;, &quot;10&quot;);</b>
+<b class="fc"><i>65</i>&nbsp;        properties.setProperty(&quot;syncLimit&quot;, &quot;5&quot;);</b>
+<b class="fc"><i>66</i>&nbsp;        properties.setProperty(&quot;dataDir&quot;, spec.getDataDirectory().getCanonicalPath());</b>
+<b class="fc"><i>67</i>&nbsp;        properties.setProperty(&quot;clientPort&quot;, Integer.toString(spec.getPort()));</b>
+<b class="fc"><i>68</i>&nbsp;        if ( isCluster )</b>
+<i>69</i>&nbsp;        {
+<b class="fc"><i>70</i>&nbsp;            for ( InstanceSpec thisSpec : instanceSpecs )</b>
+<i>71</i>&nbsp;            {
+<b class="fc"><i>72</i>&nbsp;                properties.setProperty(&quot;server.&quot; + thisSpec.getServerId(), String.format(&quot;localhost:%d:%d&quot;, thisSpec.getQuorumPort(), thisSpec.getElectionPort()));</b>
+<i>73</i>&nbsp;            }
+<i>74</i>&nbsp;        }
+<i>75</i>&nbsp;
+<b class="fc"><i>76</i>&nbsp;        QuorumPeerConfig config = new QuorumPeerConfig();</b>
+<b class="fc"><i>77</i>&nbsp;        config.parseProperties(properties);</b>
+<b class="fc"><i>78</i>&nbsp;        return config;</b>
+<i>79</i>&nbsp;    }
+<i>80</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,219 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ChildData</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.cache</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ChildData (com.netflix.curator.framework.recipes.cache)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ChildData</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (6/ 9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    38.7%
+  </span>
+  <span class="absValue">
+    (12/ 31)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;package com.netflix.curator.framework.recipes.cache;
+<i>17</i>&nbsp;
+<i>18</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>19</i>&nbsp;import java.util.Arrays;
+<i>20</i>&nbsp;
+<b class="fc"><i>21</i>&nbsp;public class ChildData implements Comparable&lt;ChildData&gt;</b>
+<i>22</i>&nbsp;{
+<i>23</i>&nbsp;    private final String    path;
+<i>24</i>&nbsp;    private final Stat      stat;
+<i>25</i>&nbsp;    private final byte[]    data;
+<i>26</i>&nbsp;
+<i>27</i>&nbsp;    ChildData(String path, Stat stat, byte[] data)
+<b class="fc"><i>28</i>&nbsp;    {</b>
+<b class="fc"><i>29</i>&nbsp;        this.path = path;</b>
+<b class="fc"><i>30</i>&nbsp;        this.stat = stat;</b>
+<b class="fc"><i>31</i>&nbsp;        this.data = data;</b>
+<b class="fc"><i>32</i>&nbsp;    }</b>
+<i>33</i>&nbsp;
+<i>34</i>&nbsp;    /**
+<i>35</i>&nbsp;     * @inheritDoc
+<i>36</i>&nbsp;     *
+<i>37</i>&nbsp;     * Note: this class has a natural ordering that is inconsistent with equals.
+<i>38</i>&nbsp;     */
+<i>39</i>&nbsp;    @Override
+<i>40</i>&nbsp;    public int compareTo(ChildData rhs)
+<i>41</i>&nbsp;    {
+<b class="fc"><i>42</i>&nbsp;        if ( this == rhs )</b>
+<i>43</i>&nbsp;        {
+<b class="nc"><i>44</i>&nbsp;            return 0;</b>
+<i>45</i>&nbsp;        }
+<b class="fc"><i>46</i>&nbsp;        if ( rhs == null || getClass() != rhs.getClass() )</b>
+<i>47</i>&nbsp;        {
+<b class="nc"><i>48</i>&nbsp;            return -1;</b>
+<i>49</i>&nbsp;        }
+<i>50</i>&nbsp;
+<b class="fc"><i>51</i>&nbsp;        return path.compareTo(rhs.path);</b>
+<i>52</i>&nbsp;    }
+<i>53</i>&nbsp;
+<i>54</i>&nbsp;    @SuppressWarnings(&quot;RedundantIfStatement&quot;)
+<i>55</i>&nbsp;    @Override
+<i>56</i>&nbsp;    public boolean equals(Object o)
+<i>57</i>&nbsp;    {
+<b class="nc"><i>58</i>&nbsp;        if ( this == o )</b>
+<i>59</i>&nbsp;        {
+<b class="nc"><i>60</i>&nbsp;            return true;</b>
+<i>61</i>&nbsp;        }
+<b class="nc"><i>62</i>&nbsp;        if ( o == null || getClass() != o.getClass() )</b>
+<i>63</i>&nbsp;        {
+<b class="nc"><i>64</i>&nbsp;            return false;</b>
+<i>65</i>&nbsp;        }
+<i>66</i>&nbsp;
+<b class="nc"><i>67</i>&nbsp;        ChildData childData = (ChildData)o;</b>
+<i>68</i>&nbsp;
+<b class="nc"><i>69</i>&nbsp;        if ( !Arrays.equals(data, childData.data) )</b>
+<i>70</i>&nbsp;        {
+<b class="nc"><i>71</i>&nbsp;            return false;</b>
+<i>72</i>&nbsp;        }
+<b class="nc"><i>73</i>&nbsp;        if ( path != null ? !path.equals(childData.path) : childData.path != null )</b>
+<i>74</i>&nbsp;        {
+<b class="nc"><i>75</i>&nbsp;            return false;</b>
+<i>76</i>&nbsp;        }
+<b class="nc"><i>77</i>&nbsp;        if ( stat != null ? !stat.equals(childData.stat) : childData.stat != null )</b>
+<i>78</i>&nbsp;        {
+<b class="nc"><i>79</i>&nbsp;            return false;</b>
+<i>80</i>&nbsp;        }
+<i>81</i>&nbsp;
+<b class="nc"><i>82</i>&nbsp;        return true;</b>
+<i>83</i>&nbsp;    }
+<i>84</i>&nbsp;
+<i>85</i>&nbsp;    @Override
+<i>86</i>&nbsp;    public int hashCode()
+<i>87</i>&nbsp;    {
+<b class="nc"><i>88</i>&nbsp;        int result = path != null ? path.hashCode() : 0;</b>
+<b class="nc"><i>89</i>&nbsp;        result = 31 * result + (stat != null ? stat.hashCode() : 0);</b>
+<b class="nc"><i>90</i>&nbsp;        result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);</b>
+<b class="nc"><i>91</i>&nbsp;        return result;</b>
+<i>92</i>&nbsp;    }
+<i>93</i>&nbsp;
+<i>94</i>&nbsp;    /**
+<i>95</i>&nbsp;     * Returns the full path of the this child
+<i>96</i>&nbsp;     *
+<i>97</i>&nbsp;     * @return full path
+<i>98</i>&nbsp;     */
+<i>99</i>&nbsp;    public String getPath()
+<i>100</i>&nbsp;    {
+<b class="fc"><i>101</i>&nbsp;        return path;</b>
+<i>102</i>&nbsp;    }
+<i>103</i>&nbsp;
+<i>104</i>&nbsp;    /**
+<i>105</i>&nbsp;     * Returns the stat data for this child
+<i>106</i>&nbsp;     *
+<i>107</i>&nbsp;     * @return stat or null
+<i>108</i>&nbsp;     */
+<i>109</i>&nbsp;    public Stat getStat()
+<i>110</i>&nbsp;    {
+<b class="fc"><i>111</i>&nbsp;        return stat;</b>
+<i>112</i>&nbsp;    }
+<i>113</i>&nbsp;
+<i>114</i>&nbsp;    /**
+<i>115</i>&nbsp;     * &lt;p&gt;Returns the node data for this child when the cache mode is set to cache data.&lt;/p&gt;
+<i>116</i>&nbsp;     *
+<i>117</i>&nbsp;     * &lt;p&gt;&lt;b&gt;NOTE:&lt;/b&gt; the byte array returned is the raw reference of this instance&#39;s field. If you change
+<i>118</i>&nbsp;     * the values in the array any other callers to this method will see the change.&lt;/p&gt;
+<i>119</i>&nbsp;     *
+<i>120</i>&nbsp;     * @return node data or null
+<i>121</i>&nbsp;     */
+<i>122</i>&nbsp;    public byte[] getData()
+<i>123</i>&nbsp;    {
+<b class="fc"><i>124</i>&nbsp;        return data;</b>
+<i>125</i>&nbsp;    }
+<i>126</i>&nbsp;
+<i>127</i>&nbsp;    @Override
+<i>128</i>&nbsp;    public String toString()
+<i>129</i>&nbsp;    {
+<b class="nc"><i>130</i>&nbsp;        return &quot;ChildData{&quot; +</b>
+<i>131</i>&nbsp;            &quot;path=&#39;&quot; + path + &#39;\&#39;&#39; +
+<i>132</i>&nbsp;            &quot;, stat=&quot; + stat +
+<i>133</i>&nbsp;            &quot;, data=&quot; + Arrays.toString(data) +
+<i>134</i>&nbsp;            &#39;}&#39;;
+<i>135</i>&nbsp;    }
+<i>136</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

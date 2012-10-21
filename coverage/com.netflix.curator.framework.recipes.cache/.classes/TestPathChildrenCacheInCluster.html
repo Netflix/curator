@@ -1,0 +1,208 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: TestPathChildrenCacheInCluster</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.cache</a> ]
+</div>
+
+<h1>Coverage Summary for Class: TestPathChildrenCacheInCluster (com.netflix.curator.framework.recipes.cache)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TestPathChildrenCacheInCluster</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (28/ 28)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TestPathChildrenCacheInCluster$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/ 8)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (36/ 36)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.cache;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.io.Closeables;
+<i>20</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>21</i>&nbsp;import com.netflix.curator.framework.CuratorFrameworkFactory;
+<i>22</i>&nbsp;import com.netflix.curator.retry.RetryOneTime;
+<i>23</i>&nbsp;import com.netflix.curator.test.InstanceSpec;
+<i>24</i>&nbsp;import com.netflix.curator.test.TestingCluster;
+<i>25</i>&nbsp;import com.netflix.curator.test.Timing;
+<i>26</i>&nbsp;import org.testng.Assert;
+<i>27</i>&nbsp;import org.testng.annotations.Test;
+<i>28</i>&nbsp;import java.util.concurrent.CountDownLatch;
+<i>29</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>30</i>&nbsp;import java.util.concurrent.atomic.AtomicReference;
+<i>31</i>&nbsp;
+<b class="fc"><i>32</i>&nbsp;public class TestPathChildrenCacheInCluster</b>
+<i>33</i>&nbsp;{
+<i>34</i>&nbsp;    @Test
+<i>35</i>&nbsp;    public void     testServerLoss() throws Exception
+<i>36</i>&nbsp;    {
+<b class="fc"><i>37</i>&nbsp;        Timing                  timing = new Timing();</b>
+<i>38</i>&nbsp;
+<b class="fc"><i>39</i>&nbsp;        CuratorFramework client = null;</b>
+<b class="fc"><i>40</i>&nbsp;        PathChildrenCache cache = null;</b>
+<b class="fc"><i>41</i>&nbsp;        TestingCluster cluster = new TestingCluster(3);</b>
+<i>42</i>&nbsp;        try
+<i>43</i>&nbsp;        {
+<b class="fc"><i>44</i>&nbsp;            cluster.start();</b>
+<i>45</i>&nbsp;
+<b class="fc"><i>46</i>&nbsp;            client = CuratorFrameworkFactory.newClient(cluster.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));</b>
+<b class="fc"><i>47</i>&nbsp;            client.start();</b>
+<b class="fc"><i>48</i>&nbsp;            client.create().creatingParentsIfNeeded().forPath(&quot;/test&quot;);</b>
+<i>49</i>&nbsp;
+<b class="fc"><i>50</i>&nbsp;            cache = new PathChildrenCache(client, &quot;/test&quot;, false);</b>
+<b class="fc"><i>51</i>&nbsp;            cache.start();</b>
+<i>52</i>&nbsp;
+<b class="fc"><i>53</i>&nbsp;            final CountDownLatch                    resetLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>54</i>&nbsp;            final CountDownLatch                    reconnectLatch = new CountDownLatch(1);</b>
+<b class="fc"><i>55</i>&nbsp;            final AtomicReference&lt;CountDownLatch&gt;   latch = new AtomicReference&lt;CountDownLatch&gt;(new CountDownLatch(3));</b>
+<b class="fc"><i>56</i>&nbsp;            cache.getListenable().addListener</b>
+<i>57</i>&nbsp;                (
+<i>58</i>&nbsp;                    new PathChildrenCacheListener()
+<b class="fc"><i>59</i>&nbsp;                    {</b>
+<i>60</i>&nbsp;                        @Override
+<i>61</i>&nbsp;                        public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception
+<i>62</i>&nbsp;                        {
+<b class="fc"><i>63</i>&nbsp;                            if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED )</b>
+<i>64</i>&nbsp;                            {
+<b class="fc"><i>65</i>&nbsp;                                resetLatch.countDown();</b>
+<i>66</i>&nbsp;                            }
+<b class="fc"><i>67</i>&nbsp;                            else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED )</b>
+<i>68</i>&nbsp;                            {
+<b class="fc"><i>69</i>&nbsp;                                reconnectLatch.countDown();</b>
+<i>70</i>&nbsp;                            }
+<b class="fc"><i>71</i>&nbsp;                            else if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED )</b>
+<i>72</i>&nbsp;                            {
+<b class="fc"><i>73</i>&nbsp;                                latch.get().countDown();</b>
+<i>74</i>&nbsp;                            }
+<b class="fc"><i>75</i>&nbsp;                        }</b>
+<i>76</i>&nbsp;                    }
+<i>77</i>&nbsp;                );
+<i>78</i>&nbsp;
+<b class="fc"><i>79</i>&nbsp;            client.create().forPath(&quot;/test/one&quot;);</b>
+<b class="fc"><i>80</i>&nbsp;            client.create().forPath(&quot;/test/two&quot;);</b>
+<b class="fc"><i>81</i>&nbsp;            client.create().forPath(&quot;/test/three&quot;);</b>
+<i>82</i>&nbsp;
+<b class="fc"><i>83</i>&nbsp;            Assert.assertTrue(latch.get().await(10, TimeUnit.SECONDS));</b>
+<i>84</i>&nbsp;
+<b class="fc"><i>85</i>&nbsp;            InstanceSpec connectionInstance = cluster.findConnectionInstance(client.getZookeeperClient().getZooKeeper());</b>
+<b class="fc"><i>86</i>&nbsp;            cluster.killServer(connectionInstance);</b>
+<i>87</i>&nbsp;
+<b class="fc"><i>88</i>&nbsp;            Assert.assertTrue(timing.awaitLatch(reconnectLatch));</b>
+<i>89</i>&nbsp;
+<b class="fc"><i>90</i>&nbsp;            Assert.assertEquals(cache.getCurrentData().size(), 3);</b>
+<i>91</i>&nbsp;        }
+<i>92</i>&nbsp;        finally
+<i>93</i>&nbsp;        {
+<b class="fc"><i>94</i>&nbsp;            Closeables.closeQuietly(cache);</b>
+<b class="fc"><i>95</i>&nbsp;            Closeables.closeQuietly(client);</b>
+<b class="fc"><i>96</i>&nbsp;            Closeables.closeQuietly(cluster);</b>
+<b class="fc"><i>97</i>&nbsp;        }</b>
+<b class="fc"><i>98</i>&nbsp;    }</b>
+<i>99</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DefaultACLProvider</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.imps</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DefaultACLProvider (com.netflix.curator.framework.imps)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DefaultACLProvider</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.netflix.curator.framework.imps;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.netflix.curator.framework.api.ACLProvider;
+<i>4</i>&nbsp;import org.apache.zookeeper.ZooDefs;
+<i>5</i>&nbsp;import org.apache.zookeeper.data.ACL;
+<i>6</i>&nbsp;import java.util.List;
+<i>7</i>&nbsp;
+<b class="fc"><i>8</i>&nbsp;public class DefaultACLProvider implements ACLProvider</b>
+<i>9</i>&nbsp;{
+<i>10</i>&nbsp;    @Override
+<i>11</i>&nbsp;    public List&lt;ACL&gt; getDefaultAcl()
+<i>12</i>&nbsp;    {
+<b class="nc"><i>13</i>&nbsp;        return ZooDefs.Ids.OPEN_ACL_UNSAFE;</b>
+<i>14</i>&nbsp;    }
+<i>15</i>&nbsp;
+<i>16</i>&nbsp;    @Override
+<i>17</i>&nbsp;    public List&lt;ACL&gt; getAclForPath(String path)
+<i>18</i>&nbsp;    {
+<b class="fc"><i>19</i>&nbsp;        return ZooDefs.Ids.OPEN_ACL_UNSAFE;</b>
+<i>20</i>&nbsp;    }
+<i>21</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

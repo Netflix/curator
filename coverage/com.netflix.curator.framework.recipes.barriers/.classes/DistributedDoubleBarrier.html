@@ -1,0 +1,467 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: DistributedDoubleBarrier</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.barriers</a> ]
+</div>
+
+<h1>Coverage Summary for Class: DistributedDoubleBarrier (com.netflix.curator.framework.recipes.barriers)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DistributedDoubleBarrier</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.3%
+  </span>
+  <span class="absValue">
+    (10/ 12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    83.7%
+  </span>
+  <span class="absValue">
+    (87/ 104)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">DistributedDoubleBarrier$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/ 4)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">DistributedDoubleBarrier$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/ 2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (14/ 16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    84.5%
+  </span>
+  <span class="absValue">
+    (93/ 110)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.barriers;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;import com.google.common.annotations.VisibleForTesting;
+<i>20</i>&nbsp;import com.google.common.base.Preconditions;
+<i>21</i>&nbsp;import com.google.common.base.Predicate;
+<i>22</i>&nbsp;import com.google.common.collect.Iterables;
+<i>23</i>&nbsp;import com.google.common.collect.Lists;
+<i>24</i>&nbsp;import com.netflix.curator.framework.CuratorFramework;
+<i>25</i>&nbsp;import com.netflix.curator.utils.ZKPaths;
+<i>26</i>&nbsp;import org.apache.zookeeper.CreateMode;
+<i>27</i>&nbsp;import org.apache.zookeeper.KeeperException;
+<i>28</i>&nbsp;import org.apache.zookeeper.WatchedEvent;
+<i>29</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>30</i>&nbsp;import org.apache.zookeeper.data.Stat;
+<i>31</i>&nbsp;import java.util.ArrayList;
+<i>32</i>&nbsp;import java.util.Collections;
+<i>33</i>&nbsp;import java.util.List;
+<i>34</i>&nbsp;import java.util.UUID;
+<i>35</i>&nbsp;import java.util.concurrent.TimeUnit;
+<i>36</i>&nbsp;import java.util.concurrent.atomic.AtomicBoolean;
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;/**
+<i>39</i>&nbsp; * &lt;p&gt;
+<i>40</i>&nbsp; *     A double barrier as described in the ZK recipes. Quoting the recipe:
+<i>41</i>&nbsp; * &lt;/p&gt;
+<i>42</i>&nbsp; *
+<i>43</i>&nbsp; * &lt;blockquote&gt;
+<i>44</i>&nbsp; *     Double barriers enable
+<i>45</i>&nbsp; *     clients to synchronize the beginning and the end of a computation. When enough processes
+<i>46</i>&nbsp; *     have joined the barrier, processes start their computation and leave the barrier
+<i>47</i>&nbsp; *     once they have finished.
+<i>48</i>&nbsp; * &lt;/blockquote&gt;
+<i>49</i>&nbsp; */
+<b class="fc"><i>50</i>&nbsp;public class DistributedDoubleBarrier</b>
+<i>51</i>&nbsp;{
+<i>52</i>&nbsp;    private final CuratorFramework client;
+<i>53</i>&nbsp;    private final String barrierPath;
+<i>54</i>&nbsp;    private final int memberQty;
+<i>55</i>&nbsp;    private final String ourPath;
+<i>56</i>&nbsp;    private final String readyPath;
+<b class="fc"><i>57</i>&nbsp;    private final AtomicBoolean hasBeenNotified = new AtomicBoolean(false);</b>
+<b class="fc"><i>58</i>&nbsp;    private final AtomicBoolean connectionLost = new AtomicBoolean(false);</b>
+<b class="fc"><i>59</i>&nbsp;    private final Watcher watcher = new Watcher()</b>
+<b class="fc"><i>60</i>&nbsp;    {</b>
+<i>61</i>&nbsp;        @Override
+<i>62</i>&nbsp;        public void process(WatchedEvent event)
+<i>63</i>&nbsp;        {
+<b class="fc"><i>64</i>&nbsp;            connectionLost.set(event.getState() != Event.KeeperState.SyncConnected);</b>
+<b class="fc"><i>65</i>&nbsp;            notifyFromWatcher();</b>
+<b class="fc"><i>66</i>&nbsp;        }</b>
+<i>67</i>&nbsp;    };
+<i>68</i>&nbsp;
+<i>69</i>&nbsp;    private static final String     READY_NODE = &quot;ready&quot;;
+<i>70</i>&nbsp;
+<i>71</i>&nbsp;    /**
+<i>72</i>&nbsp;     * Creates the barrier abstraction. &lt;code&gt;memberQty&lt;/code&gt; is the number of members in the
+<i>73</i>&nbsp;     * barrier. When {@link #enter()} is called, it blocks until all members have entered. When
+<i>74</i>&nbsp;     * {@link #leave()} is called, it blocks until all members have left.
+<i>75</i>&nbsp;     *
+<i>76</i>&nbsp;     * @param client the client
+<i>77</i>&nbsp;     * @param barrierPath path to use
+<i>78</i>&nbsp;     * @param memberQty the number of members in the barrier. NOTE: more than &lt;code&gt;memberQty&lt;/code&gt;
+<i>79</i>&nbsp;     *                  can enter the barrier. &lt;code&gt;memberQty&lt;/code&gt; is a threshold, not a limit
+<i>80</i>&nbsp;     */
+<i>81</i>&nbsp;    public DistributedDoubleBarrier(CuratorFramework client, String barrierPath, int memberQty)
+<b class="fc"><i>82</i>&nbsp;    {</b>
+<b class="fc"><i>83</i>&nbsp;        Preconditions.checkState(memberQty &gt; 0, &quot;memberQty cannot be 0&quot;);</b>
+<i>84</i>&nbsp;
+<b class="fc"><i>85</i>&nbsp;        this.client = client;</b>
+<b class="fc"><i>86</i>&nbsp;        this.barrierPath = barrierPath;</b>
+<b class="fc"><i>87</i>&nbsp;        this.memberQty = memberQty;</b>
+<b class="fc"><i>88</i>&nbsp;        ourPath = ZKPaths.makePath(barrierPath, UUID.randomUUID().toString());</b>
+<b class="fc"><i>89</i>&nbsp;        readyPath = ZKPaths.makePath(barrierPath, READY_NODE);</b>
+<b class="fc"><i>90</i>&nbsp;    }</b>
+<i>91</i>&nbsp;
+<i>92</i>&nbsp;    /**
+<i>93</i>&nbsp;     * Enter the barrier and block until all members have entered
+<i>94</i>&nbsp;     *
+<i>95</i>&nbsp;     * @throws Exception interruptions, errors, etc.
+<i>96</i>&nbsp;     */
+<i>97</i>&nbsp;    public void     enter() throws Exception
+<i>98</i>&nbsp;    {
+<b class="nc"><i>99</i>&nbsp;        enter(-1, null);</b>
+<b class="nc"><i>100</i>&nbsp;    }</b>
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;    /**
+<i>103</i>&nbsp;     * Enter the barrier and block until all members have entered or the timeout has
+<i>104</i>&nbsp;     * elapsed
+<i>105</i>&nbsp;     *
+<i>106</i>&nbsp;     * @param maxWait max time to block
+<i>107</i>&nbsp;     * @param unit time unit
+<i>108</i>&nbsp;     * @return true if the entry was successful, false if the timeout elapsed first
+<i>109</i>&nbsp;     * @throws Exception interruptions, errors, etc.
+<i>110</i>&nbsp;     */
+<i>111</i>&nbsp;    public boolean     enter(long maxWait, TimeUnit unit) throws Exception
+<i>112</i>&nbsp;    {
+<b class="fc"><i>113</i>&nbsp;        long            startMs = System.currentTimeMillis();</b>
+<b class="fc"><i>114</i>&nbsp;        boolean         hasMaxWait = (unit != null);</b>
+<b class="fc"><i>115</i>&nbsp;        long            maxWaitMs = hasMaxWait ? TimeUnit.MILLISECONDS.convert(maxWait, unit) : Long.MAX_VALUE;</b>
+<i>116</i>&nbsp;
+<b class="fc"><i>117</i>&nbsp;        boolean         readyPathExists = (client.checkExists().usingWatcher(watcher).forPath(readyPath) != null);</b>
+<b class="fc"><i>118</i>&nbsp;        client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ourPath);</b>
+<i>119</i>&nbsp;
+<b class="fc"><i>120</i>&nbsp;        boolean         result = (readyPathExists || internalEnter(startMs, hasMaxWait, maxWaitMs));</b>
+<b class="fc"><i>121</i>&nbsp;        if ( connectionLost.get() )</b>
+<i>122</i>&nbsp;        {
+<b class="nc"><i>123</i>&nbsp;            throw new KeeperException.ConnectionLossException();</b>
+<i>124</i>&nbsp;        }
+<i>125</i>&nbsp;
+<b class="fc"><i>126</i>&nbsp;        return result;</b>
+<i>127</i>&nbsp;    }
+<i>128</i>&nbsp;
+<i>129</i>&nbsp;    /**
+<i>130</i>&nbsp;     * Leave the barrier and block until all members have left
+<i>131</i>&nbsp;     *
+<i>132</i>&nbsp;     * @throws Exception interruptions, errors, etc.
+<i>133</i>&nbsp;     */
+<i>134</i>&nbsp;    public synchronized void     leave() throws Exception
+<i>135</i>&nbsp;    {
+<b class="nc"><i>136</i>&nbsp;        leave(-1, null);</b>
+<b class="nc"><i>137</i>&nbsp;    }</b>
+<i>138</i>&nbsp;
+<i>139</i>&nbsp;    /**
+<i>140</i>&nbsp;     * Leave the barrier and block until all members have left or the timeout has
+<i>141</i>&nbsp;     * elapsed
+<i>142</i>&nbsp;     *
+<i>143</i>&nbsp;     * @param maxWait max time to block
+<i>144</i>&nbsp;     * @param unit time unit
+<i>145</i>&nbsp;     * @return true if leaving was successful, false if the timeout elapsed first
+<i>146</i>&nbsp;     * @throws Exception interruptions, errors, etc.
+<i>147</i>&nbsp;     */
+<i>148</i>&nbsp;    public synchronized boolean     leave(long maxWait, TimeUnit unit) throws Exception
+<i>149</i>&nbsp;    {
+<b class="fc"><i>150</i>&nbsp;        long            startMs = System.currentTimeMillis();</b>
+<b class="fc"><i>151</i>&nbsp;        boolean         hasMaxWait = (unit != null);</b>
+<b class="fc"><i>152</i>&nbsp;        long            maxWaitMs = hasMaxWait ? TimeUnit.MILLISECONDS.convert(maxWait, unit) : Long.MAX_VALUE;</b>
+<i>153</i>&nbsp;
+<b class="fc"><i>154</i>&nbsp;        return internalLeave(startMs, hasMaxWait, maxWaitMs);</b>
+<i>155</i>&nbsp;    }
+<i>156</i>&nbsp;
+<i>157</i>&nbsp;    @VisibleForTesting
+<i>158</i>&nbsp;    protected List&lt;String&gt; getChildrenForEntering() throws Exception
+<i>159</i>&nbsp;    {
+<b class="fc"><i>160</i>&nbsp;        return client.getChildren().forPath(barrierPath);</b>
+<i>161</i>&nbsp;    }
+<i>162</i>&nbsp;
+<i>163</i>&nbsp;    private List&lt;String&gt; filterAndSortChildren(List&lt;String&gt; children)
+<i>164</i>&nbsp;    {
+<b class="fc"><i>165</i>&nbsp;        Iterable&lt;String&gt; filtered = Iterables.filter</b>
+<i>166</i>&nbsp;        (
+<i>167</i>&nbsp;            children,
+<i>168</i>&nbsp;            new Predicate&lt;String&gt;()
+<b class="fc"><i>169</i>&nbsp;            {</b>
+<i>170</i>&nbsp;                @Override
+<i>171</i>&nbsp;                public boolean apply(String name)
+<i>172</i>&nbsp;                {
+<b class="fc"><i>173</i>&nbsp;                    return !name.equals(READY_NODE);</b>
+<i>174</i>&nbsp;                }
+<i>175</i>&nbsp;            }
+<i>176</i>&nbsp;        );
+<i>177</i>&nbsp;
+<b class="fc"><i>178</i>&nbsp;        ArrayList&lt;String&gt; filteredList = Lists.newArrayList(filtered);</b>
+<b class="fc"><i>179</i>&nbsp;        Collections.sort(filteredList);</b>
+<b class="fc"><i>180</i>&nbsp;        return filteredList;</b>
+<i>181</i>&nbsp;    }
+<i>182</i>&nbsp;
+<i>183</i>&nbsp;    private boolean internalLeave(long startMs, boolean hasMaxWait, long maxWaitMs) throws Exception
+<i>184</i>&nbsp;    {
+<b class="fc"><i>185</i>&nbsp;        String          ourPathName = ZKPaths.getNodeFromPath(ourPath);</b>
+<b class="fc"><i>186</i>&nbsp;        boolean         ourNodeShouldExist = true;</b>
+<b class="fc"><i>187</i>&nbsp;        boolean         result = true;</b>
+<i>188</i>&nbsp;        for(;;)
+<i>189</i>&nbsp;        {
+<b class="fc"><i>190</i>&nbsp;            if ( connectionLost.get() )</b>
+<i>191</i>&nbsp;            {
+<b class="nc"><i>192</i>&nbsp;                throw new KeeperException.ConnectionLossException();</b>
+<i>193</i>&nbsp;            }
+<i>194</i>&nbsp;
+<i>195</i>&nbsp;            List&lt;String&gt; children;
+<i>196</i>&nbsp;            try
+<i>197</i>&nbsp;            {
+<b class="fc"><i>198</i>&nbsp;                children = client.getChildren().forPath(barrierPath);</b>
+<i>199</i>&nbsp;            }
+<b class="nc"><i>200</i>&nbsp;            catch ( KeeperException.NoNodeException dummy )</b>
+<i>201</i>&nbsp;            {
+<b class="nc"><i>202</i>&nbsp;                children = Lists.newArrayList();</b>
+<b class="fc"><i>203</i>&nbsp;            }</b>
+<b class="fc"><i>204</i>&nbsp;            children = filterAndSortChildren(children);</b>
+<b class="fc"><i>205</i>&nbsp;            if ( (children == null) || (children.size() == 0) )</b>
+<i>206</i>&nbsp;            {
+<b class="fc"><i>207</i>&nbsp;                break;</b>
+<i>208</i>&nbsp;            }
+<i>209</i>&nbsp;
+<b class="fc"><i>210</i>&nbsp;            int                 ourIndex = children.indexOf(ourPathName);</b>
+<b class="fc"><i>211</i>&nbsp;            if ( (ourIndex &lt; 0) &amp;&amp; ourNodeShouldExist )</b>
+<i>212</i>&nbsp;            {
+<b class="nc"><i>213</i>&nbsp;                if ( connectionLost.get() )</b>
+<i>214</i>&nbsp;                {
+<b class="nc"><i>215</i>&nbsp;                    break;  // connection was lost but we&#39;ve reconnected. However, our ephemeral node is gone</b>
+<i>216</i>&nbsp;                }
+<i>217</i>&nbsp;                else
+<i>218</i>&nbsp;                {
+<b class="nc"><i>219</i>&nbsp;                    throw new IllegalStateException(String.format(&quot;Our path (%s) is missing&quot;, ourPathName));</b>
+<i>220</i>&nbsp;                }
+<i>221</i>&nbsp;            }
+<i>222</i>&nbsp;
+<b class="fc"><i>223</i>&nbsp;            if ( children.size() == 1 )</b>
+<i>224</i>&nbsp;            {
+<b class="fc"><i>225</i>&nbsp;                if ( ourNodeShouldExist &amp;&amp; !children.get(0).equals(ourPathName) )</b>
+<i>226</i>&nbsp;                {
+<b class="nc"><i>227</i>&nbsp;                    throw new IllegalStateException(String.format(&quot;Last path (%s) is not ours (%s)&quot;, children.get(0), ourPathName));</b>
+<i>228</i>&nbsp;                }
+<b class="fc"><i>229</i>&nbsp;                checkDeleteOurPath(ourNodeShouldExist);</b>
+<b class="fc"><i>230</i>&nbsp;                break;</b>
+<i>231</i>&nbsp;            }
+<i>232</i>&nbsp;
+<i>233</i>&nbsp;            Stat            stat;
+<b class="fc"><i>234</i>&nbsp;            boolean         IsLowestNode = (ourIndex == 0);</b>
+<b class="fc"><i>235</i>&nbsp;            if ( IsLowestNode )</b>
+<i>236</i>&nbsp;            {
+<b class="fc"><i>237</i>&nbsp;                String  highestNodePath = ZKPaths.makePath(barrierPath, children.get(children.size() - 1));</b>
+<b class="fc"><i>238</i>&nbsp;                stat = client.checkExists().usingWatcher(watcher).forPath(highestNodePath);</b>
+<b class="fc"><i>239</i>&nbsp;            }</b>
+<i>240</i>&nbsp;            else
+<i>241</i>&nbsp;            {
+<b class="fc"><i>242</i>&nbsp;                String  lowestNodePath = ZKPaths.makePath(barrierPath, children.get(0));</b>
+<b class="fc"><i>243</i>&nbsp;                stat = client.checkExists().usingWatcher(watcher).forPath(lowestNodePath);</b>
+<i>244</i>&nbsp;
+<b class="fc"><i>245</i>&nbsp;                checkDeleteOurPath(ourNodeShouldExist);</b>
+<b class="fc"><i>246</i>&nbsp;                ourNodeShouldExist = false;</b>
+<i>247</i>&nbsp;            }
+<i>248</i>&nbsp;
+<b class="fc"><i>249</i>&nbsp;            if ( stat != null )</b>
+<i>250</i>&nbsp;            {
+<b class="fc"><i>251</i>&nbsp;                if ( hasMaxWait )</b>
+<i>252</i>&nbsp;                {
+<b class="fc"><i>253</i>&nbsp;                    long        elapsed = System.currentTimeMillis() - startMs;</b>
+<b class="fc"><i>254</i>&nbsp;                    long        thisWaitMs = maxWaitMs - elapsed;</b>
+<b class="fc"><i>255</i>&nbsp;                    if ( thisWaitMs &lt;= 0 )</b>
+<i>256</i>&nbsp;                    {
+<b class="nc"><i>257</i>&nbsp;                        result = false;</b>
+<i>258</i>&nbsp;                    }
+<i>259</i>&nbsp;
+<b class="fc"><i>260</i>&nbsp;                    wait(thisWaitMs);</b>
+<b class="fc"><i>261</i>&nbsp;                }</b>
+<i>262</i>&nbsp;                else
+<i>263</i>&nbsp;                {
+<b class="nc"><i>264</i>&nbsp;                    wait();</b>
+<i>265</i>&nbsp;                }
+<i>266</i>&nbsp;            }
+<b class="fc"><i>267</i>&nbsp;        }</b>
+<i>268</i>&nbsp;
+<i>269</i>&nbsp;        try
+<i>270</i>&nbsp;        {
+<b class="fc"><i>271</i>&nbsp;            client.delete().forPath(readyPath);</b>
+<i>272</i>&nbsp;        }
+<b class="fc"><i>273</i>&nbsp;        catch ( KeeperException.NoNodeException ignore )</b>
+<i>274</i>&nbsp;        {
+<i>275</i>&nbsp;            // ignore
+<b class="fc"><i>276</i>&nbsp;        }</b>
+<i>277</i>&nbsp;
+<b class="fc"><i>278</i>&nbsp;        return result;</b>
+<i>279</i>&nbsp;    }
+<i>280</i>&nbsp;
+<i>281</i>&nbsp;    private void checkDeleteOurPath(boolean shouldExist) throws Exception
+<i>282</i>&nbsp;    {
+<b class="fc"><i>283</i>&nbsp;        if ( shouldExist )</b>
+<i>284</i>&nbsp;        {
+<b class="fc"><i>285</i>&nbsp;            client.delete().forPath(ourPath);</b>
+<i>286</i>&nbsp;        }
+<b class="fc"><i>287</i>&nbsp;    }</b>
+<i>288</i>&nbsp;
+<i>289</i>&nbsp;    private synchronized boolean internalEnter(long startMs, boolean hasMaxWait, long maxWaitMs) throws Exception
+<i>290</i>&nbsp;    {
+<b class="fc"><i>291</i>&nbsp;        boolean result = true;</b>
+<i>292</i>&nbsp;        do
+<i>293</i>&nbsp;        {
+<b class="fc"><i>294</i>&nbsp;            List&lt;String&gt;    children = getChildrenForEntering();</b>
+<b class="fc"><i>295</i>&nbsp;            int             count = (children != null) ? children.size() : 0;</b>
+<b class="fc"><i>296</i>&nbsp;            if ( count &gt;= memberQty )</b>
+<i>297</i>&nbsp;            {
+<i>298</i>&nbsp;                try
+<i>299</i>&nbsp;                {
+<b class="fc"><i>300</i>&nbsp;                    client.create().forPath(readyPath);</b>
+<i>301</i>&nbsp;                }
+<b class="fc"><i>302</i>&nbsp;                catch ( KeeperException.NodeExistsException ignore )</b>
+<i>303</i>&nbsp;                {
+<i>304</i>&nbsp;                    // ignore
+<b class="fc"><i>305</i>&nbsp;                }</b>
+<b class="fc"><i>306</i>&nbsp;                break;</b>
+<i>307</i>&nbsp;            }
+<i>308</i>&nbsp;
+<b class="fc"><i>309</i>&nbsp;            if ( hasMaxWait &amp;&amp; !hasBeenNotified.get() )</b>
+<i>310</i>&nbsp;            {
+<b class="fc"><i>311</i>&nbsp;                long        elapsed = System.currentTimeMillis() - startMs;</b>
+<b class="fc"><i>312</i>&nbsp;                long        thisWaitMs = maxWaitMs - elapsed;</b>
+<b class="fc"><i>313</i>&nbsp;                if ( thisWaitMs &lt;= 0 )</b>
+<i>314</i>&nbsp;                {
+<b class="nc"><i>315</i>&nbsp;                    result = false;</b>
+<i>316</i>&nbsp;                }
+<i>317</i>&nbsp;
+<b class="fc"><i>318</i>&nbsp;                wait(thisWaitMs);</b>
+<i>319</i>&nbsp;
+<b class="fc"><i>320</i>&nbsp;                if ( !hasBeenNotified.get() )</b>
+<i>321</i>&nbsp;                {
+<b class="nc"><i>322</i>&nbsp;                    result = false;</b>
+<i>323</i>&nbsp;                }
+<b class="fc"><i>324</i>&nbsp;            }</b>
+<i>325</i>&nbsp;            else
+<i>326</i>&nbsp;            {
+<b class="nc"><i>327</i>&nbsp;                wait();</b>
+<i>328</i>&nbsp;            }
+<i>329</i>&nbsp;        } while ( false );
+<i>330</i>&nbsp;
+<b class="fc"><i>331</i>&nbsp;        return result;</b>
+<i>332</i>&nbsp;    }
+<i>333</i>&nbsp;
+<i>334</i>&nbsp;    private synchronized void notifyFromWatcher()
+<i>335</i>&nbsp;    {
+<b class="fc"><i>336</i>&nbsp;        hasBeenNotified.set(true);</b>
+<b class="fc"><i>337</i>&nbsp;        notifyAll();</b>
+<b class="fc"><i>338</i>&nbsp;    }</b>
+<i>339</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

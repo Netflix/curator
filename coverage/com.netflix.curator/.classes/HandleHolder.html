@@ -1,0 +1,264 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: HandleHolder</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator</a> ]
+</div>
+
+<h1>Coverage Summary for Class: HandleHolder (com.netflix.curator)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">HandleHolder</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (7/ 8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (21/ 24)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">HandleHolder$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    81.8%
+  </span>
+  <span class="absValue">
+    (9/ 11)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">HandleHolder$1$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/ 3)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    85.7%
+  </span>
+  <span class="absValue">
+    (12/ 14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86.8%
+  </span>
+  <span class="absValue">
+    (33/ 38)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; *
+<i>3</i>&nbsp; *  Copyright 2011 Netflix, Inc.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; *     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>6</i>&nbsp; *     you may not use this file except in compliance with the License.
+<i>7</i>&nbsp; *     You may obtain a copy of the License at
+<i>8</i>&nbsp; *
+<i>9</i>&nbsp; *         http://www.apache.org/licenses/LICENSE-2.0
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; *     Unless required by applicable law or agreed to in writing, software
+<i>12</i>&nbsp; *     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>13</i>&nbsp; *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>14</i>&nbsp; *     See the License for the specific language governing permissions and
+<i>15</i>&nbsp; *     limitations under the License.
+<i>16</i>&nbsp; *
+<i>17</i>&nbsp; */
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;package com.netflix.curator;
+<i>20</i>&nbsp;
+<i>21</i>&nbsp;import com.netflix.curator.ensemble.EnsembleProvider;
+<i>22</i>&nbsp;import com.netflix.curator.utils.ZookeeperFactory;
+<i>23</i>&nbsp;import org.apache.zookeeper.Watcher;
+<i>24</i>&nbsp;import org.apache.zookeeper.ZooKeeper;
+<i>25</i>&nbsp;
+<b class="fc"><i>26</i>&nbsp;class HandleHolder</b>
+<i>27</i>&nbsp;{
+<i>28</i>&nbsp;    private final ZookeeperFactory zookeeperFactory;
+<i>29</i>&nbsp;    private final Watcher watcher;
+<i>30</i>&nbsp;    private final EnsembleProvider ensembleProvider;
+<i>31</i>&nbsp;    private final int sessionTimeout;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;    private volatile Helper helper;
+<i>34</i>&nbsp;
+<i>35</i>&nbsp;    private interface Helper
+<i>36</i>&nbsp;    {
+<i>37</i>&nbsp;        ZooKeeper getZooKeeper() throws Exception;
+<i>38</i>&nbsp;        
+<i>39</i>&nbsp;        String getConnectionString();
+<i>40</i>&nbsp;    }
+<i>41</i>&nbsp;
+<i>42</i>&nbsp;    HandleHolder(ZookeeperFactory zookeeperFactory, Watcher watcher, EnsembleProvider ensembleProvider, int sessionTimeout)
+<b class="fc"><i>43</i>&nbsp;    {</b>
+<b class="fc"><i>44</i>&nbsp;        this.zookeeperFactory = zookeeperFactory;</b>
+<b class="fc"><i>45</i>&nbsp;        this.watcher = watcher;</b>
+<b class="fc"><i>46</i>&nbsp;        this.ensembleProvider = ensembleProvider;</b>
+<b class="fc"><i>47</i>&nbsp;        this.sessionTimeout = sessionTimeout;</b>
+<b class="fc"><i>48</i>&nbsp;    }</b>
+<i>49</i>&nbsp;
+<i>50</i>&nbsp;    ZooKeeper getZooKeeper() throws Exception
+<i>51</i>&nbsp;    {
+<b class="fc"><i>52</i>&nbsp;        return helper.getZooKeeper();</b>
+<i>53</i>&nbsp;    }
+<i>54</i>&nbsp;
+<i>55</i>&nbsp;    String  getConnectionString()
+<i>56</i>&nbsp;    {
+<b class="nc"><i>57</i>&nbsp;        return (helper != null) ? helper.getConnectionString() : null;</b>
+<i>58</i>&nbsp;    }
+<i>59</i>&nbsp;
+<i>60</i>&nbsp;    boolean hasNewConnectionString() 
+<i>61</i>&nbsp;    {
+<b class="fc"><i>62</i>&nbsp;        String helperConnectionString = (helper != null) ? helper.getConnectionString() : null;</b>
+<b class="fc"><i>63</i>&nbsp;        return (helperConnectionString != null) &amp;&amp; !ensembleProvider.getConnectionString().equals(helperConnectionString);</b>
+<i>64</i>&nbsp;    }
+<i>65</i>&nbsp;
+<i>66</i>&nbsp;    void closeAndClear() throws Exception
+<i>67</i>&nbsp;    {
+<b class="fc"><i>68</i>&nbsp;        internalClose();</b>
+<b class="fc"><i>69</i>&nbsp;        helper = null;</b>
+<b class="fc"><i>70</i>&nbsp;    }</b>
+<i>71</i>&nbsp;
+<i>72</i>&nbsp;    void closeAndReset() throws Exception
+<i>73</i>&nbsp;    {
+<b class="fc"><i>74</i>&nbsp;        internalClose();</b>
+<i>75</i>&nbsp;
+<i>76</i>&nbsp;        // first helper is synchronized when getZooKeeper is called. Subsequent calls
+<i>77</i>&nbsp;        // are not synchronized.
+<b class="fc"><i>78</i>&nbsp;        helper = new Helper()</b>
+<b class="fc"><i>79</i>&nbsp;        {</b>
+<b class="fc"><i>80</i>&nbsp;            private volatile ZooKeeper zooKeeperHandle = null;</b>
+<b class="fc"><i>81</i>&nbsp;            private volatile String connectionString = null;</b>
+<i>82</i>&nbsp;
+<i>83</i>&nbsp;            @Override
+<i>84</i>&nbsp;            public ZooKeeper getZooKeeper() throws Exception
+<i>85</i>&nbsp;            {
+<b class="fc"><i>86</i>&nbsp;                synchronized(this)</b>
+<i>87</i>&nbsp;                {
+<b class="fc"><i>88</i>&nbsp;                    if ( zooKeeperHandle == null )</b>
+<i>89</i>&nbsp;                    {
+<b class="fc"><i>90</i>&nbsp;                        connectionString = ensembleProvider.getConnectionString();</b>
+<b class="fc"><i>91</i>&nbsp;                        zooKeeperHandle = zookeeperFactory.newZooKeeper(connectionString, sessionTimeout, watcher);</b>
+<i>92</i>&nbsp;                    }
+<i>93</i>&nbsp;
+<b class="fc"><i>94</i>&nbsp;                    helper = new Helper()</b>
+<b class="fc"><i>95</i>&nbsp;                    {</b>
+<i>96</i>&nbsp;                        @Override
+<i>97</i>&nbsp;                        public ZooKeeper getZooKeeper() throws Exception
+<i>98</i>&nbsp;                        {
+<b class="fc"><i>99</i>&nbsp;                            return zooKeeperHandle;</b>
+<i>100</i>&nbsp;                        }
+<i>101</i>&nbsp;
+<i>102</i>&nbsp;                        @Override
+<i>103</i>&nbsp;                        public String getConnectionString()
+<i>104</i>&nbsp;                        {
+<b class="fc"><i>105</i>&nbsp;                            return connectionString;</b>
+<i>106</i>&nbsp;                        }
+<i>107</i>&nbsp;                    };
+<i>108</i>&nbsp;
+<b class="fc"><i>109</i>&nbsp;                    return zooKeeperHandle;</b>
+<b class="nc"><i>110</i>&nbsp;                }</b>
+<i>111</i>&nbsp;            }
+<i>112</i>&nbsp;
+<i>113</i>&nbsp;            @Override
+<i>114</i>&nbsp;            public String getConnectionString()
+<i>115</i>&nbsp;            {
+<b class="nc"><i>116</i>&nbsp;                return connectionString;</b>
+<i>117</i>&nbsp;            }
+<i>118</i>&nbsp;        };
+<b class="fc"><i>119</i>&nbsp;    }</b>
+<i>120</i>&nbsp;
+<i>121</i>&nbsp;    private void internalClose() throws Exception
+<i>122</i>&nbsp;    {
+<i>123</i>&nbsp;        try
+<i>124</i>&nbsp;        {
+<b class="fc"><i>125</i>&nbsp;            ZooKeeper zooKeeper = (helper != null) ? helper.getZooKeeper() : null;</b>
+<b class="fc"><i>126</i>&nbsp;            if ( zooKeeper != null )</b>
+<i>127</i>&nbsp;            {
+<b class="fc"><i>128</i>&nbsp;                zooKeeper.close();</b>
+<i>129</i>&nbsp;            }
+<i>130</i>&nbsp;        }
+<b class="nc"><i>131</i>&nbsp;        catch ( InterruptedException dummy )</b>
+<i>132</i>&nbsp;        {
+<b class="nc"><i>133</i>&nbsp;            Thread.currentThread().interrupt();</b>
+<b class="fc"><i>134</i>&nbsp;        }</b>
+<b class="fc"><i>135</i>&nbsp;    }</b>
+<i>136</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,188 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: Participant</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.netflix.curator.framework.recipes.leader</a> ]
+</div>
+
+<h1>Coverage Summary for Class: Participant (com.netflix.curator.framework.recipes.leader)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Participant</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.4%
+  </span>
+  <span class="absValue">
+    (5/ 7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    59.1%
+  </span>
+  <span class="absValue">
+    (13/ 22)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/*
+<i>2</i>&nbsp; * Copyright 2012 Netflix, Inc.
+<i>3</i>&nbsp; *
+<i>4</i>&nbsp; *    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<i>5</i>&nbsp; *    you may not use this file except in compliance with the License.
+<i>6</i>&nbsp; *    You may obtain a copy of the License at
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; *        http://www.apache.org/licenses/LICENSE-2.0
+<i>9</i>&nbsp; *
+<i>10</i>&nbsp; *    Unless required by applicable law or agreed to in writing, software
+<i>11</i>&nbsp; *    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<i>12</i>&nbsp; *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<i>13</i>&nbsp; *    See the License for the specific language governing permissions and
+<i>14</i>&nbsp; *    limitations under the License.
+<i>15</i>&nbsp; */
+<i>16</i>&nbsp;
+<i>17</i>&nbsp;package com.netflix.curator.framework.recipes.leader;
+<i>18</i>&nbsp;
+<i>19</i>&nbsp;/**
+<i>20</i>&nbsp; * Describes a participant in a leadership selection
+<i>21</i>&nbsp; */
+<i>22</i>&nbsp;@SuppressWarnings({&quot;RedundantIfStatement&quot;})
+<i>23</i>&nbsp;public class Participant
+<i>24</i>&nbsp;{
+<i>25</i>&nbsp;    private final String        id;
+<i>26</i>&nbsp;    private final boolean       isLeader;
+<i>27</i>&nbsp;
+<i>28</i>&nbsp;    /**
+<i>29</i>&nbsp;     * @param id the ID
+<i>30</i>&nbsp;     * @param leader true if the leader
+<i>31</i>&nbsp;     */
+<i>32</i>&nbsp;    public Participant(String id, boolean leader)
+<b class="fc"><i>33</i>&nbsp;    {</b>
+<b class="fc"><i>34</i>&nbsp;        this.id = id;</b>
+<b class="fc"><i>35</i>&nbsp;        isLeader = leader;</b>
+<b class="fc"><i>36</i>&nbsp;    }</b>
+<i>37</i>&nbsp;
+<i>38</i>&nbsp;    Participant()
+<i>39</i>&nbsp;    {
+<b class="nc"><i>40</i>&nbsp;        this(&quot;&quot;, false);</b>
+<b class="nc"><i>41</i>&nbsp;    }</b>
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;    /**
+<i>44</i>&nbsp;     * Returns the ID set via {@link LeaderSelector#setId(String)}
+<i>45</i>&nbsp;     *
+<i>46</i>&nbsp;     * @return id
+<i>47</i>&nbsp;     */
+<i>48</i>&nbsp;    public String getId()
+<i>49</i>&nbsp;    {
+<b class="fc"><i>50</i>&nbsp;        return id;</b>
+<i>51</i>&nbsp;    }
+<i>52</i>&nbsp;
+<i>53</i>&nbsp;    /**
+<i>54</i>&nbsp;     * Returns true if this participant is the current leader
+<i>55</i>&nbsp;     *
+<i>56</i>&nbsp;     * @return true/false
+<i>57</i>&nbsp;     */
+<i>58</i>&nbsp;    public boolean isLeader()
+<i>59</i>&nbsp;    {
+<b class="fc"><i>60</i>&nbsp;        return isLeader;</b>
+<i>61</i>&nbsp;    }
+<i>62</i>&nbsp;
+<i>63</i>&nbsp;    @Override
+<i>64</i>&nbsp;    public String toString()
+<i>65</i>&nbsp;    {
+<b class="fc"><i>66</i>&nbsp;        return &quot;Participant{&quot; +</b>
+<i>67</i>&nbsp;            &quot;id=&#39;&quot; + id + &#39;\&#39;&#39; +
+<i>68</i>&nbsp;            &quot;, isLeader=&quot; + isLeader +
+<i>69</i>&nbsp;            &#39;}&#39;;
+<i>70</i>&nbsp;    }
+<i>71</i>&nbsp;
+<i>72</i>&nbsp;    @Override
+<i>73</i>&nbsp;    public boolean equals(Object o)
+<i>74</i>&nbsp;    {
+<b class="fc"><i>75</i>&nbsp;        if ( this == o )</b>
+<i>76</i>&nbsp;        {
+<b class="nc"><i>77</i>&nbsp;            return true;</b>
+<i>78</i>&nbsp;        }
+<b class="fc"><i>79</i>&nbsp;        if ( o == null || getClass() != o.getClass() )</b>
+<i>80</i>&nbsp;        {
+<b class="nc"><i>81</i>&nbsp;            return false;</b>
+<i>82</i>&nbsp;        }
+<i>83</i>&nbsp;
+<b class="fc"><i>84</i>&nbsp;        Participant that = (Participant)o;</b>
+<i>85</i>&nbsp;
+<b class="fc"><i>86</i>&nbsp;        if ( isLeader != that.isLeader )</b>
+<i>87</i>&nbsp;        {
+<b class="nc"><i>88</i>&nbsp;            return false;</b>
+<i>89</i>&nbsp;        }
+<b class="fc"><i>90</i>&nbsp;        if ( !id.equals(that.id) )</b>
+<i>91</i>&nbsp;        {
+<b class="nc"><i>92</i>&nbsp;            return false;</b>
+<i>93</i>&nbsp;        }
+<i>94</i>&nbsp;
+<b class="fc"><i>95</i>&nbsp;        return true;</b>
+<i>96</i>&nbsp;    }
+<i>97</i>&nbsp;
+<i>98</i>&nbsp;    @Override
+<i>99</i>&nbsp;    public int hashCode()
+<i>100</i>&nbsp;    {
+<b class="nc"><i>101</i>&nbsp;        int result = id.hashCode();</b>
+<b class="nc"><i>102</i>&nbsp;        result = 31 * result + (isLeader ? 1 : 0);</b>
+<b class="nc"><i>103</i>&nbsp;        return result;</b>
+<i>104</i>&nbsp;    }
+<i>105</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2012-10-21 00:38</div>
+</div>
+</body>
+</html>
