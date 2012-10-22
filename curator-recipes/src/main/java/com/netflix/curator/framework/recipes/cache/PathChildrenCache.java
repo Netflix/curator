@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 
@@ -68,20 +69,18 @@ public class PathChildrenCache implements Closeable
     private final boolean                   cacheData;
     private final boolean                   dataIsCompressed;
     private final EnsurePath                ensurePath;
+    private final BlockingQueue<Operation>                      operations = new LinkedBlockingQueue<Operation>();
+    private final ListenerContainer<PathChildrenCacheListener>  listeners = new ListenerContainer<PathChildrenCacheListener>();
+    private final ConcurrentMap<String, ChildData>              currentData = Maps.newConcurrentMap();
+
+    private volatile Future<Void>           mainLoopTask;
 
     private final Watcher     childrenWatcher = new Watcher()
     {
         @Override
         public void process(WatchedEvent event)
         {
-            try
-            {
-                refresh(false);
-            }
-            catch ( Exception e )
-            {
-                handleException(e);
-            }
+            offerOperation(new RefreshOperation(PathChildrenCache.this));
         }
     };
 
@@ -98,7 +97,7 @@ public class PathChildrenCache implements Closeable
                 }
                 else if ( event.getType() == Event.EventType.NodeDataChanged )
                 {
-                    getDataAndStat(event.getPath());
+                    offerOperation(new GetDataOperation(PathChildrenCache.this, event.getPath()));
                 }
             }
             catch ( Exception e )
@@ -107,10 +106,6 @@ public class PathChildrenCache implements Closeable
             }
         }
     };
-
-    private final BlockingQueue<PathChildrenCacheEvent>         listenerEvents = new LinkedBlockingQueue<PathChildrenCacheEvent>();
-    private final ListenerContainer<PathChildrenCacheListener>  listeners = new ListenerContainer<PathChildrenCacheListener>();
-    private final ConcurrentMap<String, ChildData>              currentData = Maps.newConcurrentMap();
 
     @VisibleForTesting
     volatile Exchanger<Object>      rebuildTestExchanger;
@@ -212,14 +207,14 @@ public class PathChildrenCache implements Closeable
         Preconditions.checkState(!executorService.isShutdown(), "already started");
 
         client.getConnectionStateListenable().addListener(connectionStateListener);
-        executorService.submit
+        mainLoopTask = executorService.submit
             (
-                new Callable<Object>()
+                new Callable<Void>()
                 {
                     @Override
-                    public Object call() throws Exception
+                    public Void call() throws Exception
                     {
-                        listenerLoop();
+                        mainLoop();
                         return null;
                     }
                 }
@@ -231,7 +226,7 @@ public class PathChildrenCache implements Closeable
         }
         else
         {
-            refresh(false);
+            offerOperation(new RefreshOperation(this));
         }
     }
 
@@ -280,7 +275,7 @@ public class PathChildrenCache implements Closeable
         }
 
         // this is necessary so that any updates that occurred while rebuilding are taken
-        refresh(true);
+        offerOperation(new ForceRefreshOperation(this));
     }
 
     /**
@@ -294,7 +289,7 @@ public class PathChildrenCache implements Closeable
         Preconditions.checkState(!executorService.isShutdown(), "has not been started");
 
         client.getConnectionStateListenable().removeListener(connectionStateListener);
-        executorService.shutdownNow();
+        mainLoopTask.cancel(true);
     }
 
     /**
@@ -339,7 +334,7 @@ public class PathChildrenCache implements Closeable
     public void clearAndRefresh() throws Exception
     {
         currentData.clear();
-        refresh(false);
+        offerOperation(new RefreshOperation(this));
     }
 
     /**
@@ -351,49 +346,7 @@ public class PathChildrenCache implements Closeable
         currentData.clear();
     }
 
-    /**
-     * Default behavior is just to log the exception
-     *
-     * @param e the exception
-     */
-    protected void      handleException(Throwable e)
-    {
-        log.error("", e);
-    }
-
-    private void handleStateChange(ConnectionState newState)
-    {
-        switch ( newState )
-        {
-        case SUSPENDED:
-        {
-            listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED, null));
-            break;
-        }
-
-        case LOST:
-        {
-            listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_LOST, null));
-            break;
-        }
-
-        case RECONNECTED:
-        {
-            try
-            {
-                refresh(true);
-                listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED, null));
-            }
-            catch ( Exception e )
-            {
-                handleException(e);
-            }
-            break;
-        }
-        }
-    }
-
-    private void refresh(final boolean forceGetDataAndStat) throws Exception
+    void refresh(final boolean forceGetDataAndStat) throws Exception
     {
         ensurePath.ensure(client.getZookeeperClient());
 
@@ -409,65 +362,30 @@ public class PathChildrenCache implements Closeable
         client.getChildren().usingWatcher(childrenWatcher).inBackground(callback).forPath(path);
     }
 
-    private void processChildren(List<String> children, boolean forceGetDataAndStat) throws Exception
+    void callListeners(final PathChildrenCacheEvent event)
     {
-        List<String>    fullPaths = Lists.transform
-        (
-            children,
-            new Function<String, String>()
-            {
-                @Override
-                public String apply(String child)
+        listeners.forEach
+            (
+                new Function<PathChildrenCacheListener, Void>()
                 {
-                    return ZKPaths.makePath(path, child);
+                    @Override
+                    public Void apply(PathChildrenCacheListener listener)
+                    {
+                        try
+                        {
+                            listener.childEvent(client, event);
+                        }
+                        catch ( Exception e )
+                        {
+                            handleException(e);
+                        }
+                        return null;
+                    }
                 }
-            }
-        );
-        Set<String>     removedNodes = Sets.newHashSet(currentData.keySet());
-        removedNodes.removeAll(fullPaths);
-
-        for ( String fullPath : removedNodes )
-        {
-            remove(fullPath);
-        }
-
-        for ( String name : children )
-        {
-            String      fullPath = ZKPaths.makePath(path, name);
-            if ( forceGetDataAndStat || !currentData.containsKey(fullPath) )
-            {
-                getDataAndStat(fullPath);
-            }
-        }
+            );
     }
 
-    private void remove(String fullPath)
-    {
-        ChildData data = currentData.remove(fullPath);
-        if ( data != null )
-        {
-            listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data));
-        }
-    }
-
-    private void applyNewData(String fullPath, int resultCode, Stat stat, byte[] bytes)
-    {
-        if ( resultCode == KeeperException.Code.OK.intValue() ) // otherwise - node must have dropped or something - we should be getting another event
-        {
-            ChildData       data = new ChildData(fullPath, stat, bytes);
-            ChildData       previousData = currentData.put(fullPath, data);
-            if ( previousData == null ) // i.e. new
-            {
-                listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, data));
-            }
-            else if ( previousData.getStat().getVersion() != stat.getVersion() )
-            {
-                listenerEvents.offer(new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data));
-            }
-        }
-    }
-
-    private void getDataAndStat(final String fullPath) throws Exception
+    void getDataAndStat(final String fullPath) throws Exception
     {
         BackgroundCallback  existsCallback = new BackgroundCallback()
         {
@@ -504,43 +422,129 @@ public class PathChildrenCache implements Closeable
         }
     }
 
-    private void listenerLoop()
+    /**
+     * Default behavior is just to log the exception
+     *
+     * @param e the exception
+     */
+    protected void      handleException(Throwable e)
+    {
+        log.error("", e);
+    }
+
+    private void handleStateChange(ConnectionState newState)
+    {
+        switch ( newState )
+        {
+        case SUSPENDED:
+        {
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED, null)));
+            break;
+        }
+
+        case LOST:
+        {
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_LOST, null)));
+            break;
+        }
+
+        case RECONNECTED:
+        {
+            try
+            {
+                offerOperation(new ForceRefreshOperation(this));
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED, null)));
+            }
+            catch ( Exception e )
+            {
+                handleException(e);
+            }
+            break;
+        }
+        }
+    }
+
+    private void processChildren(List<String> children, boolean forceGetDataAndStat) throws Exception
+    {
+        List<String>    fullPaths = Lists.transform
+            (
+                children,
+                new Function<String, String>()
+                {
+                    @Override
+                    public String apply(String child)
+                    {
+                        return ZKPaths.makePath(path, child);
+                    }
+                }
+            );
+        Set<String>     removedNodes = Sets.newHashSet(currentData.keySet());
+        removedNodes.removeAll(fullPaths);
+
+        for ( String fullPath : removedNodes )
+        {
+            remove(fullPath);
+        }
+
+        for ( String name : children )
+        {
+            String      fullPath = ZKPaths.makePath(path, name);
+            if ( forceGetDataAndStat || !currentData.containsKey(fullPath) )
+            {
+                getDataAndStat(fullPath);
+            }
+        }
+    }
+
+    private void remove(String fullPath)
+    {
+        ChildData data = currentData.remove(fullPath);
+        if ( data != null )
+        {
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data)));
+        }
+    }
+
+    private void applyNewData(String fullPath, int resultCode, Stat stat, byte[] bytes)
+    {
+        if ( resultCode == KeeperException.Code.OK.intValue() ) // otherwise - node must have dropped or something - we should be getting another event
+        {
+            ChildData       data = new ChildData(fullPath, stat, bytes);
+            ChildData       previousData = currentData.put(fullPath, data);
+            if ( previousData == null ) // i.e. new
+            {
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, data)));
+            }
+            else if ( previousData.getStat().getVersion() != stat.getVersion() )
+            {
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data)));
+            }
+        }
+    }
+
+    private void mainLoop()
     {
         while ( !Thread.currentThread().isInterrupted() )
         {
             try
             {
-                PathChildrenCacheEvent event = listenerEvents.take();
-                callListeners(event);
+                operations.take().invoke();
             }
             catch ( InterruptedException e )
             {
                 Thread.currentThread().interrupt();
                 break;
             }
+            catch ( Exception e )
+            {
+                handleException(e);
+            }
         }
     }
 
-    private void callListeners(final PathChildrenCacheEvent event)
+    private void offerOperation(Operation operation)
     {
-        listeners.forEach
-        (
-            new Function<PathChildrenCacheListener, Void>()
-            {
-                @Override
-                public Void apply(PathChildrenCacheListener listener)
-                {
-                    try
-                    {
-                        listener.childEvent(client, event);
-                    }
-                    catch ( Exception e )
-                    {
-                        handleException(e);
-                    }
-                    return null;
-                }
-            }
-        );
+        operations.remove(operation);   // avoids herding for refresh operations
+        operations.offer(operation);
     }
 }
