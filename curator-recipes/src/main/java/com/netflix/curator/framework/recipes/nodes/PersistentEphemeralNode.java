@@ -1,441 +1,384 @@
 package com.netflix.curator.framework.recipes.nodes;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.netflix.curator.framework.CuratorFramework;
+import com.netflix.curator.framework.api.ACLBackgroundPathAndBytesable;
+import com.netflix.curator.framework.api.BackgroundCallback;
+import com.netflix.curator.framework.api.CreateModable;
+import com.netflix.curator.framework.api.CuratorEvent;
 import com.netflix.curator.framework.api.PathAndBytesable;
+import com.netflix.curator.framework.state.ConnectionState;
+import com.netflix.curator.framework.state.ConnectionStateListener;
 import com.netflix.curator.utils.EnsurePath;
 import com.netflix.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A persistent ephemeral node is an ephemeral node that attempts to stay present in ZooKeeper, even through connection
- * and session interruptions.
+ * <p>
+ *     A persistent ephemeral node is an ephemeral node that attempts to stay present in
+ *     ZooKeeper, even through connection and session interruptions.
+ * </p>
+ *
+ * <p>
+ *     Thanks to bbeck (https://github.com/bbeck) for the initial coding and design
+ * </p>
  */
-public class PersistentEphemeralNode
+public class PersistentEphemeralNode implements Closeable
 {
-    /** How long to wait for the node to be initially created in seconds. */
-    private static final long CREATION_WAIT_IN_SECONDS = 10;
-
-    private static final ThreadFactory THREAD_FACTORY = new ThreadFactoryBuilder()
-            .setNameFormat(PersistentEphemeralNode.class.getSimpleName() + "Thread-%d")
-            .setDaemon(true)
-            .build();
-
-    private final ScheduledExecutorService _executor;
-    private final Async _async;
-    private final AtomicBoolean _closed = new AtomicBoolean();
-
-    /**
-     * Create the ephemeral node in ZooKeeper.  If the node cannot be created in a timely fashion then an exception will
-     * be thrown.
-     */
-    public PersistentEphemeralNode(CuratorFramework curator, String basePath, byte[] data, CreateMode mode)
-    {
-        checkNotNull(curator);
-        checkArgument(curator.isStarted());
-        checkNotNull(basePath);
-        checkNotNull(data);
-        checkNotNull(mode);
-        checkArgument(mode == CreateMode.EPHEMERAL || mode == CreateMode.EPHEMERAL_SEQUENTIAL);
-
-        // TODO: Share this executor across multiple nodes.  It *MUST* remain a single thread executor though and we
-        // have to ensure that starvation doesn't ever happen for events on one node.
-        _executor = Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
-
-        _async = new Async(_executor, new Sync(curator, basePath, data, mode));
-
-        CountDownLatch latch = new CountDownLatch(1);
-        _async.createNode(latch);
-        await(latch, CREATION_WAIT_IN_SECONDS, TimeUnit.SECONDS);
-    }
-
-    public void close(long duration, TimeUnit unit)
-    {
-        if ( !_closed.compareAndSet(false, true) )
-        {
-            // Already closed
-            return;
-        }
-
-        CountDownLatch latch = new CountDownLatch(1);
-        _async.close(latch);
-        await(latch, duration, unit);
-
-        _executor.shutdown();
-        await(_executor, duration, unit);
-    }
-
-    /**
-     * Gets the actual path, including namespace (if any) and unique ID of the ZooKeeper node backing this object.
-     * </p>
-     * NOTE: This could potentially block forever (if the node never successfully gets created), so this method should
-     * only be called in testing code.
-     *
-     * @return The actual path of the ZooKeeper node.
-     * @throws InterruptedException If retrieval of the path is interrupted.
-     * @throws java.util.concurrent.ExecutionException
-     *                              Never.
-     */
     @VisibleForTesting
-    String getActualPath() throws ExecutionException, InterruptedException
+    volatile CountDownLatch         initialCreateLatch = new CountDownLatch(1);
+
+    private final Logger                    log = LoggerFactory.getLogger(getClass());
+    private final CuratorFramework          client;
+    private final EnsurePath                ensurePath;
+    private final PathAndBytesable<String>  createMethod;
+    private final AtomicReference<String>   nodePath = new AtomicReference<String>(null);
+    private final String                    basePath;
+    private final Mode                      mode;
+    private final byte[]                    data;
+    private final AtomicReference<State>    state = new AtomicReference<State>(State.LATENT);
+    private final AtomicBoolean             isSuspended = new AtomicBoolean(false);
+    private final Watcher                   watcher = new Watcher()
     {
-        return _async.getActualPath();
-    }
-
-    private void await(CountDownLatch latch, long duration, TimeUnit unit)
-    {
-        try
-        {
-            latch.await(duration, unit);
-        } catch ( InterruptedException e )
-        {
-            throw Throwables.propagate(e);
-        }
-    }
-
-    private void await(ExecutorService executor, long duration, TimeUnit unit)
-    {
-        try
-        {
-            executor.awaitTermination(duration, unit);
-        } catch ( InterruptedException e )
-        {
-            throw Throwables.propagate(e);
-        }
-    }
-
-    /**
-     * Watcher events are executed on the ZooKeeper event thread.  Switch over to the thread used by the methods
-     * in the Sync class.
-     */
-    private class CheckExistsWatcher implements Watcher
-    {
-        private final AtomicBoolean _watcherCanceled;
-
-        public CheckExistsWatcher(AtomicBoolean watcherCanceled)
-        {
-            _watcherCanceled = watcherCanceled;
-        }
-
         @Override
         public void process(WatchedEvent event)
         {
-            _async.onNodeChanged(_watcherCanceled, event);
+            if ( Objects.equal(nodePath.get(), event.getPath()) )
+            {
+                createNode();
+            }
         }
+    };
+    private final ConnectionStateListener   listener = new ConnectionStateListener()
+    {
+        @Override
+        public void stateChanged(CuratorFramework client, ConnectionState newState)
+        {
+            isSuspended.set((newState != ConnectionState.RECONNECTED) && (newState != ConnectionState.CONNECTED));
+            if ( newState == ConnectionState.RECONNECTED )
+            {
+                createNode();
+            }
+        }
+    };
+    private final BackgroundCallback        checkExistsCallback = new BackgroundCallback()
+    {
+        @Override
+        public void processResult(CuratorFramework client, CuratorEvent event) throws Exception
+        {
+            if ( event.getResultCode() == KeeperException.Code.NONODE.intValue() )
+            {
+                createNode();
+            }
+        }
+    };
+
+    private enum State
+    {
+        LATENT,
+        STARTED,
+        CLOSED
     }
 
     /**
-     * Every method in the Async class is executed in a background thread so they will all return immediately.  All
-     * operations proxy to the corresponding operation in the contained {@link Sync} object.
+     * The mode for node creation
      */
-    private static class Async
+    public enum Mode
     {
-        /** How long to wait (in the background) before attempting an asynchronous operation. */
-        private static final long WAIT_DURATION_IN_MILLIS = 100;
-
-        private final ScheduledExecutorService _executor;
-        private final Sync _sync;
-
-        private Async(ScheduledExecutorService executor, Sync sync)
-        {
-            _executor = executor;
-            _sync = sync;
-        }
-
-        private void createNode(final CountDownLatch latch)
-        {
-            _executor.submit(new Runnable()
-            {
-                @Override
-                public void run()
+        /**
+         * Same as {@link CreateMode#EPHEMERAL}
+         */
+        EPHEMERAL()
                 {
-                    _sync.createNode(latch);
-                }
-            });
-        }
-
-        private void waitThenCreateNode(final CountDownLatch latch)
-        {
-            _executor.schedule(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    _sync.createNode(latch);
-                }
-            }, WAIT_DURATION_IN_MILLIS, TimeUnit.MILLISECONDS);
-        }
-
-        private void waitThenWatchNode()
-        {
-            _executor.schedule(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    _sync.watchNode();
-                }
-            }, WAIT_DURATION_IN_MILLIS, TimeUnit.MILLISECONDS);
-        }
-
-        private void waitThenDeleteNode(final CountDownLatch latch)
-        {
-            _executor.schedule(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    _sync.deleteNode(latch);
-                }
-            }, WAIT_DURATION_IN_MILLIS, TimeUnit.MILLISECONDS);
-        }
-
-        private void onNodeChanged(final AtomicBoolean handled, final WatchedEvent event)
-        {
-            _executor.submit(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    _sync.onNodeChanged(handled, event);
-                }
-            });
-        }
-
-        private void close(final CountDownLatch latch)
-        {
-            _executor.submit(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    _sync.close(latch);
-                }
-            });
-        }
-
-        private String getActualPath() throws ExecutionException, InterruptedException
-        {
-            String path = _sync._nodePath;
-            if ( path != null )
-            {
-                return path;
-            }
-
-            SettableFuture<String> future = SettableFuture.create();
-
-            while ( !future.isDone() )
-            {
-                waitThenGetActualPath(future);
-            }
-
-            return future.get();
-        }
-
-        private void waitThenGetActualPath(final SettableFuture<String> future)
-        {
-            _executor.schedule(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    String path = _sync._nodePath;
-                    if ( path != null )
+                    @Override
+                    protected CreateMode getCreateMode()
                     {
-                        future.set(path);
+                        return CreateMode.EPHEMERAL;
+                    }
+
+                    @Override
+                    protected boolean isProtected()
+                    {
+                        return false;
+                    }
+
+                    @Override
+                    protected boolean isSequential()
+                    {
+                        return false;
+                    }
+                },
+
+        /**
+         * Same as {@link CreateMode#EPHEMERAL_SEQUENTIAL}
+         */
+        EPHEMERAL_SEQUENTIAL()
+                {
+                    @Override
+                    protected CreateMode getCreateMode()
+                    {
+                        return CreateMode.EPHEMERAL_SEQUENTIAL;
+                    }
+
+                    @Override
+                    protected boolean isProtected()
+                    {
+                        return false;
+                    }
+
+                    @Override
+                    protected boolean isSequential()
+                    {
+                        return true;
+                    }
+                },
+
+        /**
+         * Same as {@link CreateMode#EPHEMERAL} with protection
+         */
+        PROTECTED_EPHEMERAL()
+                {
+                    @Override
+                    protected CreateMode getCreateMode()
+                    {
+                        return CreateMode.EPHEMERAL;
+                    }
+
+                    @Override
+                    protected boolean isProtected()
+                    {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean isSequential()
+                    {
+                        return false;
+                    }
+                },
+
+        /**
+         * Same as {@link CreateMode#EPHEMERAL_SEQUENTIAL} with protection
+         */
+        PROTECTED_EPHEMERAL_SEQUENTIAL()
+                {
+                    @Override
+                    protected CreateMode getCreateMode()
+                    {
+                        return CreateMode.EPHEMERAL_SEQUENTIAL;
+                    }
+
+                    @Override
+                    protected boolean isProtected()
+                    {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean isSequential()
+                    {
+                        return true;
                     }
                 }
-            }, WAIT_DURATION_IN_MILLIS, TimeUnit.MILLISECONDS);
-        }
+
+        ;
+
+        protected abstract CreateMode getCreateMode();
+
+        protected abstract boolean isProtected();
+
+        protected abstract boolean isSequential();
     }
 
     /**
-     * Every method in the Sync class is guaranteed to be executed on the same thread.  Because of this within Sync no
-     * explicit synchronization is necessary.
+     * @param client client instance
+     * @param mode creation/protection mode
+     * @param basePath the base path for the node
+     * @param data data for the node
      */
-    private class Sync
+    public PersistentEphemeralNode(CuratorFramework client, Mode mode, String basePath, byte[] data)
     {
-        private final CuratorFramework _curator;
-        private final String _basePath;
-        private final byte[] _data;
+        this.client = Preconditions.checkNotNull(client, "client cannot be null");
+        this.basePath = Preconditions.checkNotNull(basePath, "basePath cannot be null");
+        this.mode = Preconditions.checkNotNull(mode, "mode cannot be null");
+        data = Preconditions.checkNotNull(data, "data cannot be null");
 
-        private volatile String _nodePath;  // volatile since it may be read from other threads
-        private boolean _closing;
-        private boolean _deleted;
+        String parentDir = ZKPaths.getPathAndNode(basePath).getPath();
+        ensurePath = client.newNamespaceAwareEnsurePath(parentDir);
 
-        // Store this at the class level because it encodes state that prevents the need for trying to create the path
-        // multiple times.  If we instantiated this on the fly every time we tried to create a node we'd be wasting
-        // effort since we'd know that that node was created already.
-        private final EnsurePath _ensurePath;
-
-        // Store this at the class level as well because it is a creation with protection so it has a UUID embedded in
-        // the node name.  In order to ensure that that UUID remains constant for this ZooKeeperPersistentEphemeralNode
-        // instance we need to only create this one time.
-        private final PathAndBytesable<String> _createMethod;
-
-        private Sync(CuratorFramework curator, String basePath, byte[] data, CreateMode mode)
+        BackgroundCallback        backgroundCallback = new BackgroundCallback()
         {
-            _curator = curator;
-            _basePath = basePath;
-            _data = data;
+            @Override
+            public void processResult(CuratorFramework client, CuratorEvent event) throws Exception
+            {
+                String      path = null;
+                if ( event.getResultCode() == KeeperException.Code.NODEEXISTS.intValue() )
+                {
+                    path = event.getPath();
+                }
+                else if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
+                {
+                    path = event.getName();
+                }
+                if ( path != null )
+                {
+                    nodePath.set(path);
+                    watchNode();
 
-            String parentDir = ZKPaths.getPathAndNode(_basePath).getPath();
-            _ensurePath = _curator.newNamespaceAwareEnsurePath(parentDir);
+                    CountDownLatch      localLatch = initialCreateLatch;
+                    initialCreateLatch = null;
+                    if ( localLatch != null )
+                    {
+                        localLatch.countDown();
+                    }
+                }
+                else
+                {
+                    createNode();
+                }
+            }
+        };
 
-            _createMethod = _curator.create().withProtection().withMode(mode);
+        createMethod = makeCreateMethod(client, mode, backgroundCallback);
+        this.data = Arrays.copyOf(data, data.length);
+    }
+
+    /**
+     * You must call start() to initiate the persistent ephemeral node. An attempt to create the node
+     * in the background will be started
+     */
+    public void start()
+    {
+        Preconditions.checkState(state.compareAndSet(State.LATENT, State.STARTED), "Already started");
+
+        client.getConnectionStateListenable().addListener(listener);
+        createNode();
+    }
+
+    /**
+     * Block until the either initial node creation initiated by {@link #start()} succeeds or
+     * the timeout elapses.
+     *
+     * @param timeout the maximum time to wait
+     * @param unit time unit
+     * @return if the node was created before timeout
+     * @throws InterruptedException if the thread is interrupted
+     */
+    public boolean waitForInitialCreate(long timeout, TimeUnit unit) throws InterruptedException
+    {
+        Preconditions.checkState(state.get() == State.STARTED, "Not started");
+
+        return initialCreateLatch.await(timeout, unit);
+    }
+
+    @Override
+    public void close()
+    {
+        if ( !state.compareAndSet(State.STARTED, State.CLOSED) )
+        {
+            return;
         }
 
-        private void createNode(CountDownLatch latch)
-        {
-            if ( _deleted )
-            {
-                return;
-            }
-            _nodePath = null;
+        client.getConnectionStateListenable().removeListener(listener);
 
+        deleteNode();
+    }
+
+    /**
+     * Returns the currently set path or null if the node does not exist
+     *
+     * @return node path or null
+     */
+    public String getActualPath()
+    {
+        return nodePath.get();
+    }
+
+    private void deleteNode()
+    {
+        String          localNodePath = nodePath.getAndSet(null);
+        if ( localNodePath != null )
+        {
             try
             {
-                // Ensure the parents are created first...
-                _ensurePath.ensure(_curator.getZookeeperClient());
-            } catch ( Exception e )
-            {
-                _async.waitThenCreateNode(latch);
-                return;
+                client.delete().guaranteed().inBackground().forPath(localNodePath);
             }
+            catch ( KeeperException.NoNodeException ignore )
+            {
+                // ignore
+            }
+            catch ( Exception e )
+            {
+                log.error("Deleting node: " + localNodePath, e);
+            }
+        }
+    }
 
+    private void createNode()
+    {
+        if ( !isActive() )
+        {
+            return;
+        }
+
+        try
+        {
+            if ( mode.isSequential() )
+            {
+                deleteNode();
+            }
+            ensurePath.ensure(client.getZookeeperClient());
+            createMethod.forPath(basePath, data);
+        }
+        catch ( Exception e )
+        {
+            log.error("Creating node. BasePath: " + basePath, e);
+        }
+    }
+
+    private void watchNode()
+    {
+        if ( !isActive() )
+        {
+            return;
+        }
+
+        String          localNodePath = nodePath.get();
+        if ( localNodePath != null )
+        {
             try
             {
-                // Create the actual node...
-                _nodePath = _createMethod.forPath(_basePath, _data);
-            } catch ( KeeperException.NodeExistsException e )
-            {
-                // The node was already present, it may be created by us, maybe by another session.  In either
-                // case we're going to start watching it and if it gets removed we'll recreate it under our session.
-                _nodePath = e.getPath();
-            } catch ( Exception e )
-            {
-                _async.waitThenCreateNode(latch);
-                return;
+                client.checkExists().usingWatcher(watcher).inBackground(checkExistsCallback).forPath(localNodePath);
             }
-
-            watchNode();
-
-            if ( latch != null )
+            catch ( Exception e )
             {
-                latch.countDown();
+                log.error("Watching node: " + localNodePath, e);
             }
         }
+    }
 
-        private void watchNode()
-        {
-            if ( _closing )
-            {
-                return;
-            }
+    private boolean isActive()
+    {
+        return (state.get() == State.STARTED) && !isSuspended.get();
+    }
 
-            // Use this to cancel the watcher when this method is going to do something that will eventually create
-            // a new watcher.
-            AtomicBoolean cancelWatcher = new AtomicBoolean();
-            Stat stat;
-            try
-            {
-                stat = _curator
-                        .checkExists()
-                        .usingWatcher(new CheckExistsWatcher(cancelWatcher))
-                        .forPath(_nodePath);
-            } catch ( Exception e )
-            {
-                cancelWatcher.set(true);
-                _async.waitThenWatchNode();
-                return;
-            }
-
-            if ( stat == null )
-            {
-                // The node didn't exist -- it needs to be created, but we've already registered a watcher.  Set the
-                // watcher as handled so that when it's called later (when the node is created) it'll ignore that event.
-                cancelWatcher.set(true);
-                createNode(null);
-            }
-        }
-
-        private void onNodeChanged(AtomicBoolean watcherCanceled, WatchedEvent event)
-        {
-            if ( _closing || !watcherCanceled.compareAndSet(false, true) )
-            {
-                return;
-            }
-
-            if ( event.getType() == Watcher.Event.EventType.NodeDeleted )
-            {
-                // Doesn't exist.  Must recreate it.
-                createNode(null);
-            } else if ( event.getType() == Watcher.Event.EventType.None )
-            {
-                // Something failed.  Try again in a little while.
-                _async.waitThenWatchNode();
-            } else
-            {
-                // Node changed in a way we don't care about.  Re-establish the watch.
-                watchNode();
-            }
-        }
-
-        private void deleteNode(CountDownLatch latch)
-        {
-            if ( _nodePath == null )
-            {
-                // The only time _nodePath is true is if we're creating a node.  Wait for it to finish.
-                _async.waitThenDeleteNode(latch);
-                return;
-            }
-
-            try
-            {
-                _curator.delete().forPath(_nodePath);
-            } catch ( KeeperException.NoNodeException e )
-            {
-                // The node doesn't exist, we don't care, we're finished.
-            } catch ( Exception e )
-            {
-                // Something failed.  Try again in a little while.
-                _async.waitThenDeleteNode(latch);
-                return;
-            }
-
-            _deleted = true;
-
-            if ( latch != null )
-            {
-                latch.countDown();
-            }
-        }
-
-        private void close(CountDownLatch latch)
-        {
-            if ( _closing ) return;
-
-            _closing = true;
-            deleteNode(latch);
-        }
+    private static PathAndBytesable<String> makeCreateMethod(CuratorFramework curator, Mode mode, BackgroundCallback backgroundCallback)
+    {
+        CreateModable<ACLBackgroundPathAndBytesable<String>> builder = mode.isProtected() ? curator.create().withProtection() : curator.create();
+        return builder.withMode(mode.getCreateMode()).inBackground(backgroundCallback);
     }
 }
