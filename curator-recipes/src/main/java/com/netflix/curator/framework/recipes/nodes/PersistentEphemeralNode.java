@@ -1,6 +1,5 @@
 package com.netflix.curator.framework.recipes.nodes;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.netflix.curator.framework.CuratorFramework;
@@ -24,7 +23,6 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -34,14 +32,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * </p>
  *
  * <p>
- *     Thanks to bbeck (https://github.com/bbeck) for the initial coding and design
+ *     Thanks to <a href="http://github.com/bbeck">bbeck</a> and <a href="http://github.com/shawnsmith">shawnsmith</a>
+ *     for the initial coding and design.
  * </p>
  */
 public class PersistentEphemeralNode implements Closeable
 {
-    @VisibleForTesting
-    volatile CountDownLatch         initialCreateLatch = new CountDownLatch(1);
-
+    private volatile CountDownLatch         initialCreateLatch = new CountDownLatch(1);
     private final Logger                    log = LoggerFactory.getLogger(getClass());
     private final CuratorFramework          client;
     private final EnsurePath                ensurePath;
@@ -51,7 +48,7 @@ public class PersistentEphemeralNode implements Closeable
     private final Mode                      mode;
     private final byte[]                    data;
     private final AtomicReference<State>    state = new AtomicReference<State>(State.LATENT);
-    private final AtomicBoolean             isSuspended = new AtomicBoolean(false);
+    private volatile boolean                isSuspended = false;
     private final Watcher                   watcher = new Watcher()
     {
         @Override
@@ -68,7 +65,7 @@ public class PersistentEphemeralNode implements Closeable
         @Override
         public void stateChanged(CuratorFramework client, ConnectionState newState)
         {
-            isSuspended.set((newState != ConnectionState.RECONNECTED) && (newState != ConnectionState.CONNECTED));
+            isSuspended = (newState != ConnectionState.RECONNECTED) && (newState != ConnectionState.CONNECTED);
             if ( newState == ConnectionState.RECONNECTED )
             {
                 createNode();
@@ -213,9 +210,9 @@ public class PersistentEphemeralNode implements Closeable
     public PersistentEphemeralNode(CuratorFramework client, Mode mode, String basePath, byte[] data)
     {
         this.client = Preconditions.checkNotNull(client, "client cannot be null");
-        this.basePath = Preconditions.checkNotNull(basePath, "basePath cannot be null");
         this.mode = Preconditions.checkNotNull(mode, "mode cannot be null");
-        data = Preconditions.checkNotNull(data, "data cannot be null");
+        this.basePath = Preconditions.checkNotNull(basePath, "basePath cannot be null");
+        this.data = Arrays.copyOf(Preconditions.checkNotNull(data, "data cannot be null"), data.length);
 
         String parentDir = ZKPaths.getPathAndNode(basePath).getPath();
         ensurePath = client.newNamespaceAwareEnsurePath(parentDir);
@@ -239,14 +236,20 @@ public class PersistentEphemeralNode implements Closeable
                     nodePath.set(path);
                     watchNode();
 
-                    CountDownLatch      localLatch = initialCreateLatch;
-                    initialCreateLatch = null;
-                    if ( localLatch != null )
+                    if ( initialCreateLatch != null )
                     {
-                        localLatch.countDown();
+                        initialCreateLatch.countDown();
+                        initialCreateLatch = null;
+                    }
+
+                    // If create hadn't finished but delete was called, but didn't know nodePath and thus couldn't
+                    // delete the node, then we need to cleanup the node now.
+                    if ( state.get() == State.CLOSED )
+                    {
+                        deleteNode();
                     }
                 }
-                else
+                else if ( state.get() == State.STARTED )
                 {
                     createNode();
                 }
@@ -254,7 +257,6 @@ public class PersistentEphemeralNode implements Closeable
         };
 
         createMethod = makeCreateMethod(client, mode, backgroundCallback);
-        this.data = Arrays.copyOf(data, data.length);
     }
 
     /**
@@ -282,9 +284,13 @@ public class PersistentEphemeralNode implements Closeable
     {
         Preconditions.checkState(state.get() == State.STARTED, "Not started");
 
-        return initialCreateLatch.await(timeout, unit);
+        CountDownLatch localInitialCreateLatch = initialCreateLatch;
+        return localInitialCreateLatch == null || localInitialCreateLatch.await(timeout, unit);
     }
 
+    /**
+     * Close (and delete the node in the background)
+     */
     @Override
     public void close()
     {
@@ -373,7 +379,7 @@ public class PersistentEphemeralNode implements Closeable
 
     private boolean isActive()
     {
-        return (state.get() == State.STARTED) && !isSuspended.get();
+        return (state.get() == State.STARTED) && !isSuspended;
     }
 
     private static PathAndBytesable<String> makeCreateMethod(CuratorFramework curator, Mode mode, BackgroundCallback backgroundCallback)

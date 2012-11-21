@@ -4,6 +4,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
+import com.netflix.curator.framework.api.CuratorEvent;
+import com.netflix.curator.framework.api.CuratorListener;
 import com.netflix.curator.framework.recipes.BaseClassForTests;
 import com.netflix.curator.retry.RetryOneTime;
 import com.netflix.curator.test.KillSession;
@@ -21,6 +23,7 @@ import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -77,14 +80,39 @@ public class TestPersistentEphemeralNode extends BaseClassForTests
     }
 
     @Test
+    public void testStartThenClose() throws Exception
+    {
+        CuratorFramework curator = newCurator();
+
+        PersistentEphemeralNode node = new PersistentEphemeralNode(curator, PersistentEphemeralNode.Mode.PROTECTED_EPHEMERAL, PATH, new byte[0]);
+        node.start();
+        node.close();
+        sync(curator);
+
+        assertDirectoryEmpty(curator, DIR);
+    }
+
+    @Test
+    public void testWaitForInitialCreateTwice() throws Exception
+    {
+        CuratorFramework curator = newCurator();
+
+        PersistentEphemeralNode node = new PersistentEphemeralNode(curator, PersistentEphemeralNode.Mode.PROTECTED_EPHEMERAL, PATH, new byte[0]);
+        node.start();
+
+        assertTrue(node.waitForInitialCreate(10, TimeUnit.SECONDS));
+        assertTrue(node.waitForInitialCreate(10, TimeUnit.SECONDS));
+    }
+
+    @Test
     public void testCreatesNodeOnConstruction() throws Exception
     {
         CuratorFramework curator = newCurator();
 
         PersistentEphemeralNode node = new PersistentEphemeralNode(curator, PersistentEphemeralNode.Mode.PROTECTED_EPHEMERAL, PATH, new byte[0]);
         node.start();
-        assertTrue(node.waitForInitialCreate(10, TimeUnit.SECONDS));
 
+        assertTrue(node.waitForInitialCreate(10, TimeUnit.SECONDS));
         assertNodeExists(curator, node.getActualPath());
     }
 
@@ -263,6 +291,11 @@ public class TestPersistentEphemeralNode extends BaseClassForTests
         assertTrue(curator.checkExists().forPath(path) == null);
     }
 
+    private void assertDirectoryEmpty(CuratorFramework curator, String dir) throws Exception
+    {
+        assertEquals(curator.getChildren().forPath(dir).size(), 0);
+    }
+
     private CuratorFramework newCurator() throws IOException
     {
         Timing timing = new Timing();
@@ -276,6 +309,31 @@ public class TestPersistentEphemeralNode extends BaseClassForTests
     public void killSession(CuratorFramework curator) throws Exception
     {
         KillSession.kill(curator.getZookeeperClient().getZooKeeper(), curator.getZookeeperClient().getCurrentConnectionString());
+    }
+
+    private void sync(CuratorFramework curator) throws Exception {
+        // Curator sync() is always a background operation.  Setup a listener to determine when it finishes.
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Object context = new Object();
+        CuratorListener listener = new CuratorListener() {
+            @Override
+            public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
+                if (event.getContext() == context) {
+                    latch.countDown();
+                }
+            }
+        };
+        curator.getCuratorListenable().addListener(listener);
+
+        try {
+            // Initiate a background sync (all curator sync operations run in the background)
+            curator.sync("/sync", context);
+
+            // Wait for sync to complete.
+            assertTrue(latch.await(10, TimeUnit.MILLISECONDS));
+        } finally {
+            curator.getCuratorListenable().removeListener(listener);
+        }
     }
 
     private static final class Trigger implements Watcher
