@@ -184,6 +184,12 @@ public class CuratorFrameworkImpl implements CuratorFramework
     }
 
     @Override
+    public boolean isClosed()
+    {
+        return state.get() == State.STOPPED;
+    }
+
+    @Override
     public void     start()
     {
         log.info("Starting");
