@@ -48,6 +48,13 @@ public interface CuratorFramework extends Closeable
     public boolean  isStarted();
 
     /**
+     * Return true if the client has been closed
+     *
+     * @return true/false
+     */
+    public boolean  isClosed();
+
+    /**
      * Start a create builder
      *
      * @return builder object
