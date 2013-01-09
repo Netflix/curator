@@ -593,48 +593,6 @@ public class TestPathChildrenCache extends BaseClassForTests
     }
 
     @Test
-    public void     testAsyncInitialPopulationWithConnectionFailure() throws Exception
-    {
-        CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));
-        client.start();
-
-        try
-        {
-            client.create().forPath("/test");
-            client.create().forPath("/test/one", "hey there".getBytes());
-            client.create().forPath("/test/two", "hey there again".getBytes());
-
-            final BlockingQueue<PathChildrenCacheEvent>        events = new LinkedBlockingQueue<PathChildrenCacheEvent>();
-            PathChildrenCache cache = new PathChildrenCache(client, "/test", true);
-            cache.getListenable().addListener
-                    (
-                            new PathChildrenCacheListener()
-                            {
-                                @Override
-                                public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception
-                                {
-                                    events.offer(event);
-                                }
-                            }
-                    );
-            cache.start();
-
-            PathChildrenCacheEvent event = null;
-
-            event = events.poll(10, TimeUnit.SECONDS);
-            Assert.assertEquals(event.getType(), PathChildrenCacheEvent.Type.CHILD_ADDED);
-
-            event = events.poll(10, TimeUnit.SECONDS);
-            Assert.assertEquals(event.getType(), PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED);
-            Assert.assertEquals(event.getChildren().size(), 1);
-        }
-        finally
-        {
-            client.close();
-        }
-    }
-
-    @Test
     public void     testBasics() throws Exception
     {
         CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), new RetryOneTime(1));
