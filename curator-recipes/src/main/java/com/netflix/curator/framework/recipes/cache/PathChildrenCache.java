@@ -39,7 +39,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
@@ -526,7 +531,7 @@ public class PathChildrenCache implements Closeable
         log.error("", e);
     }
 
-    private class InternalRebuildNodeResult
+    private static class InternalRebuildNodeResult
     {
         private ChildData oldChild;
         private ChildData newChild;
