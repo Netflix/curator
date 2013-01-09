@@ -41,9 +41,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -383,9 +382,8 @@ public class PathChildrenCache implements Closeable
 
     void initialize()
     {
-        boolean succeeded = true;
         Collection<ChildData> newChildDatas = new ArrayList<ChildData>();
-        Map<String, ChildData> childDatasToRemove = new HashMap<String, ChildData>(currentData);
+        Set<ChildData> childDatasToRemove = new HashSet<ChildData>(currentData.values());
 
         try
         {
@@ -417,7 +415,7 @@ public class PathChildrenCache implements Closeable
                 childDatasToRemove.remove(ZKPaths.makePath(path, newChildData.getPath()));
             }
 
-            for (ChildData childToRemove : childDatasToRemove.values())
+            for (ChildData childToRemove : childDatasToRemove)
             {
                 currentData.remove(ZKPaths.makePath(path, childToRemove.getPath()));
 
@@ -427,22 +425,18 @@ public class PathChildrenCache implements Closeable
         catch (Throwable t)
         {
             handleException(t);
-            succeeded = false;
-        }
 
-        if (succeeded)
-        {
-            // fire the initialized event
-            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED, null, newChildDatas)));
-
-            // this is necessary so that any updates that occurred while initializing are taken
-            offerOperation(new ForceRefreshOperation(this));
-        }
-        else
-        {
             // try again
             offerOperation(new InitializeOperation(this));
+
+            return;
         }
+
+        // fire the initialized event
+        offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED, null, newChildDatas)));
+
+        // this is necessary so that any updates that occurred while initializing are taken
+        offerOperation(new ForceRefreshOperation(this));
     }
 
     void refresh(final boolean forceGetDataAndStat) throws Exception
