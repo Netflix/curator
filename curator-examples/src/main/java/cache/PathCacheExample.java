@@ -77,21 +77,27 @@ public class PathCacheExample
             {
                 switch ( event.getType() )
                 {
+                    case CHILDREN_INITIALIZED:
+                    {
+                        System.out.println("Nodes initialized.");
+                        break;
+                    }
+
                     case CHILD_ADDED:
                     {
-                        System.out.println("Node added: " + ZKPaths.getNodeFromPath(event.getData().getPath()));
+                        System.out.println("Node added: " + ZKPaths.getNodeFromPath(event.getChild().getPath()));
                         break;
                     }
 
                     case CHILD_UPDATED:
                     {
-                        System.out.println("Node changed: " + ZKPaths.getNodeFromPath(event.getData().getPath()));
+                        System.out.println("Node changed: " + ZKPaths.getNodeFromPath(event.getChild().getPath()));
                         break;
                     }
 
                     case CHILD_REMOVED:
                     {
-                        System.out.println("Node removed: " + ZKPaths.getNodeFromPath(event.getData().getPath()));
+                        System.out.println("Node removed: " + ZKPaths.getNodeFromPath(event.getChild().getPath()));
                         break;
                     }
                 }

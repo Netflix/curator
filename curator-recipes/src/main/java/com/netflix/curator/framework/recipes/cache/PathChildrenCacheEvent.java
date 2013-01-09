@@ -17,19 +17,27 @@ package com.netflix.curator.framework.recipes.cache;
 
 import com.netflix.curator.framework.state.ConnectionState;
 
+import java.util.Collection;
+
 /**
  * POJO that abstracts a change to a path
  */
 public class PathChildrenCacheEvent
 {
     private final Type type;
-    private final ChildData data;
+    private final ChildData child;
+    private final Collection<ChildData> children;
 
     /**
      * Type of change
      */
     public enum Type
     {
+        /**
+         * The cache has been populated with an initial set of children
+         */
+        CHILDREN_INITIALIZED,
+
         /**
          * A child was added to the path
          */
@@ -63,12 +71,14 @@ public class PathChildrenCacheEvent
 
     /**
      * @param type event type
-     * @param data event data or null
+     * @param child event child data or null
+     * @param children event children data or null
      */
-    public PathChildrenCacheEvent(Type type, ChildData data)
+    public PathChildrenCacheEvent(Type type, ChildData child, Collection<ChildData> children)
     {
         this.type = type;
-        this.data = data;
+        this.child = child;
+        this.children = children;
     }
 
     /**
@@ -80,11 +90,19 @@ public class PathChildrenCacheEvent
     }
 
     /**
-     * @return the node's data
+     * @return the child data
      */
-    public ChildData getData()
+    public ChildData getChild()
     {
-        return data;
+        return child;
+    }
+
+    /**
+     * @return the children data
+     */
+    public Collection<ChildData> getChildren()
+    {
+        return children;
     }
 
     @Override
@@ -92,7 +110,8 @@ public class PathChildrenCacheEvent
     {
         return "PathChildrenCacheEvent{" +
             "type=" + type +
-            ", data=" + data +
+            ", child=" + child +
+            ", children=" + children +
             '}';
     }
 }

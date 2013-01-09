@@ -30,6 +30,7 @@ import com.netflix.curator.utils.ZKPaths;
 import com.netflix.curator.x.discovery.ServiceCache;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
@@ -131,17 +132,24 @@ public class ServiceCacheImpl<T> implements ServiceCache<T>, PathChildrenCacheLi
         boolean         notifyListeners = false;
         switch ( event.getType() )
         {
+            case CHILDREN_INITIALIZED:
+            {
+                addInstances(event.getChildren(), false);
+                notifyListeners = true;
+                break;
+            }
+
             case CHILD_ADDED:
             case CHILD_UPDATED:
             {
-                addInstance(event.getData(), false);
+                addInstance(event.getChild(), false);
                 notifyListeners = true;
                 break;
             }
 
             case CHILD_REMOVED:
             {
-                instances.remove(instanceIdFromData(event.getData()));
+                instances.remove(instanceIdFromData(event.getChild()));
                 notifyListeners = true;
                 break;
             }
@@ -167,6 +175,14 @@ public class ServiceCacheImpl<T> implements ServiceCache<T>, PathChildrenCacheLi
     private String instanceIdFromData(ChildData childData)
     {
         return ZKPaths.getNodeFromPath(childData.getPath());
+    }
+
+    private void addInstances(Collection<ChildData> childDatas, boolean onlyIfAbsent) throws Exception
+    {
+        for (ChildData childData : childDatas)
+        {
+            addInstance(childData, onlyIfAbsent);
+        }
     }
 
     private void addInstance(ChildData childData, boolean onlyIfAbsent) throws Exception

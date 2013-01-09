@@ -39,8 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
@@ -196,7 +195,8 @@ public class PathChildrenCache implements Closeable
      * Same as {@link #start()} but gives the option of doing an initial build
      *
      * @param buildInitial if true, {@link #rebuild()} will be called before this method
-     *                     returns in order to get an initial view of the node
+     *                     returns in order to get an initial view of the node; otherwise,
+     *                     the cache will be initialized asynchronously
      * @throws Exception errors
      */
     public void     start(boolean buildInitial) throws Exception
@@ -223,7 +223,7 @@ public class PathChildrenCache implements Closeable
         }
         else
         {
-            offerOperation(new RefreshOperation(this));
+            offerOperation(new InitializeOperation(this));
         }
     }
 
@@ -376,6 +376,70 @@ public class PathChildrenCache implements Closeable
         currentData.clear();
     }
 
+    void initialize()
+    {
+        boolean succeeded = true;
+        Collection<ChildData> newChildDatas = new ArrayList<ChildData>();
+        Map<String, ChildData> childDatasToRemove = new HashMap<String, ChildData>(currentData);
+
+        try
+        {
+            ensurePath.ensure(client.getZookeeperClient());
+
+            List<String>            children = client.getChildren().forPath(path);
+            for ( String child : children )
+            {
+                String  fullPath = ZKPaths.makePath(path, child);
+
+                // add or update the child
+                InternalRebuildNodeResult result = internalRebuildNode(fullPath);
+                newChildDatas.add(result.newChild);
+
+                // fire the add or update event
+                if (result.getOldChild() == null)
+                {
+                    offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, result.getNewChild(), null)));
+                }
+                else
+                {
+                    offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, result.getNewChild(), null)));
+                }
+            }
+
+            // remove any children that should no longer be in the cache, then fire the remove events
+            for (ChildData newChildData : newChildDatas)
+            {
+                childDatasToRemove.remove(ZKPaths.makePath(path, newChildData.getPath()));
+            }
+
+            for (ChildData childToRemove : childDatasToRemove.values())
+            {
+                currentData.remove(ZKPaths.makePath(path, childToRemove.getPath()));
+
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, childToRemove, null)));
+            }
+        }
+        catch (Throwable t)
+        {
+            handleException(t);
+            succeeded = false;
+        }
+
+        if (succeeded)
+        {
+            // fire the initialized event
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED, null, newChildDatas)));
+
+            // this is necessary so that any updates that occurred while initializing are taken
+            offerOperation(new ForceRefreshOperation(this));
+        }
+        else
+        {
+            // try again
+            offerOperation(new InitializeOperation(this));
+        }
+    }
+
     void refresh(final boolean forceGetDataAndStat) throws Exception
     {
         ensurePath.ensure(client.getZookeeperClient());
@@ -462,15 +526,41 @@ public class PathChildrenCache implements Closeable
         log.error("", e);
     }
 
-    private void internalRebuildNode(String fullPath) throws Exception
+    private class InternalRebuildNodeResult
     {
+        private ChildData oldChild;
+        private ChildData newChild;
+
+        public InternalRebuildNodeResult(ChildData oldChild, ChildData newChild)
+        {
+            this.oldChild = oldChild;
+            this.newChild = newChild;
+        }
+
+        public ChildData getOldChild()
+        {
+            return oldChild;
+        }
+
+        public ChildData getNewChild()
+        {
+            return newChild;
+        }
+    }
+
+    private InternalRebuildNodeResult internalRebuildNode(String fullPath) throws Exception
+    {
+        ChildData newChildData = null;
+        ChildData oldChildData = null;
+
         if ( cacheData )
         {
             try
             {
                 Stat stat = new Stat();
                 byte[]      bytes = dataIsCompressed ? client.getData().decompressed().storingStatIn(stat).forPath(fullPath) : client.getData().storingStatIn(stat).forPath(fullPath);
-                currentData.put(fullPath, new ChildData(fullPath, stat, bytes));
+                newChildData = new ChildData(fullPath, stat, bytes);
+                oldChildData = currentData.put(fullPath, newChildData);
             }
             catch ( KeeperException.NoNodeException ignore )
             {
@@ -482,9 +572,12 @@ public class PathChildrenCache implements Closeable
             Stat        stat = client.checkExists().forPath(fullPath);
             if ( stat != null )
             {
-                currentData.put(fullPath, new ChildData(fullPath, stat, null));
+                newChildData = new ChildData(fullPath, stat, null);
+                oldChildData = currentData.put(fullPath, newChildData);
             }
         }
+
+        return new InternalRebuildNodeResult(oldChildData, newChildData);
     }
 
     private void handleStateChange(ConnectionState newState)
@@ -493,13 +586,13 @@ public class PathChildrenCache implements Closeable
         {
         case SUSPENDED:
         {
-            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED, null)));
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED, null, null)));
             break;
         }
 
         case LOST:
         {
-            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_LOST, null)));
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_LOST, null, null)));
             break;
         }
 
@@ -508,7 +601,7 @@ public class PathChildrenCache implements Closeable
             try
             {
                 offerOperation(new ForceRefreshOperation(this));
-                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED, null)));
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED, null, null)));
             }
             catch ( Exception e )
             {
@@ -556,7 +649,7 @@ public class PathChildrenCache implements Closeable
         ChildData data = currentData.remove(fullPath);
         if ( data != null )
         {
-            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data)));
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data, null)));
         }
     }
 
@@ -568,11 +661,11 @@ public class PathChildrenCache implements Closeable
             ChildData       previousData = currentData.put(fullPath, data);
             if ( previousData == null ) // i.e. new
             {
-                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, data)));
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, data, null)));
             }
             else if ( previousData.getStat().getVersion() != stat.getVersion() )
             {
-                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data)));
+                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data, null)));
             }
         }
     }
