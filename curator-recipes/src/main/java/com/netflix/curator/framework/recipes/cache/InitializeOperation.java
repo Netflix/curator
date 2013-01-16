@@ -28,7 +28,7 @@ class InitializeOperation implements Operation
     @Override
     public void invoke() throws Exception
     {
-        cache.initialize();
+        cache.refresh(PathChildrenCache.RefreshMode.POST_INITIALIZED);
     }
 
     @Override

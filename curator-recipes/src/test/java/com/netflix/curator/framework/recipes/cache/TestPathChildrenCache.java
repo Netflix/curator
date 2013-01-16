@@ -307,7 +307,7 @@ public class TestPathChildrenCache extends BaseClassForTests
                 }
             );
             cache.start();
-            
+
             Assert.assertTrue(semaphore.tryAcquire(4, 10, TimeUnit.SECONDS));
 
             client.delete().forPath("/base/a");

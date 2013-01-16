@@ -28,7 +28,7 @@ class RefreshOperation implements Operation
     @Override
     public void invoke() throws Exception
     {
-        cache.refresh(false);
+        cache.refresh(PathChildrenCache.RefreshMode.STANDARD);
     }
 
     @Override

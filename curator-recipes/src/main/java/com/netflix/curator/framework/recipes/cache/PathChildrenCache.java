@@ -18,6 +18,7 @@ package com.netflix.curator.framework.recipes.cache;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,12 +38,12 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -74,6 +75,7 @@ public class PathChildrenCache implements Closeable
     private final BlockingQueue<Operation>                      operations = new LinkedBlockingQueue<Operation>();
     private final ListenerContainer<PathChildrenCacheListener>  listeners = new ListenerContainer<PathChildrenCacheListener>();
     private final ConcurrentMap<String, ChildData>              currentData = Maps.newConcurrentMap();
+    private Map<String, ChildData>                              initialSet = null;
 
     private final Watcher     childrenWatcher = new Watcher()
     {
@@ -380,66 +382,14 @@ public class PathChildrenCache implements Closeable
         currentData.clear();
     }
 
-    void initialize()
+    enum RefreshMode
     {
-        Collection<ChildData> newChildDatas = new ArrayList<ChildData>();
-        Set<ChildData> childDatasToRemove = new HashSet<ChildData>(currentData.values());
-
-        try
-        {
-            ensurePath.ensure(client.getZookeeperClient());
-
-            List<String>            children = client.getChildren().forPath(path);
-            for ( String child : children )
-            {
-                String  fullPath = ZKPaths.makePath(path, child);
-
-                // add or update the child
-                InternalRebuildNodeResult result = internalRebuildNode(fullPath);
-                newChildDatas.add(result.newChild);
-
-                // fire the add or update event
-                if (result.getOldChild() == null)
-                {
-                    offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_ADDED, result.getNewChild(), null)));
-                }
-                else
-                {
-                    offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, result.getNewChild(), null)));
-                }
-            }
-
-            // remove any children that should no longer be in the cache, then fire the remove events
-            for (ChildData newChildData : newChildDatas)
-            {
-                childDatasToRemove.remove(ZKPaths.makePath(path, newChildData.getPath()));
-            }
-
-            for (ChildData childToRemove : childDatasToRemove)
-            {
-                currentData.remove(ZKPaths.makePath(path, childToRemove.getPath()));
-
-                offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, childToRemove, null)));
-            }
-        }
-        catch (Throwable t)
-        {
-            handleException(t);
-
-            // try again
-            offerOperation(new InitializeOperation(this));
-
-            return;
-        }
-
-        // fire the initialized event
-        offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED, null, newChildDatas)));
-
-        // this is necessary so that any updates that occurred while initializing are taken
-        offerOperation(new ForceRefreshOperation(this));
+        STANDARD,
+        FORCE_GET_DATA_AND_STAT,
+        POST_INITIALIZED
     }
 
-    void refresh(final boolean forceGetDataAndStat) throws Exception
+    void refresh(final RefreshMode mode) throws Exception
     {
         ensurePath.ensure(client.getZookeeperClient());
 
@@ -448,7 +398,7 @@ public class PathChildrenCache implements Closeable
             @Override
             public void processResult(CuratorFramework client, CuratorEvent event) throws Exception
             {
-                processChildren(event.getChildren(), forceGetDataAndStat);
+                processChildren(event.getChildren(), mode);
             }
         };
 
@@ -525,41 +475,15 @@ public class PathChildrenCache implements Closeable
         log.error("", e);
     }
 
-    private static class InternalRebuildNodeResult
+    private void internalRebuildNode(String fullPath) throws Exception
     {
-        private ChildData oldChild;
-        private ChildData newChild;
-
-        public InternalRebuildNodeResult(ChildData oldChild, ChildData newChild)
-        {
-            this.oldChild = oldChild;
-            this.newChild = newChild;
-        }
-
-        public ChildData getOldChild()
-        {
-            return oldChild;
-        }
-
-        public ChildData getNewChild()
-        {
-            return newChild;
-        }
-    }
-
-    private InternalRebuildNodeResult internalRebuildNode(String fullPath) throws Exception
-    {
-        ChildData newChildData = null;
-        ChildData oldChildData = null;
-
         if ( cacheData )
         {
             try
             {
                 Stat stat = new Stat();
                 byte[]      bytes = dataIsCompressed ? client.getData().decompressed().storingStatIn(stat).forPath(fullPath) : client.getData().storingStatIn(stat).forPath(fullPath);
-                newChildData = new ChildData(fullPath, stat, bytes);
-                oldChildData = currentData.put(fullPath, newChildData);
+                currentData.put(fullPath, new ChildData(fullPath, stat, bytes));
             }
             catch ( KeeperException.NoNodeException ignore )
             {
@@ -571,12 +495,9 @@ public class PathChildrenCache implements Closeable
             Stat        stat = client.checkExists().forPath(fullPath);
             if ( stat != null )
             {
-                newChildData = new ChildData(fullPath, stat, null);
-                oldChildData = currentData.put(fullPath, newChildData);
+                currentData.put(fullPath, new ChildData(fullPath, stat, null));
             }
         }
-
-        return new InternalRebuildNodeResult(oldChildData, newChildData);
     }
 
     private void handleStateChange(ConnectionState newState)
@@ -611,7 +532,7 @@ public class PathChildrenCache implements Closeable
         }
     }
 
-    private void processChildren(List<String> children, boolean forceGetDataAndStat) throws Exception
+    private void processChildren(List<String> children, RefreshMode mode) throws Exception
     {
         List<String>    fullPaths = Lists.transform
         (
@@ -633,12 +554,29 @@ public class PathChildrenCache implements Closeable
             remove(fullPath);
         }
 
+        if (mode == RefreshMode.POST_INITIALIZED)
+        {
+            // keep track of the initial children
+            initialSet = Maps.newHashMap();
+            for ( String name : children )
+            {
+                initialSet.put(name, null);
+            }
+
+            maybeOfferInitializedEvent();
+        }
+
         for ( String name : children )
         {
             String      fullPath = ZKPaths.makePath(path, name);
-            if ( forceGetDataAndStat || !currentData.containsKey(fullPath) )
+
+            if ( mode == RefreshMode.FORCE_GET_DATA_AND_STAT || !currentData.containsKey(fullPath) )
             {
                 getDataAndStat(fullPath);
+            }
+            else
+            {
+                updateInitialSet(name, null);
             }
         }
     }
@@ -666,6 +604,33 @@ public class PathChildrenCache implements Closeable
             {
                 offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data, null)));
             }
+            updateInitialSet(ZKPaths.getNodeFromPath(fullPath), data);
+        }
+    }
+
+    private void updateInitialSet(String name, ChildData data)
+    {
+        if ( initialSet != null )
+        {
+            initialSet.put(name, data);
+            maybeOfferInitializedEvent();
+        }
+    }
+
+    private void maybeOfferInitializedEvent()
+    {
+        Map<String, ChildData> uninitializedChildren = Maps.filterValues(initialSet, new Predicate<ChildData>() {
+            @Override
+            public boolean apply(@Nullable ChildData input) {
+                return input == null;
+            }
+        });
+
+        if ( uninitializedChildren.size() == 0)
+        {
+            // all initial children have been processed - send initialized message
+            offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED, null, initialSet.values())));
+            initialSet = null;
         }
     }
 
