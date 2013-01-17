@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Netflix, Inc.
+ * Copyright 2013 Netflix, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package com.netflix.curator.framework.recipes.cache;
 
-class RefreshOperation implements Operation
+class InitializeOperation implements Operation
 {
     private final PathChildrenCache cache;
 
-    RefreshOperation(PathChildrenCache cache)
+    InitializeOperation(PathChildrenCache cache)
     {
         this.cache = cache;
     }
@@ -28,13 +28,13 @@ class RefreshOperation implements Operation
     @Override
     public void invoke() throws Exception
     {
-        cache.refresh(PathChildrenCache.RefreshMode.STANDARD);
+        cache.refresh(PathChildrenCache.RefreshMode.POST_INITIALIZED);
     }
 
     @Override
     public int hashCode()
     {
-        return RefreshOperation.class.hashCode();
+        return InitializeOperation.class.hashCode();
     }
 
     @Override
@@ -52,6 +52,6 @@ class RefreshOperation implements Operation
     @Override
     public String toString()
     {
-        return "RefreshOperation{}";
+        return "InitializeOperation{}";
     }
 }

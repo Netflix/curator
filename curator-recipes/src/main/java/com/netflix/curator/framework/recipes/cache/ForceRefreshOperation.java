@@ -28,7 +28,7 @@ class ForceRefreshOperation implements Operation
     @Override
     public void invoke() throws Exception
     {
-        cache.refresh(true);
+        cache.refresh(PathChildrenCache.RefreshMode.FORCE_GET_DATA_AND_STAT);
     }
 
     @Override

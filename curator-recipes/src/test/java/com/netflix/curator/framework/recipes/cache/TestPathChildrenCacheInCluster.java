@@ -48,33 +48,41 @@ public class TestPathChildrenCacheInCluster
             client.create().creatingParentsIfNeeded().forPath("/test");
 
             cache = new PathChildrenCache(client, "/test", false);
-            cache.start();
 
             final CountDownLatch                    resetLatch = new CountDownLatch(1);
             final CountDownLatch                    reconnectLatch = new CountDownLatch(1);
+            final CountDownLatch                    initializeLatch = new CountDownLatch(1);
             final AtomicReference<CountDownLatch>   latch = new AtomicReference<CountDownLatch>(new CountDownLatch(3));
             cache.getListenable().addListener
-                (
-                    new PathChildrenCacheListener()
-                    {
-                        @Override
-                        public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception
-                        {
-                            if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED )
+                    (
+                            new PathChildrenCacheListener()
                             {
-                                resetLatch.countDown();
+                                @Override
+                                public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception
+                                {
+                                    if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_SUSPENDED )
+                                    {
+                                        resetLatch.countDown();
+                                    }
+                                    else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED )
+                                    {
+                                        reconnectLatch.countDown();
+                                    }
+                                    else if ( event.getType() == PathChildrenCacheEvent.Type.CHILDREN_INITIALIZED )
+                                    {
+                                        initializeLatch.countDown();
+                                    }
+                                    else if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED )
+                                    {
+                                        latch.get().countDown();
+                                    }
+                                }
                             }
-                            else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED )
-                            {
-                                reconnectLatch.countDown();
-                            }
-                            else if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED )
-                            {
-                                latch.get().countDown();
-                            }
-                        }
-                    }
-                );
+                    );
+
+            cache.start();
+
+            Assert.assertTrue(initializeLatch.await(10, TimeUnit.SECONDS));
 
             client.create().forPath("/test/one");
             client.create().forPath("/test/two");
