@@ -28,6 +28,8 @@ import com.netflix.curator.framework.api.CuratorListener;
 import com.netflix.curator.framework.state.ConnectionState;
 import com.netflix.curator.framework.state.ConnectionStateListener;
 import com.netflix.curator.retry.RetryOneTime;
+import com.netflix.curator.test.InstanceSpec;
+import com.netflix.curator.test.TestingCluster;
 import com.netflix.curator.test.TestingServer;
 import com.netflix.curator.test.Timing;
 import com.netflix.curator.utils.EnsurePath;
