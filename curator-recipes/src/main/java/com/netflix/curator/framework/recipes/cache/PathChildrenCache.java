@@ -669,6 +669,10 @@ public class PathChildrenCache implements Closeable
             }
             updateInitialSet(ZKPaths.getNodeFromPath(fullPath), data);
         }
+        else if ( resultCode == KeeperException.Code.NONODE.intValue() )
+        {
+            removeFromInitialSet(ZKPaths.getNodeFromPath(fullPath));
+        }
     }
 
     private void updateInitialSet(String name, ChildData data)
@@ -677,6 +681,16 @@ public class PathChildrenCache implements Closeable
         if ( localInitialSet != null )
         {
             localInitialSet.put(name, data);
+            maybeOfferInitializedEvent(localInitialSet);
+        }
+    }
+
+    private void removeFromInitialSet(String name)
+    {
+        Map<String, ChildData> localInitialSet = initialSet.get();
+        if ( localInitialSet != null )
+        {
+            localInitialSet.remove(name);
             maybeOfferInitializedEvent(localInitialSet);
         }
     }
