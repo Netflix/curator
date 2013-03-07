@@ -546,12 +546,7 @@ public class PathChildrenCache implements Closeable
             offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data)));
         }
 
-        Map<String, ChildData> localInitialSet = initialSet.get();
-        if ( localInitialSet != null )
-        {
-            localInitialSet.remove(fullPath);
-            maybeOfferInitializedEvent(localInitialSet);
-        }
+        removeFromInitialSet(ZKPaths.getNodeFromPath(fullPath));
     }
 
     private void internalRebuildNode(String fullPath) throws Exception
