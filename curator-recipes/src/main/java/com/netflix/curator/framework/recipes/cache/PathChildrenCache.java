@@ -641,14 +641,17 @@ public class PathChildrenCache implements Closeable
 
         for ( String name : children )
         {
+            updateInitialSet(name, NULL_CHILD_DATA);
+        }
+
+        for ( String name : children )
+        {
             String fullPath = ZKPaths.makePath(path, name);
 
             if ( (mode == RefreshMode.FORCE_GET_DATA_AND_STAT) || !currentData.containsKey(fullPath) )
             {
                 getDataAndStat(fullPath);
             }
-
-            updateInitialSet(name, NULL_CHILD_DATA);
         }
         maybeOfferInitializedEvent(initialSet.get());
     }
