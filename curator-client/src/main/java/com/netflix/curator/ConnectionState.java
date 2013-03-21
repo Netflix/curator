@@ -37,24 +37,23 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class ConnectionState implements Watcher, Closeable
 {
-    private volatile long connectionStartMs = 0;
-
-    private final Logger                        log = LoggerFactory.getLogger(getClass());
-    private final HandleHolder                  zooKeeper;
-    private final AtomicBoolean                 isConnected = new AtomicBoolean(false);
-    private final AtomicBoolean                 lost = new AtomicBoolean(false);
-    private final EnsembleProvider              ensembleProvider;
-    private final int                           connectionTimeoutMs;
+    private static final int MAX_BACKGROUND_EXCEPTIONS = 10;
+    private static final boolean LOG_EVENTS = Boolean.getBoolean(DebugUtils.PROPERTY_LOG_EVENTS);
+    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final HandleHolder zooKeeper;
+    private final AtomicBoolean isConnected = new AtomicBoolean(false);
+    private final EnsembleProvider ensembleProvider;
+    private final int sessionTimeoutMs;
+    private final int connectionTimeoutMs;
     private final AtomicReference<TracerDriver> tracer;
-    private final Queue<Exception>              backgroundExceptions = new ConcurrentLinkedQueue<Exception>();
-    private final Queue<Watcher>                parentWatchers = new ConcurrentLinkedQueue<Watcher>();
-
-    private static final int        MAX_BACKGROUND_EXCEPTIONS = 10;
-    private static final boolean    LOG_EVENTS = Boolean.getBoolean(DebugUtils.PROPERTY_LOG_EVENTS);
+    private final Queue<Exception> backgroundExceptions = new ConcurrentLinkedQueue<Exception>();
+    private final Queue<Watcher> parentWatchers = new ConcurrentLinkedQueue<Watcher>();
+    private volatile long connectionStartMs = 0;
 
     ConnectionState(ZookeeperFactory zookeeperFactory, EnsembleProvider ensembleProvider, int sessionTimeoutMs, int connectionTimeoutMs, Watcher parentWatcher, AtomicReference<TracerDriver> tracer, boolean canBeReadOnly)
     {
         this.ensembleProvider = ensembleProvider;
+        this.sessionTimeoutMs = sessionTimeoutMs;
         this.connectionTimeoutMs = connectionTimeoutMs;
         this.tracer = tracer;
         if ( parentWatcher != null )
@@ -72,12 +71,6 @@ class ConnectionState implements Watcher, Closeable
             throw new SessionFailRetryLoop.SessionFailedException();
         }
 
-        if ( lost.compareAndSet(true, false) )
-        {
-            log.info("resetting after loss");
-            reset();
-        }
-
         Exception exception = backgroundExceptions.poll();
         if ( exception != null )
         {
@@ -89,24 +82,7 @@ class ConnectionState implements Watcher, Closeable
         boolean localIsConnected = isConnected.get();
         if ( !localIsConnected )
         {
-            long        elapsed = System.currentTimeMillis() - connectionStartMs;
-            if ( elapsed >= connectionTimeoutMs )
-            {
-                if ( zooKeeper.hasNewConnectionString() )
-                {
-                    handleNewConnectionString();
-                }
-                else
-                {
-                    KeeperException.ConnectionLossException connectionLossException = new KeeperException.ConnectionLossException();
-                    if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )
-                    {
-                        log.error(String.format("Connection timed out for connection string (%s) and timeout (%d) / elapsed (%d)", zooKeeper.getConnectionString(), connectionTimeoutMs, elapsed), connectionLossException);
-                    }
-                    tracer.get().addCount("connections-timed-out", 1);
-                    throw connectionLossException;
-                }
-            }
+            checkTimeouts();
         }
 
         return zooKeeper.getZooKeeper();
@@ -117,7 +93,7 @@ class ConnectionState implements Watcher, Closeable
         return isConnected.get();
     }
 
-    void        start() throws Exception
+    void start() throws Exception
     {
         log.debug("Starting");
         ensembleProvider.start();
@@ -125,7 +101,7 @@ class ConnectionState implements Watcher, Closeable
     }
 
     @Override
-    public void        close() throws IOException
+    public void close() throws IOException
     {
         log.debug("Closing");
 
@@ -141,25 +117,17 @@ class ConnectionState implements Watcher, Closeable
         finally
         {
             isConnected.set(false);
-            lost.set(false);
         }
     }
 
-    void        addParentWatcher(Watcher watcher)
+    void addParentWatcher(Watcher watcher)
     {
         parentWatchers.offer(watcher);
     }
 
-    void        removeParentWatcher(Watcher watcher)
+    void removeParentWatcher(Watcher watcher)
     {
         parentWatchers.remove(watcher);
-    }
-
-    void markLost()
-    {
-        log.info("lost marked");
-
-        lost.set(true);
     }
 
     @Override
@@ -187,10 +155,6 @@ class ConnectionState implements Watcher, Closeable
         if ( newIsConnected != wasConnected )
         {
             isConnected.set(newIsConnected);
-            if ( newIsConnected )
-            {
-                lost.set(false);
-            }
             connectionStartMs = System.currentTimeMillis();
         }
     }
@@ -198,6 +162,36 @@ class ConnectionState implements Watcher, Closeable
     EnsembleProvider getEnsembleProvider()
     {
         return ensembleProvider;
+    }
+
+    private synchronized void checkTimeouts() throws Exception
+    {
+        long elapsed = System.currentTimeMillis() - connectionStartMs;
+        if ( elapsed >= Math.min(sessionTimeoutMs, connectionTimeoutMs) )
+        {
+            if ( zooKeeper.hasNewConnectionString() )
+            {
+                handleNewConnectionString();
+            }
+            else if ( elapsed > sessionTimeoutMs )
+            {
+                if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )
+                {
+                    log.warn(String.format("Connection attempt unsuccessful after %d (greater than session timeout of %d). Resetting connection and trying again with a new connection.", elapsed, sessionTimeoutMs));
+                }
+                reset();
+            }
+            else
+            {
+                KeeperException.ConnectionLossException connectionLossException = new KeeperException.ConnectionLossException();
+                if ( !Boolean.getBoolean(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES) )
+                {
+                    log.error(String.format("Connection timed out for connection string (%s) and timeout (%d) / elapsed (%d)", zooKeeper.getConnectionString(), connectionTimeoutMs, elapsed), connectionLossException);
+                }
+                tracer.get().addCount("connections-timed-out", 1);
+                throw connectionLossException;
+            }
+        }
     }
 
     private synchronized void reset() throws Exception
@@ -212,44 +206,44 @@ class ConnectionState implements Watcher, Closeable
 
     private boolean checkState(Event.KeeperState state, boolean wasConnected)
     {
-        boolean     isConnected = wasConnected;
-        boolean     checkNewConnectionString = true;
+        boolean isConnected = wasConnected;
+        boolean checkNewConnectionString = true;
         switch ( state )
         {
-            default:
-            case Disconnected:
-            {
-                isConnected = false;
-                break;
-            }
+        default:
+        case Disconnected:
+        {
+            isConnected = false;
+            break;
+        }
 
-            case SyncConnected:
-            case ConnectedReadOnly:
-            {
-                isConnected = true;
-                break;
-            }
+        case SyncConnected:
+        case ConnectedReadOnly:
+        {
+            isConnected = true;
+            break;
+        }
 
-            case AuthFailed:
-            {
-                isConnected = false;
-                log.error("Authentication failed");
-                break;
-            }
+        case AuthFailed:
+        {
+            isConnected = false;
+            log.error("Authentication failed");
+            break;
+        }
 
-            case Expired:
-            {
-                isConnected = false;
-                checkNewConnectionString = false;
-                handleExpiredSession();
-                break;
-            }
+        case Expired:
+        {
+            isConnected = false;
+            checkNewConnectionString = false;
+            handleExpiredSession();
+            break;
+        }
 
-            case SaslAuthenticated:
-            {
-                // NOP
-                break;
-            }
+        case SaslAuthenticated:
+        {
+            // NOP
+            break;
+        }
         }
 
         if ( checkNewConnectionString && zooKeeper.hasNewConnectionString() )
