@@ -546,12 +546,7 @@ public class PathChildrenCache implements Closeable
             offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_REMOVED, data)));
         }
 
-        Map<String, ChildData> localInitialSet = initialSet.get();
-        if ( localInitialSet != null )
-        {
-            localInitialSet.remove(fullPath);
-            maybeOfferInitializedEvent(localInitialSet);
-        }
+        removeFromInitialSet(ZKPaths.getNodeFromPath(fullPath));
     }
 
     private void internalRebuildNode(String fullPath) throws Exception
@@ -641,14 +636,17 @@ public class PathChildrenCache implements Closeable
 
         for ( String name : children )
         {
+            updateInitialSet(name, NULL_CHILD_DATA);
+        }
+
+        for ( String name : children )
+        {
             String fullPath = ZKPaths.makePath(path, name);
 
             if ( (mode == RefreshMode.FORCE_GET_DATA_AND_STAT) || !currentData.containsKey(fullPath) )
             {
                 getDataAndStat(fullPath);
             }
-
-            updateInitialSet(name, NULL_CHILD_DATA);
         }
         maybeOfferInitializedEvent(initialSet.get());
     }
@@ -667,7 +665,11 @@ public class PathChildrenCache implements Closeable
             {
                 offerOperation(new EventOperation(this, new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.CHILD_UPDATED, data)));
             }
-            updateInitialSet(ZKPaths.getNodeFromPath(fullPath), data);
+            removeFromInitialSet(ZKPaths.getNodeFromPath(fullPath));
+        }
+        else if ( resultCode == KeeperException.Code.NONODE.intValue() )
+        {
+            removeFromInitialSet(ZKPaths.getNodeFromPath(fullPath));
         }
     }
 
@@ -681,6 +683,16 @@ public class PathChildrenCache implements Closeable
         }
     }
 
+    private void removeFromInitialSet(String name)
+    {
+        Map<String, ChildData> localInitialSet = initialSet.get();
+        if ( localInitialSet != null )
+        {
+            localInitialSet.remove(name);
+            maybeOfferInitializedEvent(localInitialSet);
+        }
+    }
+
     private void maybeOfferInitializedEvent(Map<String, ChildData> localInitialSet)
     {
         if ( !hasUninitialized(localInitialSet) )
@@ -689,7 +701,7 @@ public class PathChildrenCache implements Closeable
 
             if ( initialSet.getAndSet(null) != null )   // avoid edge case - don't send more than 1 INITIALIZED event
             {
-                final List<ChildData> children = ImmutableList.copyOf(localInitialSet.values());
+                final List<ChildData> children = ImmutableList.copyOf(currentData.values());
                 PathChildrenCacheEvent event = new PathChildrenCacheEvent(PathChildrenCacheEvent.Type.INITIALIZED, null)
                 {
                     @Override
@@ -705,24 +717,7 @@ public class PathChildrenCache implements Closeable
 
     private boolean hasUninitialized(Map<String, ChildData> localInitialSet)
     {
-        if ( localInitialSet == null )
-        {
-            return false;
-        }
-
-        Map<String, ChildData> uninitializedChildren = Maps.filterValues
-        (
-            localInitialSet,
-            new Predicate<ChildData>()
-            {
-                @Override
-                public boolean apply(ChildData input)
-                {
-                    return (input == NULL_CHILD_DATA);  // check against ref intentional
-                }
-            }
-        );
-        return (uninitializedChildren.size() != 0);
+        return localInitialSet != null && !localInitialSet.isEmpty();
     }
 
     private void mainLoop()
