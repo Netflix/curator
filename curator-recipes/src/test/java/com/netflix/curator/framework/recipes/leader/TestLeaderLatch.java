@@ -15,8 +15,10 @@
  */
 package com.netflix.curator.framework.recipes.leader;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.framework.recipes.BaseClassForTests;
@@ -27,6 +29,7 @@ import com.netflix.curator.test.TestingServer;
 import com.netflix.curator.test.Timing;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -36,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TestLeaderLatch extends BaseClassForTests
 {
@@ -240,6 +244,83 @@ public class TestLeaderLatch extends BaseClassForTests
     {
         basic(Mode.START_IN_THREADS);
     }
+
+  @Test
+  public void testCallbackSanity() throws Exception
+  {
+    final int PARTICIPANT_QTY = 10;
+    final CountDownLatch timesSquare = new CountDownLatch(PARTICIPANT_QTY);
+    final AtomicLong masterCounter = new AtomicLong(0);
+    final AtomicLong dunceCounter = new AtomicLong(0);
+
+    Timing timing = new Timing();
+    CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));
+    ExecutorService exec = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("callbackSanity-%s").build());
+
+    List<LeaderLatch> latches = Lists.newArrayList();
+    for (int i = 0; i < PARTICIPANT_QTY; ++i) {
+      final int nodeId = i;
+      final LeaderLatch latch = new LeaderLatch(client, PATH_NAME);
+      latch.attachListener(
+          new LeaderLatchListener()
+          {
+            boolean beenLeader = false;
+
+            @Override
+            public void becomeMaster()
+            {
+              if (!beenLeader) {
+                masterCounter.incrementAndGet();
+                beenLeader = true;
+                try {
+                  latch.reset();
+                }
+                catch (Exception e) {
+                  throw Throwables.propagate(e);
+                }
+              }
+              else {
+                masterCounter.incrementAndGet();
+                Closeables.closeQuietly(latch);
+                timesSquare.countDown();
+              }
+            }
+
+            @Override
+            public void stopBeingMaster()
+            {
+              dunceCounter.incrementAndGet();
+            }
+          },
+          exec
+      );
+      latches.add(latch);
+    }
+
+    try {
+      client.start();
+
+      for (LeaderLatch latch : latches) {
+        latch.start();
+      }
+
+      timesSquare.await();
+
+      Assert.assertEquals(masterCounter.get(), PARTICIPANT_QTY * 2);
+      Assert.assertEquals(dunceCounter.get(), PARTICIPANT_QTY);
+      for (LeaderLatch latch : latches) {
+        Assert.assertEquals(latch.getState(), LeaderLatch.State.CLOSED);
+      }
+    }
+    finally {
+      for (LeaderLatch latch : latches) {
+        if (latch.getState() != LeaderLatch.State.CLOSED) {
+          Closeables.closeQuietly(latch);
+        }
+      }
+      Closeables.closeQuietly(client);
+    }
+  }
 
     private enum Mode
     {
