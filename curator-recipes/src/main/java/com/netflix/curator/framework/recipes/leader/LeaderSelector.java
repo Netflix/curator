@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.recipes.locks.InterProcessMutex;
 import com.netflix.curator.utils.ThreadUtils;
@@ -368,21 +367,28 @@ public class LeaderSelector implements Closeable
     {
         do
         {
+            KeeperException ke = null;
+
             try
             {
                 doWork();
             }
             catch ( KeeperException.ConnectionLossException e )
             {
-                if ( !autoRequeue.get() )   // autoRequeue should ignore connection loss and just keep trying
-                {
-                    throw e;
-                }
+                ke = e;
+            }
+            catch ( KeeperException.SessionExpiredException e )
+            {
+                ke = e;
             }
             catch ( InterruptedException ignore )
             {
                 Thread.currentThread().interrupt();
                 break;
+            }
+            if ( ke != null && !autoRequeue.get() )   // autoRequeue should ignore connection loss and just keep trying
+            {
+                throw ke;
             }
         } while ( autoRequeue.get() && (state.get() == State.STARTED) && !Thread.currentThread().isInterrupted() );
     }
