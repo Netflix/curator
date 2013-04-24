@@ -18,6 +18,8 @@ package com.netflix.curator.framework.recipes.leader;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.api.BackgroundCallback;
 import com.netflix.curator.framework.api.CuratorEvent;
@@ -33,12 +35,16 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,6 +66,7 @@ public class LeaderLatch implements Closeable
     private final AtomicReference<State>                state = new AtomicReference<State>(State.LATENT);
     private final AtomicBoolean                         hasLeadership = new AtomicBoolean(false);
     private final AtomicReference<String>               ourPath = new AtomicReference<String>();
+    private final ConcurrentMap<LeaderLatchListener, Executor> listeners = Maps.newConcurrentMap();
 
     private final ConnectionStateListener               listener = new ConnectionStateListener()
     {
@@ -81,7 +88,7 @@ public class LeaderLatch implements Closeable
         }
     };
 
-    private enum State
+    public enum State
     {
         LATENT,
         STARTED,
@@ -145,9 +152,41 @@ public class LeaderLatch implements Closeable
         finally
         {
             client.getConnectionStateListenable().removeListener(listener);
+            listeners.clear();
             setLeadership(false);
         }
     }
+
+  /**
+   * Attaches a listener to this LeaderLatch
+   *
+   * Attaching the same listener multiple times is a noop from the second time on.
+   *
+   * All methods for the listener are run using the provided Executor.  It is common to pass in a single-threaded
+   * executor so that you can be certain that listener methods are called in sequence, but if you are fine with
+   * them being called out of order you are welcome to use multiple threads.
+   *
+   * @param listener the listener to attach
+   * @param exec An executor to run the methods for the listener on.
+   */
+  public void attachListener(LeaderLatchListener listener, Executor exec)
+  {
+    listeners.putIfAbsent(listener, exec);
+  }
+
+  /**
+   * Removes a given listener from this LeaderLatch
+   *
+   * This method returns the executor associated with the listener as a convenience so that it can be shutdown()
+   * if that is what you want to do.
+   *
+   * @param listener the listener to remove
+   * @return the executor associated with the listener
+   */
+  public Executor removeListener(LeaderLatchListener listener)
+  {
+    return listeners.remove(listener);
+  }
 
     /**
      * <p>Causes the current thread to wait until this instance acquires leadership
@@ -257,6 +296,19 @@ public class LeaderLatch implements Closeable
     {
         return id;
     }
+
+  /**
+   * Returns this instances current state, this is the only way to verify that the object has been closed before
+   * closing again.  If you try to close a latch multiple times, the close() method will throw an
+   * IllegalArgumentException which is often not caught and ignored (Closeables.closeQuietly() only looks for
+   * IOException).
+   *
+   * @return the state of the current instance
+   */
+  public State getState()
+  {
+    return state.get();
+  }
 
     /**
      * <p>
@@ -446,9 +498,57 @@ public class LeaderLatch implements Closeable
 
     private synchronized void setLeadership(boolean newValue)
     {
-        hasLeadership.set(newValue);
+        boolean oldValue = hasLeadership.getAndSet(newValue);
+
+      if (oldValue && !newValue) { // Lost leadership, was true, now false
+        callCallbacks(
+            new Predicate<LeaderLatchListener>()
+            {
+              @Override
+              public boolean apply(LeaderLatchListener input)
+              {
+                input.stopBeingMaster();
+                return true;
+              }
+            }
+        );
+      }
+      else if (!oldValue && newValue) { // Gained leadership, was false, now true
+        callCallbacks(
+            new Predicate<LeaderLatchListener>()
+            {
+              @Override
+              public boolean apply(LeaderLatchListener input)
+              {
+                input.becomeMaster();
+                return true;
+              }
+            }
+        );
+      }
+
         notifyAll();
     }
+
+  /**
+   * Calls the callbacks, takes a Predicate as a poor man's unary function
+   * @param toApply
+   */
+  private void callCallbacks(final Predicate<LeaderLatchListener> toApply)
+  {
+    for (final Map.Entry<LeaderLatchListener, Executor> entry : listeners.entrySet()) {
+      entry.getValue().execute(
+          new Runnable()
+          {
+            @Override
+            public void run()
+            {
+              toApply.apply(entry.getKey());
+            }
+          }
+      );
+    }
+  }
 
     private void setNode(String newValue) throws Exception
     {
@@ -458,4 +558,6 @@ public class LeaderLatch implements Closeable
             client.delete().guaranteed().inBackground().forPath(oldPath);
         }
     }
+
+
 }
