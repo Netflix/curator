@@ -5,7 +5,7 @@ http://netflix.github.com/curator/curator.png
 Curator is in the process of moving to Apache. This Github site will stay open until the move is complete. Please open 
 any new issues on the Apache Jira for Curator.
 
- . . . . . . . . . . 
+==
 
 == DESCRIPTION
 
