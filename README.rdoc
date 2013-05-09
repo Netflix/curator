@@ -2,14 +2,14 @@ http://netflix.github.com/curator/curator.png
 
 == IMPORTANT NOTE!!!
 
-Curator is in the process of moving to Apache. This Github site will stay open until the move is complete. Please open 
-any new issues on the Apache Jira for Curator.
+Curator has moved to Apache. The Netflix Curator project will remain to hold Netflix
+extensions to Curator.
 
+http://curator.incubator.apache.org
 
 == DESCRIPTION
 
-Curator is a set of Java libraries that make using Apache ZooKeeper much easier. While
-ZooKeeper comes bundled with a Java client, using the client is non-trivial and error prone.
+Netflix Curator contains extensions to Apache Curator.
 
 == DETAILS
 
@@ -22,11 +22,7 @@ Curator is built via Gradle (http://www.gradle.org). To build from the command l
 
 == ARTIFACTS
 
-Curator binaries are published to Maven Central. Please see the docs for details.
-
-== MAILING LIST
-
-There is a Curator mailing list. Join here: http://groups.google.com/group/curator-users
+Netflix Curator binaries are published to Maven Central. Please see the docs for details.
 
 == AUTHOR
 
