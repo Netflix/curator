@@ -5,6 +5,11 @@ Curator has move to Apache. Please see: http://curator.apache.incubator.org
 
 The previous Netflix branch is now in a branch named "archive".
 
+2.0.0 - June 3, 2013
+====================
+* Possible final release - removed code branches that are now in Apache. Added
+a version of ZkClient bridge that uses Apache Curator.
+
 1.3.4 - xxxxxxxxxxxxx
 =====================
 * Issue 257: Fixed a race condition in LeaderLatch that cause the recipe to create
