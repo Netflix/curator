@@ -136,4 +136,47 @@ public class TestChildReaper extends BaseClassForTests
             Closeables.closeQuietly(client);
         }
     }
+
+    @Test
+    public void     testLeader() throws Exception
+    {
+        Timing                  timing = new Timing();
+        CuratorFramework        client = CuratorFrameworkFactory.newClient(server.getConnectString(), timing.session(), timing.connection(), new RetryOneTime(1));
+
+        client.start();
+
+        for ( int i = 0; i < 10; ++i )
+        {
+            client.create().creatingParentsIfNeeded().forPath("/test/" + Integer.toString(i));
+        }
+
+        ChildReaper reaper1 = new ChildReaper(client, "/test", Reaper.Mode.REAP_UNTIL_DELETE, 1);
+        reaper1.start();
+        ChildReaper reaper2 = new ChildReaper(client, "/test", Reaper.Mode.REAP_UNTIL_DELETE, 1);
+        reaper2.start();
+
+        timing.forWaiting().sleepABit();
+
+        Stat    stat = client.checkExists().forPath("/test");
+        Assert.assertEquals(stat.getNumChildren(), 0);
+
+        Assert.assertTrue(reaper1.countToReap > 0);
+        int prevCount = reaper1.countToReap;
+        Assert.assertEquals(reaper2.countToReap, 0);
+        reaper1.close();
+
+        for ( int i = 0; i < 10; ++i )
+        {
+            client.create().creatingParentsIfNeeded().forPath("/test/" + Integer.toString(i));
+        }
+
+        timing.forWaiting().sleepABit();
+
+        stat = client.checkExists().forPath("/test");
+        Assert.assertEquals(stat.getNumChildren(), 0);
+        Assert.assertTrue(reaper2.countToReap > 0);
+        Assert.assertEquals(reaper1.countToReap, prevCount);
+
+        reaper2.close();
+    }
 }
