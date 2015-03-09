@@ -196,6 +196,11 @@ public class CuratorZKClientBridge implements IZkConnection
     @Override
     public void writeData(String path, byte[] data, int expectedVersion) throws KeeperException, InterruptedException
     {
+        writeDataReturnStat(path, data, expectedVersion);
+    }
+
+    @Override
+    public Stat writeDataReturnStat(String path, byte[] data, int expectedVersion) throws KeeperException, InterruptedException {
         try
         {
             curator.setData().withVersion(expectedVersion).forPath(path, data);
@@ -204,6 +209,7 @@ public class CuratorZKClientBridge implements IZkConnection
         {
             adjustException(e);
         }
+        return null; // will never execute
     }
 
     @Override
