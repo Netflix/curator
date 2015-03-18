@@ -4,35 +4,36 @@
 
     <groupId>com.netflix.curator</groupId>
     <artifactId>curator-x-zkclient-bridge</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
 
     <parent>
-      <groupId>org.sonatype.oss</groupId>
-      <artifactId>oss-parent</artifactId>
-      <version>7</version>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
     </parent>
 
     <licenses>
-      <license>
-        <name>The Apache Software License, Version 2.0</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        <distribution>repo</distribution>
-      </license>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
 
     <name>Apache Curator ZKClient Bridge</name>
     <description>
-        You may be trying to integrate a project that uses ZKClient and would like a way to use Curator with that project (for example Kafka). The ZKClient Bridge accomplishes that.
+        You may be trying to integrate a project that uses ZKClient and would like a way to use Curator with that
+        project (for example Kafka). The ZKClient Bridge accomplishes that.
     </description>
     <url>http://curator.apache.org</url>
     <inceptionYear>2011</inceptionYear>
 
     <scm>
-        <connection>scm:git:git@github.com:Netflix/curator.git</connection>
-        <url>scm:git:git@github.com:Netflix/curator.git</url>
-        <developerConnection>scm:git:git@github.com:Netflix/curator.git</developerConnection>
-      <tag>curator-x-zkclient-bridge-3.0.0</tag>
-  </scm>
+        <connection>scm:git:git@github.com:randgalt/curator.git</connection>
+        <url>scm:git:git@github.com:randgalt/curator.git</url>
+        <developerConnection>scm:git:git@github.com:randgalt/curator.git</developerConnection>
+        <tag>curator-x-zkclient-bridge-3.0.0</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,6 +51,7 @@
         <maven-scm-publish-plugin-version>1.0</maven-scm-publish-plugin-version>
         <maven-release-plugin-version>2.5</maven-release-plugin-version>
         <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
+        <maven-source-plugin-version>2.4</maven-source-plugin-version>
 
         <curator-version>2.7.1</curator-version>
         <zkclient-version>0.4</zkclient-version>
@@ -149,6 +151,19 @@
             </plugin>
 
             <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${maven-javadoc-plugin-version}</version>
                 <configuration>
@@ -158,6 +173,15 @@
                     </additionalJOptions>
                     <failOnError>false</failOnError>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

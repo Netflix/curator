@@ -37,9 +37,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>
  *     Once allocated, bridge to ZKClient via:
- *     <code><pre>
+ *     <tt>
  *     ZKClient zkClient = new ZkClient(new CuratorZKClientBridge(curatorInstance, timeout));
- *     </pre></code>
+ *     </tt>
  * </p>
  */
 public class CuratorZKClientBridge implements IZkConnection
