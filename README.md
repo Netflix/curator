@@ -5,28 +5,13 @@ http://netflix.github.com/curator/curator.png
 Curator has moved to Apache. The Netflix Curator project will remain to hold Netflix
 extensions to Curator.
 
-http://curator.incubator.apache.org
+http://curator.apache.org
 
 The previous Netflix branch is now in a branch named "archive".
 
-# DESCRIPTION
+# ZKCLIENT BRIDGE
 
-Netflix Curator contains extensions to Apache Curator.
-
-# DETAILS
-
-Please see the doc at https://github.com/Netflix/curator/wiki
-
-# BUILDING
-
-Curator is built via Gradle (http://www.gradle.org). To build from the command line:
-    ./gradlew build
-
-# ARTIFACTS
-
-Netflix Curator binaries are published to Maven Central. Please see the docs for details.
-
-# AUTHOR
+Please see the doc at https://github.com/Netflix/curator/wiki/ZKClient-Bridge
 
 Jordan Zimmerman (mailto:jzimmerman@netflix.com)
 
