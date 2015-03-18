@@ -1,2 +1,0 @@
-rootProject.name='curator'
-include 'curator-x-zkclient-bridge', 'curator-x-apache-zkclient-bridge'
