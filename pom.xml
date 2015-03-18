@@ -4,7 +4,7 @@
 
     <groupId>com.netflix.curator</groupId>
     <artifactId>curator-x-zkclient-bridge</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -51,6 +51,7 @@
         <maven-scm-publish-plugin-version>1.0</maven-scm-publish-plugin-version>
         <maven-release-plugin-version>2.5</maven-release-plugin-version>
         <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
+        <maven-source-plugin-version>2.4</maven-source-plugin-version>
 
         <curator-version>2.7.1</curator-version>
         <zkclient-version>0.4</zkclient-version>
@@ -150,6 +151,19 @@
             </plugin>
 
             <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${maven-javadoc-plugin-version}</version>
                 <configuration>
@@ -159,6 +173,15 @@
                     </additionalJOptions>
                     <failOnError>false</failOnError>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
