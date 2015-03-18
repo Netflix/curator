@@ -4,7 +4,7 @@
 
     <groupId>com.netflix.curator</groupId>
     <artifactId>curator-x-zkclient-bridge</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
