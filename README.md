@@ -1,6 +1,6 @@
 http://netflix.github.com/curator/curator.png
 
-== IMPORTANT NOTE!!!
+# IMPORTANT NOTE!!!
 
 Curator has moved to Apache. The Netflix Curator project will remain to hold Netflix
 extensions to Curator.
@@ -9,28 +9,28 @@ http://curator.incubator.apache.org
 
 The previous Netflix branch is now in a branch named "archive".
 
-== DESCRIPTION
+# DESCRIPTION
 
 Netflix Curator contains extensions to Apache Curator.
 
-== DETAILS
+# DETAILS
 
 Please see the doc at https://github.com/Netflix/curator/wiki
 
-== BUILDING
+# BUILDING
 
 Curator is built via Gradle (http://www.gradle.org). To build from the command line:
     ./gradlew build
 
-== ARTIFACTS
+# ARTIFACTS
 
 Netflix Curator binaries are published to Maven Central. Please see the docs for details.
 
-== AUTHOR
+# AUTHOR
 
 Jordan Zimmerman (mailto:jzimmerman@netflix.com)
 
-== LICENSE
+# LICENSE
 
 Copyright 2011 Netflix, Inc.
 
