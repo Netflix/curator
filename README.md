@@ -13,7 +13,7 @@ The previous Netflix branch is now in a branch named "archive".
 
 Please see the doc at https://github.com/Netflix/curator/wiki/ZKClient-Bridge
 
-Jordan Zimmerman (mailto:jzimmerman@netflix.com)
+Jordan Zimmerman (mailto:jordan@jordanzimmerman.com)
 
 # LICENSE
 
