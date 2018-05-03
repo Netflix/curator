@@ -1,4 +1,4 @@
-http://netflix.github.com/curator/curator.png
+![logo](http://netflix.github.com/curator/curator.png)
 
 # IMPORTANT NOTE!!!
 
